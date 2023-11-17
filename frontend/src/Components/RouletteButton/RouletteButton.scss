@@ -1,0 +1,63 @@
+@use "../../variables" as v;
+
+.column-span-4 {
+  grid-column: span 4;
+}
+
+.column-span-2 {
+  grid-column: span 2;
+}
+
+.standard-button {
+  position: relative;
+  color: white;
+  font-weight: bold;
+  border: 3px solid v.$roulette_black;
+  background-color: transparent;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.red {
+  position: relative;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  border: none;
+  background-color: v.$roulette_red;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s background-color;
+  cursor: pointer;
+}
+
+.red:has(~ .all-red-hover:hover),
+.all-red-hover:hover {
+  background-color: rgb(254, 110, 134);
+}
+
+.chip-stack-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.black {
+  position: relative;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  border: none;
+  background-color: v.$roulette_black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
