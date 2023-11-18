@@ -1,0 +1,28 @@
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes moveAroundWheel {
+  0% {
+    transform: rotate(50deg);
+  }
+
+  100% {
+    transform: rotate(1440deg);
+  }
+}
+
+.spinning {
+  animation: spin 15s linear infinite;
+}
+
+.roulette-ball {
+  transform-origin: center center;
+  animation: moveAroundWheel 3.5s ease-out forwards;
+  z-index: 1;
+}

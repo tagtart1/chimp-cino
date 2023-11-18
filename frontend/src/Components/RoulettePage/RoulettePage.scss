@@ -15,11 +15,11 @@
   }
   .roulette-buttons {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: repeat(14, 1fr);
     grid-template-rows: repeat(5, 1fr);
     gap: 3px;
     width: 100%;
-    max-width: 700px;
+    max-width: 850px;
 
     grid-template-rows: 1fr 1fr;
 
@@ -29,6 +29,43 @@
       align-items: center;
       justify-content: center;
       min-height: 54px;
+
+      &:active .wrap {
+        transform: scale(0.96);
+      }
+    }
+
+    // Selects all red odd numbers
+    .odd.red:has(~ .odd-button:hover),
+    .odd-button:hover {
+      background-color: v.$roulette_light_red;
+    }
+    // Selects all black odd numbers
+    .odd.black:has(~ .odd-button:hover),
+    .odd-button:hover {
+      background-color: v.$roulette_light_black;
+    }
+
+    // Selects all red even numbers
+    .even.red:has(~ .even-button:hover),
+    .even-button:hover {
+      background-color: v.$roulette_light_red;
+    }
+    // Selects all black even numbers
+    .even.black:has(~ .even-button:hover),
+    .even-button:hover {
+      background-color: v.$roulette_light_black;
+    }
+
+    // Selects all 1to12 red numbers
+    .oneto12.red:has(~ .oneto12-button:hover),
+    .oneto12-button:hover {
+      background-color: v.$roulette_light_red;
+    }
+    // Selects all 1to12 black numbers
+    .oneto12.black:has(~ .oneto12-button:hover),
+    .oneto12-button:hover {
+      background-color: v.$roulette_light_black;
     }
   }
 

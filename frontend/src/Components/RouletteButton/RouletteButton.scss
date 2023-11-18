@@ -8,6 +8,13 @@
   grid-column: span 2;
 }
 
+.column-start-2-span-4 {
+  grid-column: 2 / span 4;
+}
+
+.column-start-2-span-2 {
+  grid-column: 2 / span 2;
+}
 .standard-button {
   position: relative;
   color: white;
@@ -39,6 +46,11 @@
   background-color: rgb(254, 110, 134);
 }
 
+.black:has(~ .all-black-hover:hover),
+.all-black-hover:hover {
+  background-color: rgb(75, 110, 132);
+}
+
 .chip-stack-wrapper {
   position: absolute;
   top: 0;
@@ -48,6 +60,27 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.green {
+  position: relative;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  border: none;
+  background-color: v.$roulette_green;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s background-color;
+  cursor: pointer;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  transition: 0.3s background-color;
+}
+
+.green:hover {
+  background-color: rgb(105, 194, 103);
 }
 
 .black {
@@ -60,4 +93,5 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: 0.3s background-color;
 }

@@ -1,12 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./RouletteButton.scss";
 import { useState } from "react";
 import RouletteChip from "../RouletteChip/RouletteChip";
 
-const RouletteButton = ({ className, text, chipValues, onClick }) => {
+const RouletteButton = ({
+  className,
+  text,
+  chipValues,
+  onClick,
+  clearChips,
+}) => {
   const [chips, setChips] = useState(0);
   const [buttonValue, setButtonValue] = useState(0);
-
+  const [initChipColor, setInitChipColor] = useState();
   // Increase size of chip stack, max of 5
   const addChip = () => {
     if (chips < 5) {
@@ -19,6 +25,20 @@ const RouletteButton = ({ className, text, chipValues, onClick }) => {
 
     onClick();
   };
+
+  // Listens for change in clearChips prop to then reset value
+  useEffect(() => {
+    setChips(0);
+    setButtonValue(0);
+  }, [clearChips]);
+
+  // Locks the chip color to the first chip placed in pocket
+  // resets to the selected chip color when empty
+  useEffect(() => {
+    if (chips < 1 && chipValues) {
+      setInitChipColor(chipValues.color);
+    }
+  }, [chipValues, chips]);
 
   // Creats chip stack, each chip after the first is stacked on top of each other
   // with the style object
@@ -36,10 +56,11 @@ const RouletteButton = ({ className, text, chipValues, onClick }) => {
     if (buttonValue > 999) {
       lockVisualValue = true;
     }
+
     return (
       <RouletteChip
         key={index}
-        color={chipValues.color}
+        color={initChipColor}
         amount={
           !lockVisualValue
             ? (!buttonValue ? chipValues.value : buttonValue) +
@@ -58,7 +79,9 @@ const RouletteButton = ({ className, text, chipValues, onClick }) => {
       {text}
       {chipList.length < 1 ? null : (
         <div className="chip-stack-wrapper">
-          <div style={{ position: "relative" }}>{chipList}</div>
+          <div className="wrap" style={{ position: "relative" }}>
+            {chipList}
+          </div>
         </div>
       )}
     </button>
