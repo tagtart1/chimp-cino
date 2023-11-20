@@ -6,7 +6,6 @@ const Wheel = ({ numberOfWedges, winningNum }) => {
   const viewBoxSize = 325;
   const radius = (viewBoxSize * 0.85) / 2;
 
-  const ballYMultInPocket = 0.72;
   const ballRef = useRef();
   const wedges = [];
   const numbers = [];
@@ -81,56 +80,60 @@ const Wheel = ({ numberOfWedges, winningNum }) => {
 
   const winningMarkerPosition = getMarkerPosition(winningIndex);
 
-  const startAnimation = () => {
-    let start = null;
-    const startValue = 1.08;
-    const endValue = 0.72;
-    const duration = 3500; // 3.5 seconds
-
-    const step = (timestamp) => {
-      if (!start) start = timestamp;
-      const progress = timestamp - start;
-
-      let newValue;
-      if (progress < 2000) {
-        // Phase 1: Stay at 1.08 for 2 seconds
-        newValue = startValue;
-      } else if (progress < 2200) {
-        // Phase 2: Drop to 0.72 in 0.2 seconds
-        const phaseProgress = (progress - 2000) / 200;
-        newValue = startValue - (startValue - endValue) * phaseProgress;
-      } else if (progress < 2400) {
-        // Phase 3: Jump to 0.97 in 0.2 seconds
-        const phaseProgress = (progress - 2200) / 200;
-        newValue = endValue + (0.85 - endValue) * phaseProgress;
-      } else if (progress < 2600) {
-        // Phase 4: Drop back to 0.72 in 0.2 seconds
-        const phaseProgress = (progress - 2400) / 200;
-        newValue = 0.85 - (0.85 - endValue) * phaseProgress;
-      } else if (progress < 2800) {
-        // Phase 5: Jump to 0.85 in 0.2 seconds
-        const phaseProgress = (progress - 2600) / 200;
-        newValue = endValue + (0.85 - endValue) * phaseProgress;
-      } else if (progress < 3000) {
-        // Final Phase: Go to 0.72 in 0.2 seconds
-        const phaseProgress = (progress - 2800) / 200;
-        newValue = 0.85 - (0.85 - endValue) * phaseProgress;
-      } else {
-        newValue = endValue; // Ensure it ends at 0.72
-      }
-
-      setBallYValue(newValue);
-
-      if (progress < duration) {
-        requestAnimationFrame(step);
-      }
-    };
-
-    requestAnimationFrame(step);
-  };
-
   useEffect(() => {
-    ballRef.current.classList.add("roulette-ball");
+    const startAnimation = () => {
+      if (winningNum === null) return;
+      console.log("anim");
+      ballRef.current.classList.add("roulette-visible");
+      ballRef.current.classList.add("roulette-ball");
+      let start = null;
+      const startValue = 1.08;
+      const endValue = 0.72;
+      const duration = 3500; // 3.5 seconds
+
+      const step = (timestamp) => {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+
+        let newValue;
+        if (progress < 2000) {
+          // Phase 1: Stay at 1.08 for 2 seconds
+          newValue = startValue;
+        } else if (progress < 2200) {
+          // Phase 2: Drop to 0.72 in 0.2 seconds
+          const phaseProgress = (progress - 2000) / 200;
+          newValue = startValue - (startValue - endValue) * phaseProgress;
+        } else if (progress < 2400) {
+          // Phase 3: Jump to 0.97 in 0.2 seconds
+          const phaseProgress = (progress - 2200) / 200;
+          newValue = endValue + (0.85 - endValue) * phaseProgress;
+        } else if (progress < 2600) {
+          // Phase 4: Drop back to 0.72 in 0.2 seconds
+          const phaseProgress = (progress - 2400) / 200;
+          newValue = 0.85 - (0.85 - endValue) * phaseProgress;
+        } else if (progress < 2800) {
+          // Phase 5: Jump to 0.85 in 0.2 seconds
+          const phaseProgress = (progress - 2600) / 200;
+          newValue = endValue + (0.85 - endValue) * phaseProgress;
+        } else if (progress < 3000) {
+          // Final Phase: Go to 0.72 in 0.2 seconds
+          const phaseProgress = (progress - 2800) / 200;
+          newValue = 0.85 - (0.85 - endValue) * phaseProgress;
+        } else {
+          newValue = endValue; // Ensure it ends at 0.72
+        }
+
+        setBallYValue(newValue);
+
+        if (progress < duration) {
+          requestAnimationFrame(step);
+        }
+      };
+
+      requestAnimationFrame(step);
+    };
+    console.log(winningNum);
+    ballRef.current.classList.remove("roulette-visible");
     startAnimation();
   }, [winningNum]);
 
@@ -172,8 +175,10 @@ const Wheel = ({ numberOfWedges, winningNum }) => {
           cy={winningMarkerPosition.y}
           r={6} // Radius of the winning marker
           fill="white"
-          className="roulette-ball"
           ref={ballRef}
+          style={{
+            visibility: "hidden",
+          }}
           onAnimationEnd={(e) => {
             e.currentTarget.classList.remove("roulette-ball");
           }}

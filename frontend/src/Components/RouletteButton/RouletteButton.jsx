@@ -6,8 +6,9 @@ import RouletteChip from "../RouletteChip/RouletteChip";
 const RouletteButton = ({
   className,
   text,
+  pocketNums,
   chipValues,
-  onClick,
+  addNewBet,
   clearChips,
 }) => {
   const [chips, setChips] = useState(0);
@@ -23,7 +24,7 @@ const RouletteButton = ({
 
     setButtonValue((prev) => prev + chipValues.value);
 
-    onClick();
+    addNewBet(pocketNums);
   };
 
   // Listens for change in clearChips prop to then reset value

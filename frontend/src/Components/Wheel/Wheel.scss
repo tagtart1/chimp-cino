@@ -9,7 +9,7 @@
 
 @keyframes moveAroundWheel {
   0% {
-    transform: rotate(50deg);
+    transform: rotate(floor(random() * 71deg) + 40deg);
   }
 
   100% {
@@ -25,4 +25,8 @@
   transform-origin: center center;
   animation: moveAroundWheel 3.5s ease-out forwards;
   z-index: 1;
+}
+
+.roulette-visible {
+  visibility: visible !important;
 }
