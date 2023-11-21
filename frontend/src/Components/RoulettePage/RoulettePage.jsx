@@ -48,10 +48,6 @@ const RoulettePage = () => {
     setTotalBetValue((prev) => prev + chipType.trueValue);
   };
 
-  useEffect(() => {
-    console.log(betMap);
-  });
-
   return (
     <main className="roulette-main">
       <section>

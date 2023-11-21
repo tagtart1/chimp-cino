@@ -4,8 +4,8 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require("dotenv").config();
 const cors = require("cors");
-
-var indexRouter = require("./routes/index");
+const AppError = require("./utils/appError");
+var rouletteRouter = require("./routes/roulette");
 var usersRouter = require("./routes/users");
 
 var app = express();
@@ -27,7 +27,25 @@ app.use(
   express.static(path.join(__dirname, "utils/chimcino-logo.png"))
 );
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
+// Routes
+app.use("/api/v1/roulette", rouletteRouter);
+app.use("/api/v1/users", usersRouter);
+
+// Error Handler
+app.use((err, req, res, next) => {
+  if (err instanceof AppError && err.isOperational) {
+    // Handle operational errors by returning a specific error message to the client.
+    console.log(err);
+    return res
+      .status(err.statusCode)
+      .json({ code: err.code, message: err.message });
+  }
+
+  // Handle other unknown errors.
+  console.error("An unknown error occurred:", err);
+  res
+    .status(500)
+    .json({ code: "UNKNOWN", message: "An unexpected error occurred" });
+});
 
 module.exports = app;
