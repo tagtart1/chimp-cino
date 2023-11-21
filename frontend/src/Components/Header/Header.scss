@@ -1,0 +1,44 @@
+header {
+  background-color: #1a2c38;
+  display: flex;
+  justify-content: center;
+
+  box-shadow: #0003 0 4px 6px -1px, #0000001f 0 2px 4px -1px;
+  position: fixed;
+  padding: 8px 0px;
+  z-index: 1;
+  width: 100%;
+  max-width: 100vw;
+
+  .header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1550px;
+  }
+  .logo {
+    max-width: 120px;
+  }
+  .auth-actions-group {
+    .sign-in-button {
+      background-color: transparent;
+      color: white;
+      border: none;
+      font-weight: bold;
+      font-size: 0.875rem;
+      padding: 0.9375rem 1.25rem;
+      cursor: pointer;
+    }
+    .register-button {
+      color: white;
+      background-color: #1475e1;
+      border: none;
+      font-weight: bold;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      padding: 0.9375rem 1.25rem;
+      cursor: pointer;
+    }
+  }
+}
