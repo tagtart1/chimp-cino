@@ -2,13 +2,16 @@
 
 .roulette-main {
   width: 100%;
-  height: 100vh;
-  padding-top: 100px;
+  height: 100%;
   display: flex;
-  justify-content: center;
+
   align-items: center;
   background-color: #1a2c38;
   flex-direction: column;
+  padding-top: 20px;
+  overflow: auto;
+  padding-bottom: 24px;
+
   .chip-selection {
     display: flex;
     gap: 12px;

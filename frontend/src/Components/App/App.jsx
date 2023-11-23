@@ -1,18 +1,59 @@
+import { useEffect, useState } from "react";
 import Dashboard from "../Dashbaord/Dashboard";
 import Header from "../Header/Header";
 import RoulettePage from "../RoulettePage/RoulettePage";
 import "./App.scss";
 import { Routes, Route, useNavigate, BrowserRouter } from "react-router-dom";
+import { useUser } from "../../Contexts/UserProvider";
 
 function App() {
+  const { user, setUser } = useUser();
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  useEffect(() => {
+    console.log("GRABBING USER");
+    const fetchUser = async () => {
+      setLoadingUser(true);
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/v1/users/validate-user",
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          console.log("COULD NOT RETREIVE USER");
+          return;
+        }
+
+        const result = await response.json();
+
+        setUser(result.data);
+      } catch (err) {
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    fetchUser();
+  }, [setUser]);
+
+  // use skeleton later
+  if (loadingUser) {
+    return <div className="loading-test">LOADING</div>;
+  }
   return (
     <div className="App">
       <BrowserRouter>
-        <Header />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/roulette" element={<RoulettePage />} />
-        </Routes>
+        <div className="app-wrapper">
+          <Header />
+
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/roulette" element={<RoulettePage />} />
+          </Routes>
+        </div>
       </BrowserRouter>
     </div>
   );

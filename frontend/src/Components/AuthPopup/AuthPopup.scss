@@ -1,0 +1,134 @@
+.auth-popup-wrapper {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .close-popup-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    svg {
+      color: #bdc5d7;
+      width: 20px;
+    }
+  }
+
+  .auth-overlay {
+    position: absolute;
+    background-color: rgba(59, 59, 59, 0.565);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  .signup-module {
+    font-size: 18px;
+    color: black;
+  }
+
+  .login-module {
+    width: 100%;
+    max-width: 500px;
+    min-width: 200px;
+    background-color: #1a2c38;
+    padding: 24px 16px;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  h1 {
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 24px;
+  }
+
+  p {
+    text-align: center;
+    font-size: 16px;
+    color: #bdc5d7;
+    margin-top: 24px;
+    span {
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+    }
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .password-wrapper {
+        position: relative;
+        width: 100%;
+        input {
+          width: 100%;
+        }
+        .password-toggle-button {
+          position: absolute;
+          background-color: transparent;
+          border: none;
+          top: 10px;
+          right: 6px;
+          cursor: pointer;
+          svg {
+            width: 20px;
+            color: #bdc5d7;
+          }
+        }
+      }
+
+      label {
+        font-weight: bold;
+        color: #bdc5d7;
+      }
+
+      input {
+        background-color: #0f212e;
+        border: 2px solid #2f4553;
+        border-radius: 6px;
+        color: white;
+        font-size: 16px;
+        padding: 10px 36px;
+        padding-left: 8px;
+        font-weight: bold;
+        outline: none;
+        transition: all 0.2s;
+        box-sizing: border-box;
+        position: relative;
+
+        &:focus {
+          border-color: #537a92;
+        }
+      }
+    }
+    .submit-button {
+      width: 100%;
+      color: black;
+      font-size: 18px;
+      background-color: #00e701;
+      border: none;
+      border-radius: 6px;
+      min-height: 54px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+}

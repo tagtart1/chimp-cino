@@ -48,6 +48,8 @@ const RoulettePage = () => {
     setTotalBetValue((prev) => prev + chipType.trueValue);
   };
 
+  const startGame = () => {};
+
   return (
     <main className="roulette-main">
       <section>
@@ -518,11 +520,7 @@ const RoulettePage = () => {
       </section>
       <Wheel numberOfWedges={37} winningNum={winningNum} />
       <button
-        onClick={() => {
-          const randomNumber = Math.floor(Math.random() * 37);
-
-          setWinningNum(randomNumber);
-        }}
+        onClick={startGame}
         style={{
           marginTop: 20,
         }}

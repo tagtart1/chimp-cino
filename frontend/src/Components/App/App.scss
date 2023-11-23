@@ -1,1 +1,32 @@
+.App {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
 
+.app-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.loading-test {
+  background-color: greenyellow;
+}
+/* Customizes the scrollbar track */
+::-webkit-scrollbar {
+  width: 9px;
+  background-color: transparent; /* Makes the track background transparent */
+}
+
+/* Customizes the scrollbar handle */
+::-webkit-scrollbar-thumb {
+  background-color: #2f4553; /* Or any color you prefer */
+  border-radius: 4px; /* Rounded edges */
+}
+
+/* Changes the scrollbar handle color on hover */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #2f4553;
+}

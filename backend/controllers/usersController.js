@@ -7,13 +7,14 @@ const pool = require("../db");
 const userQueries = require("../queries/userQueries");
 
 exports.logIn = asyncHandler(async (req, res, next) => {
+  console.log(req.body);
   const inputEmailOrUsername = req.body.emailOrUsername;
   const inputPassword = req.body.password;
 
   // Null values fail credential check automatically
   if (!inputPassword || !inputEmailOrUsername) {
     throw new AppError(
-      "The username/email or password provided is incorrect",
+      "The username/email or password provided is empty",
       401,
       "INVALID_CREDENTIALS"
     );
@@ -100,7 +101,7 @@ exports.signUp = [
         req.body.username,
         req.body.email.toLowerCase(),
         hashedPassword,
-        0.0,
+        10000.0,
       ])
     ).rows[0];
 
@@ -131,7 +132,7 @@ exports.validateUser = asyncHandler(async (req, res) => {
         "TIMED_OUT"
       );
     } else {
-      return res.json({ data: userData });
+      return res.json({ data: userData.user });
     }
   });
 });
