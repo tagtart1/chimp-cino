@@ -3,8 +3,11 @@ import "./RoulettePage.scss";
 import RouletteChip from "../RouletteChip/RouletteChip";
 import RouletteButton from "../RouletteButton/RouletteButton";
 import Wheel from "../Wheel/Wheel";
+import { useUser } from "../../Contexts/UserProvider";
 
 const RoulettePage = () => {
+  const rouletteEndpooint = "http://localhost:5000/api/v1/roulette";
+  const { setUser } = useUser();
   const [chipType, setChipType] = useState({
     value: 1,
     color: "rgb(252, 120, 32)",
@@ -17,6 +20,10 @@ const RoulettePage = () => {
   const [toggleReset, setToggleReset] = useState(false);
   const [winningNum, setWinningNum] = useState(null);
   const [betMap, setBetMap] = useState({});
+  const [gameRunning, setGameRunning] = useState(false);
+
+  // Displays after the animation of the wheel has completed
+  const [updatedBalance, setUpdatedBalance] = useState();
 
   const resetBoard = () => {
     setTotalBetValue(0);
@@ -48,7 +55,47 @@ const RoulettePage = () => {
     setTotalBetValue((prev) => prev + chipType.trueValue);
   };
 
-  const startGame = () => {};
+  const startGame = async () => {
+    if (gameRunning) return;
+    setGameRunning(true);
+    const options = {
+      credentials: "include",
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        betMap: betMap,
+      }),
+    };
+
+    try {
+      const response = await fetch(rouletteEndpooint, options);
+      if (!response.ok) {
+        console.log("ERROR");
+        return;
+      }
+      const result = await response.json();
+      setWinningNum(result.data.winningNum);
+      setUpdatedBalance(result.data.newBalance.balance);
+    } catch (err) {}
+
+    setUser((prev) => {
+      const newCosmeticBal = { ...prev };
+
+      newCosmeticBal.balance -= totalBetValue;
+      return newCosmeticBal;
+    });
+  };
+
+  const gameEnd = () => {
+    setUser((prev) => {
+      console.log(updatedBalance);
+      const user = { ...prev };
+      user.balance = updatedBalance;
+      return user;
+    });
+
+    setGameRunning(false);
+  };
 
   return (
     <main className="roulette-main">
@@ -518,7 +565,7 @@ const RoulettePage = () => {
           ]}
         />
       </section>
-      <Wheel numberOfWedges={37} winningNum={winningNum} />
+      <Wheel numberOfWedges={37} winningNum={winningNum} onGameEnd={gameEnd} />
       <button
         onClick={startGame}
         style={{

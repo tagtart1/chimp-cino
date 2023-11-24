@@ -5,6 +5,7 @@ const { body, validationResult } = require("express-validator");
 const AppError = require("../utils/appError");
 const pool = require("../db");
 const userQueries = require("../queries/userQueries");
+const casinoQueries = require("../queries/casinoQueries");
 
 exports.logIn = asyncHandler(async (req, res, next) => {
   console.log(req.body);
@@ -121,18 +122,22 @@ exports.logOut = (req, res) => {
   res.status(200).json({ data: { message: "Logged out successfully" } });
 };
 
-exports.validateUser = asyncHandler(async (req, res) => {
+exports.validateUser = asyncHandler(async (req, res, next) => {
   const token = req.cookies.token;
 
-  jwt.verify(token, process.env.SECRETKEY, (err, userData) => {
+  jwt.verify(token, process.env.SECRETKEY, async (err, userData) => {
     if (err) {
-      throw new AppError(
-        "User timed out, please log back in",
-        401,
-        "TIMED_OUT"
+      next(
+        new AppError("User timed out, please log back in", 401, "TIMED_OUT")
       );
     } else {
-      return res.json({ data: userData.user });
+      const user = userData.user;
+      const balance = (await pool.query(casinoQueries.getBalance, [user.id]))
+        .rows[0].balance;
+
+      user.balance = balance;
+
+      return res.json({ data: user });
     }
   });
 });

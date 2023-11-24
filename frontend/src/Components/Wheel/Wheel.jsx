@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Wheel.scss";
 
-const Wheel = ({ numberOfWedges, winningNum }) => {
+const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
   const [ballYValue, setBallYValue] = useState(1.08);
   const viewBoxSize = 325;
   const radius = (viewBoxSize * 0.85) / 2;
@@ -181,6 +181,7 @@ const Wheel = ({ numberOfWedges, winningNum }) => {
           }}
           onAnimationEnd={(e) => {
             e.currentTarget.classList.remove("roulette-ball");
+            onGameEnd();
           }}
         />
       </svg>

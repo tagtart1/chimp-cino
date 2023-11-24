@@ -1,0 +1,57 @@
+.blackjack-main {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  overflow: auto;
+  background-color: #1a2c38;
+  padding-top: 32px;
+  padding-left: 32px;
+  padding-right: 32px;
+
+  .blackjack-game-section {
+    display: flex;
+    overflow: none;
+    width: 100%;
+    max-width: 1200px;
+    max-height: 700px;
+    border-radius: 8px;
+    overflow: none;
+    .bet-controls {
+      background-color: #213743;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 300px;
+      border-bottom-left-radius: 8px;
+      border-top-left-radius: 8px;
+      .amount-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .blackjack-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        row-gap: 16px;
+        column-gap: 8px;
+      }
+    }
+
+    .game-screen {
+      background-color: #0f212e;
+      flex-grow: 1;
+      min-height: 630px;
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+  }
+}
+
+@media (min-width: 875px) {
+  .game-screen {
+    min-height: 630px;
+  }
+}

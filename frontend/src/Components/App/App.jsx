@@ -5,13 +5,16 @@ import RoulettePage from "../RoulettePage/RoulettePage";
 import "./App.scss";
 import { Routes, Route, useNavigate, BrowserRouter } from "react-router-dom";
 import { useUser } from "../../Contexts/UserProvider";
+import BlackjackPage from "../BlackjackPage/BlackjackPage";
 
 function App() {
   const { user, setUser } = useUser();
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
+    if (user) return;
     console.log("GRABBING USER");
+
     const fetchUser = async () => {
       setLoadingUser(true);
       try {
@@ -35,9 +38,8 @@ function App() {
         setLoadingUser(false);
       }
     };
-
     fetchUser();
-  }, [setUser]);
+  }, [setUser, user]);
 
   // use skeleton later
   if (loadingUser) {
@@ -51,7 +53,9 @@ function App() {
 
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/home" element={<Dashboard />} />
             <Route path="/roulette" element={<RoulettePage />} />
+            <Route path="/blackjack" element={<BlackjackPage />} />
           </Routes>
         </div>
       </BrowserRouter>
