@@ -132,7 +132,10 @@
       min-height: 630px;
       border-top-right-radius: 8px;
       border-bottom-right-radius: 8px;
-
+      background-image: url("../../images/blackjack-banner-background.svg");
+      background-size: 40%;
+      background-repeat: no-repeat;
+      background-position: center;
       padding-top: 64px;
       padding-bottom: 48px;
       display: grid;
@@ -172,6 +175,10 @@
           box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2),
             0 1px 2px 0 rgba(0, 0, 0, 0.12);
         }
+      }
+
+      .player-side {
+        gap: 64px;
       }
 
       .static-stack {
