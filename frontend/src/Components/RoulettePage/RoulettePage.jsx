@@ -7,7 +7,7 @@ import { useUser } from "../../Contexts/UserProvider";
 
 const RoulettePage = () => {
   const rouletteEndpooint = "http://localhost:5000/api/v1/roulette";
-  const { setUser } = useUser();
+  const { setUser, user } = useUser();
   const [chipType, setChipType] = useState({
     value: 1,
     color: "rgb(252, 120, 32)",
@@ -56,7 +56,7 @@ const RoulettePage = () => {
   };
 
   const startGame = async () => {
-    if (gameRunning) return;
+    if (gameRunning || !user) return;
     setGameRunning(true);
     const options = {
       credentials: "include",

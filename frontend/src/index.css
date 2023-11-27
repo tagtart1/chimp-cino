@@ -6,9 +6,20 @@
   padding-bottom: 0px;
 }
 
+@font-face {
+  font-family: "Courgette-Regular";
+  src: url("./fonts/Courgette-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 html,
 body {
   height: 100%;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {

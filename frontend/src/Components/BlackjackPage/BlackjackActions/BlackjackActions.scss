@@ -1,0 +1,36 @@
+.blackjack-main {
+  .blackjack-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    row-gap: 16px;
+    column-gap: 8px;
+
+    button {
+      background-color: #2f4553;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+      padding: 14px 0px;
+      box-shadow: 0rem 0.0625rem 0.1875rem #00000033,
+        0rem 0.0625rem 0.125rem #0000001f;
+      transition: 0.2s all;
+
+      &:hover {
+        cursor: pointer;
+        background-color: #557086;
+      }
+
+      &:active {
+        transform: scale(0.99);
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        background-color: #283e4b;
+        color: #909ba1;
+      }
+    }
+  }
+}

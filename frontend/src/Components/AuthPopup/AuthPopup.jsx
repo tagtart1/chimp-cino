@@ -89,7 +89,7 @@ const AuthPopup = ({ isLogIn, isVisible, close }) => {
                   type="password"
                   id="password"
                   ref={passwordInputRef}
-                  autoComplete="password"
+                  autoComplete="on"
                   name="password"
                 />
                 {showPassword ? (
