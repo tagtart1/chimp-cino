@@ -7,6 +7,7 @@ const cors = require("cors");
 const AppError = require("./utils/appError");
 var rouletteRouter = require("./routes/roulette");
 var usersRouter = require("./routes/users");
+var blackjackRouter = require("./routes/blackjack");
 
 var app = express();
 
@@ -30,6 +31,7 @@ app.use(
 // Routes
 app.use("/api/v1/roulette", rouletteRouter);
 app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/blackjack", blackjackRouter);
 
 // Error Handler
 app.use((err, req, res, next) => {
