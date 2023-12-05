@@ -1,0 +1,15 @@
+.blackjack-main {
+  .static-stack {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 1.2em;
+    transform: translate(-50%, -65%);
+
+    .playing-card:not(:nth-child(1)) {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  }
+}

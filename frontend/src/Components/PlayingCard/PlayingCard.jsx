@@ -10,11 +10,15 @@ export const PlayingCard = ({
   nthCard,
 }) => {
   const controls = useAnimation();
-  const startOffsetX = nthCard * -33;
+
+  // The first card's container is usually off on the start so we account for it with the offset
+  // nthcard of 0 receives a greater buffer
+  const startOffsetX = nthCard === 0 ? -100 : nthCard * -33;
+  const startOffsetY = nthCard === 0 ? 100 : 0;
 
   const playerCardVariants = {
     initial: {
-      transform: `translate(${startOffsetX + 375}%, -${320}%)`,
+      transform: `translate(${startOffsetX + 375}%, -${320 + startOffsetY}%)`,
     },
     toPosition: {
       transform: "translate(0, 0)",

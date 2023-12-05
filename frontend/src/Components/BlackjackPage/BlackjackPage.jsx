@@ -4,8 +4,10 @@ import { useRef, useEffect } from "react";
 import BlackjackActions from "./BlackjackActions/BlackjackActions";
 import { PlayingCard } from "../PlayingCard/PlayingCard";
 import { motion } from "framer-motion";
+import BlackjackCardStack from "./BlackjackCardStack/BlackjackCardStack";
 
 const BlackjackPage = () => {
+  const blackjackStartEndpoint = "http://localhost:5000/api/v1/blackjack/start";
   const gameScreenRef = useRef(null);
   const betAmountInput = useRef(null);
   const [cardsAmount, setCardsAmount] = useState(0);
@@ -32,6 +34,27 @@ const BlackjackPage = () => {
     betAmountInput.current.value = (betAmountInput.current.value / 2).toFixed(
       2
     );
+  };
+
+  const playGame = async () => {
+    const res = await fetch(blackjackStartEndpoint, {
+      credentials: "include",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        betAmount: betAmountInput.current.value,
+      }),
+    });
+
+    if (!res.ok) {
+      const errors = await res.json();
+      console.log("Error", errors);
+      return;
+    }
+    const cards = await res.json();
+    // TRICKLE THE STATE
+    // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
+    console.log(cards);
   };
 
   useEffect(() => {
@@ -152,7 +175,9 @@ const BlackjackPage = () => {
             </div>
           </div>
           <BlackjackActions />
-          <button className="blackjack-play-button">Play</button>
+          <button className="blackjack-play-button" onClick={playGame}>
+            Play
+          </button>
         </div>
         <div className="game-screen" ref={gameScreenRef}>
           <div className="card-group dealer-side">
@@ -171,39 +196,7 @@ const BlackjackPage = () => {
               {cards}
             </motion.div>
           </div>
-          <div className="static-stack">
-            <PlayingCard staticCard={true} />
-            <PlayingCard
-              staticCard={true}
-              style={{
-                transform: `translate(0, -2%)`,
-              }}
-            />
-            <PlayingCard
-              staticCard={true}
-              style={{
-                transform: `translate(0, -4%)`,
-              }}
-            />
-            <PlayingCard
-              staticCard={true}
-              style={{
-                transform: `translate(0, -6%)`,
-              }}
-            />
-            <PlayingCard
-              staticCard={true}
-              style={{
-                transform: `translate(0, -8%)`,
-              }}
-            />
-            <PlayingCard
-              staticCard={true}
-              style={{
-                transform: `translate(0, -10%)`,
-              }}
-            />
-          </div>
+          <BlackjackCardStack />
         </div>
       </section>
       <button
