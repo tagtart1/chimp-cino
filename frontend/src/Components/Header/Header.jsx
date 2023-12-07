@@ -41,7 +41,6 @@ const Header = () => {
   };
 
   useEffect(() => {
-    console.log(user);
     const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowAccountDropdown(false);

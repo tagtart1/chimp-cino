@@ -13,7 +13,6 @@ function App() {
 
   useEffect(() => {
     if (user) return;
-    console.log("GRABBING USER");
 
     const fetchUser = async () => {
       setLoadingUser(true);
@@ -26,7 +25,6 @@ function App() {
         );
 
         if (!response.ok) {
-          console.log("COULD NOT RETREIVE USER");
           return;
         }
 

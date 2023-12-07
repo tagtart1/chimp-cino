@@ -165,8 +165,12 @@
           background-color: #2f4553;
           border-radius: 16px;
           font-size: 14px;
-          padding: 4px 24px;
-          width: fit-content;
+          width: 60px;
+          height: 21px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
           position: absolute;
           right: 0;
 

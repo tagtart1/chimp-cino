@@ -11,9 +11,17 @@
 
   box-shadow: 0 0 0.25em #0710174d;
 
+  .black-text {
+    color: #1a2c38;
+  }
+
+  .red-text {
+    color: #ec2f54;
+  }
+
   .front {
     backface-visibility: hidden;
-    color: #ec2f54;
+
     pointer-events: none;
     border-radius: 6px;
     font-size: 2.2em;
