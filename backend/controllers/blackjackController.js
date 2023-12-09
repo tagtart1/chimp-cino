@@ -57,12 +57,13 @@ exports.newGame = async (req, res, next) => {
     await client.query(queryText, values);
     console.log(game_id);
     // Hit twice for player
+    // BUG: REMOVE any "rigging" from functions and params
     const playerCard = await pullCardFromDeck(
       player_hand_id,
       1,
       client,
       game_id,
-      true
+      false
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -151,11 +152,14 @@ exports.hit = async (req, res, next) => {
       })),
     };
 
+    const should = playerHandData.length === 2;
+
     const newCard = await pullCardFromDeck(
       playerHandId,
       newSequence,
       client,
-      gameId
+      gameId,
+      should
     );
 
     playerHandFormatted.cards.push(newCard);
@@ -173,7 +177,7 @@ exports.hit = async (req, res, next) => {
 
     formattedData.data.player = playerHandFormatted;
     formattedData.data.is_game_over = isBust;
-
+    console.log(playerHandFormatted.cards);
     await client.query("COMMIT");
   } catch (err) {
     console.log(err);
@@ -246,8 +250,8 @@ const checkForBust = (cards) => {
   for (const card of cards) {
     totalValue += card.value;
   }
-
-  if (totalValue > 21) {
+  // BUG: DO not check >=, handle 21 clause somewhere else
+  if (totalValue >= 21) {
     // Game is bust, end game
     return true;
   } else return false;
@@ -255,26 +259,17 @@ const checkForBust = (cards) => {
 
 // Modifies the most recent ace to stay 11 or 1
 const validateAceValue = (cards) => {
-  const aces = [];
   let totalValue = 0;
-  let index = 0;
   for (const card of cards) {
-    if (card.rank === "A") {
-      aces.push({ card: card, index: index });
-    }
-
-    if (aces.length > 0 && totalValue + card.value > 21) {
-      // Get next ace index
-      let aceIndex = 0;
-      for (const ace of aces) {
-        if (ace.card.value === 11) {
-          aceIndex = ace.index;
-        }
-      }
-      cards[aceIndex].value = 1;
-    }
     totalValue += card.value;
-    index++;
+    if (totalValue > 21) {
+      const ace = cards.find((c) => c.rank === "A" && c.value === 11);
+      if (ace) {
+        ace.value = 1;
+        totalValue -= 10;
+      }
+    }
+    // BUG: If we draw two normal cards then an ace THEN a normal card, we are setting the first card to value of 1 no matter what it is.
   }
 };
 const isHandSoft = (cards) => {
