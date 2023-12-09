@@ -10,7 +10,8 @@ export const PlayingCard = ({
   nthCard,
   rank,
   suit,
-  shouldAnimate,
+  gameOver,
+  isBlank,
 }) => {
   const controls = useAnimation();
 
@@ -49,16 +50,17 @@ export const PlayingCard = ({
     if (staticCard) return;
     const sequence = async () => {
       await controls.start("toPosition");
+      if (isBlank) return;
       await controls.start("rotate");
     };
 
     sequence();
     // Log
-  }, [controls, staticCard]);
+  }, [controls, staticCard, isBlank]);
 
   return (
     <motion.div
-      className="playing-card"
+      className={gameOver && !dealerCard ? "playing-card lost" : "playing-card"}
       style={style}
       variants={
         !staticCard
@@ -71,22 +73,26 @@ export const PlayingCard = ({
       animate={controls}
     >
       <div className="front">
-        <div className="content">
-          <div
-            className={suit === "C" || suit === "S" ? "black-text" : "red-text"}
-          >
-            {rank}
+        {!isBlank ? (
+          <div className="content">
+            <div
+              className={
+                suit === "C" || suit === "S" ? "black-text" : "red-text"
+              }
+            >
+              {rank}
+            </div>
+            {suit === "C" ? (
+              <ClubIcon />
+            ) : suit === "H" ? (
+              <HeartIcon />
+            ) : suit === "S" ? (
+              <SpadeIcon />
+            ) : suit === "D" ? (
+              <DiamondIcon />
+            ) : null}
           </div>
-          {suit === "C" ? (
-            <ClubIcon />
-          ) : suit === "H" ? (
-            <HeartIcon />
-          ) : suit === "S" ? (
-            <SpadeIcon />
-          ) : suit === "D" ? (
-            <DiamondIcon />
-          ) : null}
-        </div>
+        ) : null}
       </div>
       <div className="back"></div>
     </motion.div>
@@ -115,7 +121,7 @@ const CardSuit = ({ symbol }) => {
 
 const HeartIcon = () => {
   return (
-    <svg fill="#ec2f54" viewBox="0 0 64 64">
+    <svg fill="#E9113C" viewBox="0 0 64 64">
       <path d="M30.907 55.396.457 24.946v.002A1.554 1.554 0 0 1 0 23.843c0-.432.174-.82.458-1.104l14.13-14.13a1.554 1.554 0 0 1 1.104-.458c.432 0 .821.175 1.104.458l14.111 14.13c.272.272.645.443 1.058.453l.1-.013h.004a1.551 1.551 0 0 0 1.045-.452l14.09-14.09a1.554 1.554 0 0 1 1.104-.457c.432 0 .82.174 1.104.457l14.13 14.121a1.557 1.557 0 0 1 0 2.209L33.114 55.396v-.002c-.27.268-.637.438-1.046.452v.001h.003a.712.712 0 0 1-.04.002h-.029c-.427 0-.815-.173-1.095-.453Z"></path>
     </svg>
   );
@@ -123,7 +129,7 @@ const HeartIcon = () => {
 
 const DiamondIcon = () => {
   return (
-    <svg fill="#ec2f54" viewBox="0 0 64 64">
+    <svg fill="#E9113C" viewBox="0 0 64 64">
       <path d="m37.036 2.1 24.875 24.865a7.098 7.098 0 0 1 2.09 5.04 7.1 7.1 0 0 1-2.09 5.04L37.034 61.91a7.076 7.076 0 0 1-5.018 2.077c-.086 0-.174 0-.25-.004v.004h-.01a7.067 7.067 0 0 1-4.79-2.071L2.089 37.049A7.098 7.098 0 0 1 0 32.009c0-1.97.798-3.75 2.09-5.04L26.965 2.102v.002A7.07 7.07 0 0 1 31.754.021l.002-.004h-.012c.088-.002.176-.004.264-.004A7.08 7.08 0 0 1 37.036 2.1Z"></path>
     </svg>
   );

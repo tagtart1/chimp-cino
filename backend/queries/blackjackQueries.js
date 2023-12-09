@@ -2,7 +2,7 @@ const findInProgressGame =
   "SELECT * FROM active_blackjack_games WHERE user_id = $1";
 
 const getHandData = `
-    SELECT c.suit, c.rank, c.value, ah.is_soft, ahc.sequence
+    SELECT c.suit, c.rank, c.value, ah.is_soft, ahc.sequence, ahc.hand_id
     FROM active_hands AS ah
     JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
     JOIN cards as c ON ahc.card_id = c.id
@@ -42,6 +42,9 @@ const addCardToHand =
 
 const deleteGame = "DELETE FROM active_blackjack_games WHERE id = $1";
 
+const setGameOver =
+  "UPDATE active_blackjack_games SET is_game_over = true WHERE id =$1";
+
 module.exports = {
   getHandData,
   findInProgressGame,
@@ -50,4 +53,5 @@ module.exports = {
   setDeckCardToInactive,
   addCardToHand,
   deleteGame,
+  setGameOver,
 };

@@ -14,14 +14,15 @@ const BlackjackPage = () => {
   const gameScreenRef = useRef(null);
   const betAmountInput = useRef(null);
   const { user } = useUser();
-  const [cardsAmount, setCardsAmount] = useState(0);
   const [dealerCardsAmount, setDealerCardsAmount] = useState(1);
+  const [renderDealerBlank, setRenderDealerBlank] = useState(false);
   const [playerCards, setPlayerCards] = useState([]);
   const [dealerCards, setDealerCards] = useState([]);
   const [dealerValue, setDealerValue] = useState(0);
   const [playerValue, setPlayerValue] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [gameLoaded, setGameLoaded] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
 
   const thresholdWidth = 875;
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -66,7 +67,6 @@ const BlackjackPage = () => {
     // TRICKLE THE STATE
     // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
     dealInitialCards(gameData.data);
-    console.log(gameData);
   };
 
   useEffect(() => {
@@ -124,7 +124,6 @@ const BlackjackPage = () => {
 
   useEffect(() => {
     const getGame = async () => {
-      console.log("FINDING GAME");
       try {
         setIsLoading(true);
         const response = await fetch(blackjackInProgressEndpoint, {
@@ -134,15 +133,36 @@ const BlackjackPage = () => {
 
         if (response.ok) {
           const results = await response.json();
-
+          // Check if game is new to send a blank
+          if (results.data.dealer.cards.length === 1) {
+            results.data.dealer.cards.push({ isStatic: true });
+          }
           // Set cards to the array of cards
+          for (const card of results.data.player.cards) {
+            card.isStatic = true;
+          }
+          for (const card of results.data.dealer.cards) {
+            card.isStatic = true;
+          }
           setPlayerCards(results.data.player.cards);
           setDealerCards(results.data.dealer.cards);
 
           // Grab total value
-          setDealerValue(getCardValueFromArray(results.data.dealer.cards));
-          setPlayerValue(getCardValueFromArray(results.data.player.cards));
-
+          console.log("Player Soft: ", results.data.player.is_soft);
+          console.log("Dealer Soft: ", results.data.dealer.is_soft);
+          setDealerValue(
+            getCardValueFromArray(
+              results.data.dealer.cards,
+              results.data.dealer.is_soft
+            )
+          );
+          setPlayerValue(
+            getCardValueFromArray(
+              results.data.player.cards,
+              results.data.player.is_soft
+            )
+          );
+          setGameOver(results.data.is_game_over);
           setGameLoaded(true);
         } else {
           console.log("No game found");
@@ -157,42 +177,92 @@ const BlackjackPage = () => {
     getGame();
   }, []);
 
-  const getCardValueFromArray = (cards) => {
+  // Once game loads the cards into the card states we turn of the game is loaded
+  useEffect(() => {
+    setGameLoaded(false);
+  }, [playerCards, dealerCards]);
+
+  const getCardValueFromArray = (cards, isSoft) => {
     let total = 0;
+
     for (const card of cards) {
-      total += card.value;
+      // checking for null card catches the last null in array if there is
+      if (!card.value) {
+        total += 0;
+      } else {
+        total += card.value;
+      }
+    }
+    if (isSoft) {
+      return `${total - 10}, ${total}`;
     }
     return total;
   };
 
+  // The delay matches the animation speed it takes to get in position
   const dealInitialCards = async (handData) => {
     const dealerCards = handData.dealer.cards;
     const playerCards = handData.player.cards;
+    const dealerSoft = handData.dealer.is_soft;
+    const playerSoft = handData.player.is_soft;
 
     setPlayerCards((currentCards) => [...currentCards, playerCards[0]]);
 
     await delay(520);
-    setPlayerValue(playerCards[0].value);
+    setPlayerValue(getCardValueFromArray([playerCards[0]], playerSoft));
     setDealerCards((currentCards) => [...currentCards, dealerCards[0]]);
 
     await delay(520);
-    setDealerValue(dealerCards[0].value);
+    setDealerValue(getCardValueFromArray([dealerCards[0]], dealerSoft));
     setPlayerCards((currentCards) => [...currentCards, playerCards[1]]);
     await delay(520);
-    setPlayerValue((oldValue) => oldValue + playerCards[1].value);
+    setDealerCards((currentCards) => [...currentCards, { isStatic: false }]);
+    setPlayerValue(
+      getCardValueFromArray([playerCards[0], playerCards[1]], playerSoft)
+    );
+  };
+
+  const dealNewCard = async (handData, isPlayer, isGameOver) => {
+    setGameLoaded(false);
+    console.log(handData);
+    if (isPlayer) {
+      setPlayerCards((currentCards) => [
+        ...currentCards,
+        handData.cards[handData.cards.length - 1],
+      ]);
+      await delay(520);
+      setPlayerValue(getCardValueFromArray(handData.cards, handData.is_soft));
+    }
+
+    if (isGameOver) {
+      await delay(520);
+      setGameOver(true);
+    }
   };
 
   const renderCardStack = (cards, isDealer = false) => {
     return cards.map((card, index) => {
-      console.log("Am dealer:", isDealer);
       const style =
         index === 0
-          ? { transform: `${gameLoaded ? "rotateY(180deg)" : ""}` }
+          ? { transform: `${card.isStatic ? "rotateY(180deg)" : ""}` }
           : {
               marginTop: `${index}em`,
               marginLeft: "-2.2em",
-              transform: `${gameLoaded ? "rotateY(180deg)" : ""}`,
+              transform: `${
+                card.isStatic && card.value ? "rotateY(180deg)" : ""
+              }`,
             };
+      if (!card.value)
+        return (
+          <PlayingCard
+            key={index}
+            style={style}
+            nthCard={index}
+            isBlank={true}
+            dealerCard={isDealer}
+            staticCard={card.isStatic}
+          />
+        );
 
       return (
         <PlayingCard
@@ -202,7 +272,8 @@ const BlackjackPage = () => {
           suit={card.suit}
           rank={card.rank}
           dealerCard={isDealer}
-          staticCard={gameLoaded}
+          staticCard={card.isStatic}
+          gameOver={gameOver}
         />
       );
     });
@@ -235,7 +306,7 @@ const BlackjackPage = () => {
               </div>
             </div>
           </div>
-          <BlackjackActions />
+          <BlackjackActions dealNewCard={dealNewCard} />
           <button className="blackjack-play-button" onClick={playGame}>
             Play
           </button>
@@ -260,7 +331,11 @@ const BlackjackPage = () => {
               layout={gameLoaded ? false : "position"}
             >
               {playerValue !== 0 ? (
-                <motion.div className="cards-value" layout="position">
+                <motion.div
+                  className="cards-value"
+                  layout="position"
+                  style={{ backgroundColor: gameOver ? "#E9113C" : "" }}
+                >
                   {playerValue}
                 </motion.div>
               ) : null}
@@ -271,21 +346,6 @@ const BlackjackPage = () => {
           <BlackjackCardStack />
         </div>
       </section>
-      <button
-        onClick={() => {
-          setCardsAmount((prev) => prev + 1);
-        }}
-      >
-        new card
-      </button>
-
-      <button
-        onClick={() => {
-          setDealerCardsAmount((prev) => prev + 1);
-        }}
-      >
-        test dealer card
-      </button>
     </main>
   );
 };
