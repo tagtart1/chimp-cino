@@ -20,31 +20,55 @@ export const PlayingCard = ({
   const startOffsetX = nthCard === 0 ? -100 : nthCard * -33;
   const startOffsetY = nthCard === 0 ? 100 : 0;
 
-  const playerCardVariants = {
-    initial: {
-      transform: `translate(${startOffsetX + 375}%, -${320 + startOffsetY}%)`,
-    },
-    toPosition: {
-      transform: "translate(0, 0)",
-      transition: { duration: 0.5 },
-    },
-    rotate: {
-      transform: "rotateY(180deg)",
-      transition: { duration: 0.5 },
-    },
-  };
+  const playerCardVariants = !staticCard
+    ? {
+        initial: {
+          transform: `translate(${startOffsetX + 375}%, -${
+            320 + startOffsetY
+          }%) `,
+          opacity: 1,
+        },
+        toPosition: {
+          transform: "translate(0, 0)",
+          transition: { duration: 0.5 },
+        },
+        rotate: {
+          transform: "rotateY(180deg) ",
+          transition: { duration: 0.5 },
+        },
+        exit: {
+          opacity: 0,
+          transform: `translateY(20px) rotateY(180deg) `,
+          transition: { delay: 0.1 * nthCard },
+        },
+      }
+    : {
+        exit: {
+          opacity: 0,
+          transform: `translateY(20px) rotateY(180deg)`,
+          transition: { delay: 0.1 * nthCard },
+        },
+      };
 
-  const dealerCardVariants = {
-    initial: { transform: `translate(${startOffsetX + 375}%, -100%)` },
-    toPosition: {
-      transform: "translate(0, 0)",
-      transition: { duration: 0.5 },
-    },
-    rotate: {
-      transform: "rotateY(180deg)",
-      transition: { duration: 0.5 },
-    },
-  };
+  const dealerCardVariants = !staticCard
+    ? {
+        initial: { transform: `translate(${startOffsetX + 375}%, -100%)` },
+        toPosition: {
+          transform: "translate(0, 0)",
+          transition: { duration: 0.5 },
+        },
+        rotate: {
+          transform: "rotateY(180deg)",
+          transition: { duration: 0.5 },
+        },
+      }
+    : {
+        exit: {
+          opacity: 0,
+          transform: `translateY(20px) `,
+          transition: { delay: 0.1 * nthCard },
+        },
+      };
 
   useEffect(() => {
     if (staticCard) return;
@@ -62,15 +86,10 @@ export const PlayingCard = ({
     <motion.div
       className={gameOver && !dealerCard ? "playing-card lost" : "playing-card"}
       style={style}
-      variants={
-        !staticCard
-          ? dealerCard
-            ? dealerCardVariants
-            : playerCardVariants
-          : ""
-      }
+      variants={dealerCard ? dealerCardVariants : playerCardVariants}
       initial="initial"
       animate={controls}
+      exit="exit"
     >
       <div className="front">
         {!isBlank ? (

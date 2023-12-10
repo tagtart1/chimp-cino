@@ -3,7 +3,7 @@ import "./BlackjackPage.scss";
 import { useRef, useEffect } from "react";
 import BlackjackActions from "./BlackjackActions/BlackjackActions";
 import { PlayingCard } from "../PlayingCard/PlayingCard";
-import { delay, motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import BlackjackCardStack from "./BlackjackCardStack/BlackjackCardStack";
 import { useUser } from "../../Contexts/UserProvider";
 
@@ -14,8 +14,7 @@ const BlackjackPage = () => {
   const gameScreenRef = useRef(null);
   const betAmountInput = useRef(null);
   const { user } = useUser();
-  const [dealerCardsAmount, setDealerCardsAmount] = useState(1);
-  const [renderDealerBlank, setRenderDealerBlank] = useState(false);
+
   const [playerCards, setPlayerCards] = useState([]);
   const [dealerCards, setDealerCards] = useState([]);
   const [dealerValue, setDealerValue] = useState(0);
@@ -64,6 +63,17 @@ const BlackjackPage = () => {
       return;
     }
     const gameData = await res.json();
+    if (gameOver) {
+      setDealerValue(0);
+      setPlayerValue(0);
+
+      setGameLoaded(false);
+      setGameOver(false);
+
+      setDealerCards([]);
+      setPlayerCards([]);
+      await delay(1000);
+    }
     // TRICKLE THE STATE
     // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
     dealInitialCards(gameData.data);
@@ -133,6 +143,9 @@ const BlackjackPage = () => {
 
         if (response.ok) {
           const results = await response.json();
+          if (results.data.is_game_over) {
+            return;
+          }
           // Check if game is new to send a blank
           if (results.data.dealer.cards.length === 1) {
             results.data.dealer.cards.push({ isStatic: true });
@@ -144,6 +157,8 @@ const BlackjackPage = () => {
           for (const card of results.data.dealer.cards) {
             card.isStatic = true;
           }
+          setGameLoaded(true);
+
           setPlayerCards(results.data.player.cards);
           setDealerCards(results.data.dealer.cards);
 
@@ -162,8 +177,6 @@ const BlackjackPage = () => {
               results.data.player.is_soft
             )
           );
-          setGameOver(results.data.is_game_over);
-          setGameLoaded(true);
         } else {
           console.log("No game found");
         }
@@ -184,16 +197,20 @@ const BlackjackPage = () => {
 
   const getCardValueFromArray = (cards, isSoft) => {
     let total = 0;
+    let aceCount = 0;
 
     for (const card of cards) {
       // checking for null card catches the last null in array if there is
-      if (!card.value) {
-        total += 0;
-      } else {
-        total += card.value;
-      }
+      total += card.value || 0;
+      if (card.rank === "A") aceCount++;
     }
-    if (isSoft) {
+    if (cards.length === 1 && aceCount === 0) {
+      return total;
+    }
+    if (cards.length === 1 && aceCount === 1 && isSoft) {
+      return `1, 11`;
+    }
+    if (isSoft && aceCount > 0) {
       return `${total - 10}, ${total}`;
     }
     return total;
@@ -224,7 +241,7 @@ const BlackjackPage = () => {
 
   const dealNewCard = async (handData, isPlayer, isGameOver) => {
     setGameLoaded(false);
-    console.log(handData);
+
     if (isPlayer) {
       setPlayerCards((currentCards) => [
         ...currentCards,
@@ -313,22 +330,27 @@ const BlackjackPage = () => {
         </div>
         <div className="game-screen" ref={gameScreenRef}>
           <div className="card-group dealer-side">
-            <motion.div
-              className="card-stack"
-              layout={gameLoaded ? false : "position"}
-            >
-              {dealerValue !== 0 ? (
-                <motion.div className="cards-value" layout="position">
-                  {dealerValue}
+            <AnimatePresence>
+              {dealerCards.length > 0 && (
+                <motion.div
+                  className="card-stack"
+                  layout={gameLoaded ? false : "position"}
+                >
+                  {dealerValue !== 0 ? (
+                    <motion.div className="cards-value" layout="position">
+                      {dealerValue}
+                    </motion.div>
+                  ) : null}
+                  {dealerCardsMap}
                 </motion.div>
-              ) : null}
-              {dealerCardsMap}
-            </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           <div className="card-group player-side">
             <motion.div
               className="card-stack"
               layout={gameLoaded ? false : "position"}
+              animate="visible"
             >
               {playerValue !== 0 ? (
                 <motion.div
@@ -339,8 +361,9 @@ const BlackjackPage = () => {
                   {playerValue}
                 </motion.div>
               ) : null}
-
-              {cardsMap}
+              <AnimatePresence>
+                {playerCards.length > 0 && cardsMap}
+              </AnimatePresence>
             </motion.div>
           </div>
           <BlackjackCardStack />

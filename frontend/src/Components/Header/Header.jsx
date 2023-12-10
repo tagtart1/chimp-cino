@@ -3,6 +3,7 @@ import "./Header.scss";
 import logo from "../../images/chimps-logo-small.png";
 import AuthPopup from "../AuthPopup/AuthPopup";
 import { useUser } from "../../Contexts/UserProvider";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const { user, setUser } = useUser();
@@ -57,7 +58,9 @@ const Header = () => {
   return (
     <header>
       <div className="header-wrapper">
-        <img src={logo} alt="logo" className="logo" />
+        <Link to="/">
+          <img src={logo} alt="logo" className="logo" />
+        </Link>
         {user ? (
           <div className="balance-bar">
             <div className="balance-num">

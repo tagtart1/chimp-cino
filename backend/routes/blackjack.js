@@ -18,4 +18,11 @@ router.patch(
   blackjackController.hit
 );
 
+router.patch(
+  "/games/stand",
+  validateToken,
+  fetchActiveGame,
+  blackjackController.stand
+);
+
 module.exports = router;

@@ -16,9 +16,13 @@ const BlackjackActions = ({ dealNewCard }) => {
       return;
     }
 
-    const newHandData = await response.json();
-    // console.log(newHandData.data);
-    dealNewCard(newHandData.data.player, true, newHandData.data.is_game_over);
+    const actionResults = await response.json();
+    console.log(actionResults.data);
+    dealNewCard(
+      actionResults.data.player,
+      true,
+      actionResults.data.is_game_over
+    );
   };
   return (
     <div className="blackjack-actions">

@@ -20,6 +20,11 @@ header {
   }
   .logo {
     max-width: 120px;
+    transition: 0.3s all;
+    cursor: pointer;
+    &:hover {
+      transform: scale(1.05);
+    }
   }
 
   .balance-bar {

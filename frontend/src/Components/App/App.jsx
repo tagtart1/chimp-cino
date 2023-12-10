@@ -6,6 +6,7 @@ import "./App.scss";
 import { Routes, Route, useNavigate, BrowserRouter } from "react-router-dom";
 import { useUser } from "../../Contexts/UserProvider";
 import BlackjackPage from "../BlackjackPage/BlackjackPage";
+import Navigation from "../Navigation/Navigation";
 
 function App() {
   const { user, setUser } = useUser();
@@ -46,15 +47,18 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <div className="app-wrapper">
-          <Header />
+        <div className="app-container">
+          <Navigation />
+          <div className="app-wrapper">
+            <Header />
 
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/home" element={<Dashboard />} />
-            <Route path="/roulette" element={<RoulettePage />} />
-            <Route path="/blackjack" element={<BlackjackPage />} />
-          </Routes>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/home" element={<Dashboard />} />
+              <Route path="/roulette" element={<RoulettePage />} />
+              <Route path="/blackjack" element={<BlackjackPage />} />
+            </Routes>
+          </div>
         </div>
       </BrowserRouter>
     </div>

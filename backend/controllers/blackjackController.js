@@ -63,15 +63,14 @@ exports.newGame = async (req, res, next) => {
       1,
       client,
       game_id,
-      false
+      8
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
       dealer_hand_id,
       1,
       client,
-      game_id,
-      false
+      game_id
     );
 
     const secondPlayerCard = await pullCardFromDeck(
@@ -79,8 +78,7 @@ exports.newGame = async (req, res, next) => {
       2,
       client,
       game_id,
-      false,
-      false
+      2
     );
 
     dealerCards = [dealerCard];
@@ -115,80 +113,6 @@ exports.newGame = async (req, res, next) => {
       },
     },
   });
-};
-
-// We need to send handID from the frontend
-exports.hit = async (req, res, next) => {
-  const gameId = req.game.id;
-
-  if (req.game.is_game_over) {
-    next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
-    return;
-  }
-
-  let client;
-  let formattedData = {
-    data: {
-      player: null,
-      is_game_over: false,
-    },
-  };
-  try {
-    client = await pool.connect();
-    await client.query("BEGIN");
-    // Grab player han d
-    const playerHandData = (
-      await client.query(blackjackQueries.getHandData, [gameId, true])
-    ).rows;
-
-    const playerHandId = playerHandData[0].hand_id;
-    const newSequence = playerHandData.length + 1;
-    const playerHandFormatted = {
-      cards: playerHandData.map((row) => ({
-        suit: row.suit,
-        rank: row.rank,
-        value: row.value,
-        sequence: row.sequence,
-      })),
-    };
-
-    const should = playerHandData.length === 2;
-
-    const newCard = await pullCardFromDeck(
-      playerHandId,
-      newSequence,
-      client,
-      gameId,
-      should
-    );
-
-    playerHandFormatted.cards.push(newCard);
-    validateAceValue(playerHandFormatted.cards);
-
-    // TO DO: Check for 21 or bust here
-    // If we get 21 off a hit we do the same action as a "stand"
-    // If we get over 21 we bust and set game is over
-    const isBust = checkForBust(playerHandFormatted.cards);
-    if (isBust) {
-      await client.query(blackjackQueries.setGameOver, [gameId]);
-    }
-    formattedData.data.is_game_over = isBust;
-    playerHandFormatted.is_soft = isHandSoft(playerHandFormatted.cards);
-
-    formattedData.data.player = playerHandFormatted;
-    formattedData.data.is_game_over = isBust;
-    console.log(playerHandFormatted.cards);
-    await client.query("COMMIT");
-  } catch (err) {
-    console.log(err);
-    await client.query("ROLLBACK");
-    next(new AppError(err.message, 400, "INVALID_ACTION"));
-    return;
-  } finally {
-    client.release();
-  }
-
-  res.status(200).json(formattedData);
 };
 
 exports.getGame = async (req, res, next) => {
@@ -245,20 +169,171 @@ exports.getGame = async (req, res, next) => {
   }
 };
 
+// We need to send handID from the frontend for splitting
+// HIT HIT HIT HIT
+exports.hit = async (req, res, next) => {
+  const gameId = req.game.id;
+
+  if (req.game.is_game_over) {
+    next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
+    return;
+  }
+
+  let client;
+  let formattedData = {
+    data: {
+      player: null,
+      is_game_over: false,
+    },
+  };
+  try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+    // Grab player hand
+    const playerHandData = (
+      await client.query(blackjackQueries.getHandData, [gameId, true])
+    ).rows;
+
+    const playerHandId = playerHandData[0].hand_id;
+    const newSequence = playerHandData.length + 1;
+    const playerHandFormatted = {
+      cards: playerHandData.map((row) => ({
+        suit: row.suit,
+        rank: row.rank,
+        value: row.value,
+        sequence: row.sequence,
+      })),
+    };
+
+    const newCard = await pullCardFromDeck(
+      playerHandId,
+      newSequence,
+      client,
+      gameId,
+      21
+    );
+
+    playerHandFormatted.cards.push(newCard);
+    validateAceValue(playerHandFormatted.cards);
+
+    // TO DO: Check for 21 or bust here
+    // If we get 21 off a hit we do the same action as a "stand"
+    // If we get over 21 we bust and set game is over
+    //
+    const isPlayerBust = checkForBust(playerHandFormatted.cards);
+    if (isPlayerBust) {
+      await client.query(blackjackQueries.setGameOver, [gameId]);
+      formattedData.data.is_game_over = isPlayerBust;
+      formattedData.data.game_winner = "dealer";
+    } else if (checkFor21(playerHandFormatted.cards)) {
+      formattedData.data.is_game_over = true;
+
+      const dealerDrawResults = await dealerDrawFor17(client, gameId);
+      await client.query(blackjackQueries.setGameOver, [gameId]);
+
+      // Determine winner
+      if (dealerDrawResults.isBust || dealerDrawResults.handValue < 21) {
+        formattedData.data.game_winner = "player";
+      } else if (dealerDrawResults.handValue === 21) {
+        formattedData.data.game_winner = "push";
+      }
+
+      formattedData.data.dealer = {
+        cards: dealerDrawResults.cards,
+        is_soft: isHandSoft(dealerDrawResults.cards),
+      };
+      // Return formatted data for both
+    }
+
+    playerHandFormatted.is_soft = isHandSoft(playerHandFormatted.cards);
+    formattedData.data.player = playerHandFormatted;
+
+    await client.query("COMMIT");
+  } catch (err) {
+    console.log(err);
+    await client.query("ROLLBACK");
+    next(new AppError(err.message, 400, "INVALID_ACTION"));
+    return;
+  } finally {
+    client.release();
+  }
+
+  res.status(200).json(formattedData);
+};
+
+exports.stand = async (req, res, next) => {};
+
+// Keeps drawing untill the dealer total is at 17 or higher;
+const dealerDrawFor17 = async (client, gameId) => {
+  // Grab dealer hand data and store for initial cards array
+  // Start loop to pull cards from deck till dealer is above or at soft 17
+  // In looop, pull card, then check if at or above 17
+  // Return cards array and total value in seperate property
+  // Use the value for determining win and the cards array to send back to client
+  const dealerHandData = (
+    await client.query(blackjackQueries.getHandData, [gameId, false])
+  ).rows;
+  const dealerHandId = dealerHandData[0].hand_id;
+  let index = 1;
+  const newSequence = dealerHandData.length + index;
+  let handValue = 0;
+  let dealerHandFormatted = {
+    cards: dealerHandData.map((row) => ({
+      suit: row.suit,
+      rank: row.rank,
+      value: row.value,
+      sequence: row.sequence,
+    })),
+  };
+
+  while (handValue < 17) {
+    const newCard = await pullCardFromDeck(
+      dealerHandId,
+      newSequence,
+      client,
+      gameId
+    );
+
+    dealerHandFormatted.cards.push(newCard);
+    validateAceValue(dealerHandFormatted.cards, true);
+    handValue = dealerHandFormatted.cards.reduce((value, card) => {
+      return value + card.value;
+    }, 0);
+    index++;
+  }
+  dealerHandFormatted.handValue = handValue;
+  dealerHandFormatted.isSoft = isHandSoft(dealerHandFormatted.cards);
+  dealerHandFormatted.isBust = checkForBust(dealerHandFormatted.cards);
+
+  return dealerHandFormatted;
+};
+
+const checkFor21 = (cards) => {
+  let totalValue = 0;
+  for (const card of cards) {
+    totalValue += card.value;
+  }
+
+  if (totalValue === 21) {
+    // Game is bust, end game
+    return true;
+  } else return false;
+};
+
 const checkForBust = (cards) => {
   let totalValue = 0;
   for (const card of cards) {
     totalValue += card.value;
   }
-  // BUG: DO not check >=, handle 21 clause somewhere else
-  if (totalValue >= 21) {
+
+  if (totalValue > 21) {
     // Game is bust, end game
     return true;
   } else return false;
 };
 
 // Modifies the most recent ace to stay 11 or 1
-const validateAceValue = (cards) => {
+const validateAceValue = (cards, isDealer) => {
   let totalValue = 0;
   for (const card of cards) {
     totalValue += card.value;
@@ -269,7 +344,6 @@ const validateAceValue = (cards) => {
         totalValue -= 10;
       }
     }
-    // BUG: If we draw two normal cards then an ace THEN a normal card, we are setting the first card to value of 1 no matter what it is.
   }
 };
 const isHandSoft = (cards) => {
@@ -291,25 +365,15 @@ const isHandSoft = (cards) => {
   }
 };
 
-const pullCardFromDeck = async (
-  handId,
-  sequence,
-  client,
-  gameId,
-  rig,
-  twoRig
-) => {
+// Later conditionally render returning the deck id
+const pullCardFromDeck = async (handId, sequence, client, gameId, rig) => {
   const deckCards = (
     await client.query(blackjackQueries.getActiveDeckCards, [gameId])
   ).rows;
   const randomCardNumber = secureRandomNumber(0, deckCards.length - 1);
 
-  const hitCard = rig
-    ? pullAce(deckCards)
-    : twoRig
-    ? pullAceTwice(deckCards)
-    : deckCards[randomCardNumber];
-  console.log(hitCard);
+  const hitCard = rig ? pullCard(deckCards, rig) : deckCards[randomCardNumber];
+
   await client.query(blackjackQueries.setDeckCardToInactive, [
     hitCard.deck_card_id,
   ]);
@@ -322,6 +386,7 @@ const pullCardFromDeck = async (
   ]);
 
   return {
+    id: hitCard.deck_card_id,
     rank: hitCard.rank,
     suit: hitCard.suit,
     value: hitCard.value,
@@ -329,18 +394,9 @@ const pullCardFromDeck = async (
   };
 };
 
-// DELETE LATER
-const pullAce = (deckCards) => {
+const pullCard = (deckCards, id) => {
   for (const card of deckCards) {
-    if (card.id === 26) {
-      return card;
-    }
-  }
-};
-
-const pullAceTwice = (deckCards) => {
-  for (const card of deckCards) {
-    if (card.id === 13) {
+    if (card.id === id) {
       return card;
     }
   }
