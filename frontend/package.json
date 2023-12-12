@@ -19,6 +19,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "sync": "aws s3 sync build/ s3://chimp-cino/",
+    "invalidate": "aws cloudfront create-invalidation --distribution-id E3UHDOK6GW1OCR --paths /*",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

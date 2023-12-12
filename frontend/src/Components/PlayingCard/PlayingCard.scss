@@ -11,6 +11,8 @@
 
   box-shadow: 0 0 0.25em #0710174d;
 
+  transition-property: box-shadow;
+  transition-duration: 0.2s;
   .black-text {
     color: #1a2c38;
   }
@@ -62,4 +64,12 @@
 
 .lost {
   box-shadow: 0 0 0 0.3em #e9113c;
+}
+
+.won {
+  box-shadow: 0 0 0 0.3em #1fff20;
+}
+
+.push {
+  box-shadow: 0 0 0 0.3em #ff9d00;
 }

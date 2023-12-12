@@ -63,7 +63,7 @@ exports.newGame = async (req, res, next) => {
       1,
       client,
       game_id,
-      8
+      26
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -77,8 +77,7 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       2,
       client,
-      game_id,
-      2
+      game_id
     );
 
     dealerCards = [dealerCard];
@@ -201,6 +200,7 @@ exports.hit = async (req, res, next) => {
         suit: row.suit,
         rank: row.rank,
         value: row.value,
+
         sequence: row.sequence,
       })),
     };
@@ -274,8 +274,8 @@ const dealerDrawFor17 = async (client, gameId) => {
     await client.query(blackjackQueries.getHandData, [gameId, false])
   ).rows;
   const dealerHandId = dealerHandData[0].hand_id;
-  let index = 1;
-  const newSequence = dealerHandData.length + index;
+
+  let newSequence = dealerHandData.length + 1;
   let handValue = 0;
   let dealerHandFormatted = {
     cards: dealerHandData.map((row) => ({
@@ -291,7 +291,8 @@ const dealerDrawFor17 = async (client, gameId) => {
       dealerHandId,
       newSequence,
       client,
-      gameId
+      gameId,
+      newSequence // === 3 ? 26 : null
     );
 
     dealerHandFormatted.cards.push(newCard);
@@ -299,12 +300,12 @@ const dealerDrawFor17 = async (client, gameId) => {
     handValue = dealerHandFormatted.cards.reduce((value, card) => {
       return value + card.value;
     }, 0);
-    index++;
+    newSequence++;
   }
   dealerHandFormatted.handValue = handValue;
   dealerHandFormatted.isSoft = isHandSoft(dealerHandFormatted.cards);
   dealerHandFormatted.isBust = checkForBust(dealerHandFormatted.cards);
-
+  console.log(dealerHandFormatted);
   return dealerHandFormatted;
 };
 

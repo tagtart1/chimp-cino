@@ -1,7 +1,7 @@
 import React from "react";
 import "./BlackjackActions.scss";
 
-const BlackjackActions = ({ dealNewCard }) => {
+const BlackjackActions = ({ handleAction }) => {
   const hitEndpoint = "http://localhost:5000/api/v1/blackjack/games/hit";
 
   const hitNewCard = async () => {
@@ -17,12 +17,16 @@ const BlackjackActions = ({ dealNewCard }) => {
     }
 
     const actionResults = await response.json();
-    console.log(actionResults.data);
-    dealNewCard(
-      actionResults.data.player,
-      true,
-      actionResults.data.is_game_over
-    );
+
+    // Turn all valued 1 aces back to 11 as this will be displayed dynamically in the animation
+    if (actionResults.data.is_game_over) {
+      actionResults.data.dealer.cards.forEach((element) => {
+        if (element.value === 1) {
+          element.value = 11;
+        }
+      });
+    }
+    handleAction(actionResults.data, true);
   };
   return (
     <div className="blackjack-actions">

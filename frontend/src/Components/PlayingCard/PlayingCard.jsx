@@ -10,7 +10,7 @@ export const PlayingCard = ({
   nthCard,
   rank,
   suit,
-  gameOver,
+  gameResults,
   isBlank,
 }) => {
   const controls = useAnimation();
@@ -82,9 +82,20 @@ export const PlayingCard = ({
     // Log
   }, [controls, staticCard, isBlank]);
 
+  const gameResultsStyle =
+    gameResults === "player"
+      ? "won"
+      : gameResults === "dealer"
+      ? "lost"
+      : gameResults === "push"
+      ? "push"
+      : "";
+
   return (
     <motion.div
-      className={gameOver && !dealerCard ? "playing-card lost" : "playing-card"}
+      className={
+        !dealerCard ? `playing-card ${gameResultsStyle}` : "playing-card"
+      }
       style={style}
       variants={dealerCard ? dealerCardVariants : playerCardVariants}
       initial="initial"
