@@ -11,6 +11,14 @@ exports.newGame = async (req, res, next) => {
   const userID = req.user.id;
   let dealerCards;
   let playerCards;
+  let formattedData = {
+    data: {
+      player: {},
+      dealer: {},
+      game_winner: "",
+      is_game_over: false,
+    },
+  };
   // ACID Transaction begins to deduct balance and create a new game
   const client = await pool.connect();
   try {
@@ -37,8 +45,6 @@ exports.newGame = async (req, res, next) => {
     ).rows[0];
 
     if (game && !game.is_game_over) {
-      // TRROW ERROR ONCE WE FINISH THE GAME LOOP
-      // await endGame(game.id, client);
       await client.query("COMMIT");
 
       throw new AppError("Game already in progress", 401, "INVALID_ACTION");
@@ -62,8 +68,7 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       1,
       client,
-      game_id,
-      26
+      game_id
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -80,8 +85,22 @@ exports.newGame = async (req, res, next) => {
       game_id
     );
 
-    dealerCards = [dealerCard];
+    const secondDealerCard = await pullCardFromDeck(
+      dealer_hand_id,
+      2,
+      client,
+      game_id
+    );
+
+    dealerCards = [dealerCard, secondDealerCard];
     playerCards = [playerCard, secondPlayerCard];
+
+    // Player instantly loses
+    if (isBlackjack(dealerCards) && !isBlackjack(playerCards)) {
+      await client.query(blackjackQueries.setGameOver, [game_id]);
+      formattedData.data.is_game_over = true;
+      formattedData.data.game_winner = "dealer";
+    }
 
     await client.query("COMMIT");
   } catch (err) {
@@ -97,21 +116,15 @@ exports.newGame = async (req, res, next) => {
     client.release();
   }
 
+  // Hide the second dealer card unless game is over
+  if (!formattedData.data.is_game_over) dealerCards.pop();
+
   validateAceValue(playerCards);
   validateAceValue(dealerCards);
 
-  res.status(200).json({
-    data: {
-      player: {
-        cards: playerCards,
-        is_soft: isHandSoft(playerCards),
-      },
-      dealer: {
-        cards: dealerCards,
-        is_soft: isHandSoft(dealerCards),
-      },
-    },
-  });
+  formattedData.data.player.cards = playerCards;
+  formattedData.data.dealer.cards = dealerCards;
+  res.status(200).json(formattedData);
 };
 
 exports.getGame = async (req, res, next) => {
@@ -148,6 +161,10 @@ exports.getGame = async (req, res, next) => {
         sequence: row.sequence,
       })),
     };
+    // Remove the face down card to not reveal
+    if (dealerDataFormatted.cards.length === 2) {
+      dealerDataFormatted.cards.pop();
+    }
     validateAceValue(dealerDataFormatted.cards);
     dealerDataFormatted.is_soft = isHandSoft(dealerDataFormatted.cards);
 
@@ -209,8 +226,7 @@ exports.hit = async (req, res, next) => {
       playerHandId,
       newSequence,
       client,
-      gameId,
-      21
+      gameId
     );
 
     playerHandFormatted.cards.push(newCard);
@@ -276,7 +292,7 @@ const dealerDrawFor17 = async (client, gameId) => {
   const dealerHandId = dealerHandData[0].hand_id;
 
   let newSequence = dealerHandData.length + 1;
-  let handValue = 0;
+
   let dealerHandFormatted = {
     cards: dealerHandData.map((row) => ({
       suit: row.suit,
@@ -286,6 +302,9 @@ const dealerDrawFor17 = async (client, gameId) => {
     })),
   };
 
+  let handValue = dealerHandFormatted.cards.reduce((value, card) => {
+    return value + card.value;
+  }, 0);
   while (handValue < 17) {
     const newCard = await pullCardFromDeck(
       dealerHandId,
@@ -422,6 +441,17 @@ const buildDeckQuery = (gameId, NUMBER_OF_DECKS) => {
   )};`;
 
   return [queryText, values];
+};
+
+const isBlackjack = (cards) => {
+  let totalValue = 0;
+
+  for (const card of cards) {
+    totalValue += card.value;
+  }
+
+  if (totalValue === 21) return true;
+  return false;
 };
 
 const endGame = async (gameId, client) => {
