@@ -132,7 +132,10 @@ const Header = () => {
       <AuthPopup
         isLogIn={showLogin}
         isVisible={showPopup}
-        close={() => setShowPopup(false)}
+        close={() => {
+          setShowPopup(false);
+          setShowLogin(null);
+        }}
       />
     </header>
   );

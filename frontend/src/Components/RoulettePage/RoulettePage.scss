@@ -5,135 +5,148 @@
   height: 100%;
   display: flex;
 
-  align-items: center;
   background-color: #1a2c38;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding-top: 20px;
   overflow: auto;
   padding-bottom: 24px;
 
-  .chip-selection {
-    display: flex;
-    gap: 12px;
-    padding: 12px;
-  }
-  .roulette-buttons {
-    display: grid;
-    grid-template-columns: repeat(14, 1fr);
-    grid-template-rows: repeat(5, 1fr);
-    gap: 3px;
-    width: 100%;
-    max-width: 850px;
+  .roulette-options {
+    .bet-amount-input-wrapper {
+      font-weight: bold;
+      color: white;
+    }
 
-    grid-template-rows: 1fr 1fr;
-
-    button {
-      border-radius: 6px;
+    .chip-selection {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 54px;
+      gap: 12px;
+      padding: 12px;
+    }
+  }
 
-      &:active .wrap {
-        transform: scale(0.96);
+  .game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    .roulette-buttons {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 3px;
+
+      grid-template-rows: 1fr 1fr;
+
+      button {
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 54px;
+        min-width: 54px;
+        &:active .wrap {
+          transform: scale(0.96);
+        }
       }
-    }
 
-    // Selects all red odd numbers
-    .odd.red:has(~ .odd-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
-    // Selects all black odd numbers
-    .odd.black:has(~ .odd-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all red odd numbers
+      .odd.red:has(~ .odd-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
+      // Selects all black odd numbers
+      .odd.black:has(~ .odd-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all red even numbers
-    .even.red:has(~ .even-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
-    // Selects all black even numbers
-    .even.black:has(~ .even-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all red even numbers
+      .even.red:has(~ .even-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
+      // Selects all black even numbers
+      .even.black:has(~ .even-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all 1to12 red numbers
-    .oneto12.red:has(~ .oneto12-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
-    // Selects all 1to12 black numbers
-    .oneto12.black:has(~ .oneto12-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all 1to12 red numbers
+      .oneto12.red:has(~ .oneto12-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
+      // Selects all 1to12 black numbers
+      .oneto12.black:has(~ .oneto12-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all 13to24 red numbers
-    .thirteento24.red:has(~ .thirteento24-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
+      // Selects all 13to24 red numbers
+      .thirteento24.red:has(~ .thirteento24-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
 
-    // Selects all 13to24 black numbers
-    .thirteento24.black:has(~ .thirteento24-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all 13to24 black numbers
+      .thirteento24.black:has(~ .thirteento24-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all 25to36 red numbers
-    .twentyfiveto36.red:has(~ .twentyfiveto36-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
+      // Selects all 25to36 red numbers
+      .twentyfiveto36.red:has(~ .twentyfiveto36-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
 
-    // Selects all 25to36 black numbers
-    .twentyfiveto36.black:has(~ .twentyfiveto36-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all 25to36 black numbers
+      .twentyfiveto36.black:has(~ .twentyfiveto36-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all 1to18 red numbers
-    .oneto18.red:has(~ .oneto18-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
+      // Selects all 1to18 red numbers
+      .oneto18.red:has(~ .oneto18-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
 
-    // Selects all 1to18 black numbers
-    .oneto18.black:has(~ .oneto18-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all 1to18 black numbers
+      .oneto18.black:has(~ .oneto18-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all 19to36 red numbers
-    .nineteento36.red:has(~ .nineteento36-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
+      // Selects all 19to36 red numbers
+      .nineteento36.red:has(~ .nineteento36-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
 
-    // Selects all 19to36 black numbers
-    .nineteento36.black:has(~ .nineteento36-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all 19to36 black numbers
+      .nineteento36.black:has(~ .nineteento36-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all top row black numbers
-    .top-row.black:has(~ .top-row-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all top row black numbers
+      .top-row.black:has(~ .top-row-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all top row red numbers
-    .top-row.red:has(~ .top-row-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
+      // Selects all top row red numbers
+      .top-row.red:has(~ .top-row-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
 
-    // Selects all middle row black numbers
-    .middle-row.black:has(~ .middle-row-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all middle row black numbers
+      .middle-row.black:has(~ .middle-row-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all middle row red numbers
-    .middle-row.red:has(~ .middle-row-button:hover) {
-      background-color: v.$roulette_light_red;
-    }
+      // Selects all middle row red numbers
+      .middle-row.red:has(~ .middle-row-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
 
-    // Selects all bottom row black numbers
-    .bottom-row.black:has(~ .bottom-row-button:hover) {
-      background-color: v.$roulette_light_black;
-    }
+      // Selects all bottom row black numbers
+      .bottom-row.black:has(~ .bottom-row-button:hover) {
+        background-color: v.$roulette_light_black;
+      }
 
-    // Selects all bottom row red numbers
-    .bottom-row.red:has(~ .bottom-row-button:hover) {
-      background-color: v.$roulette_light_red;
+      // Selects all bottom row red numbers
+      .bottom-row.red:has(~ .bottom-row-button:hover) {
+        background-color: v.$roulette_light_red;
+      }
     }
   }
 

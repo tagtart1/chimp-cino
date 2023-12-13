@@ -7,7 +7,7 @@ const secureRandomNumber = require("../utils/secureRandomNumber");
 
 exports.newGame = async (req, res, next) => {
   const NUMBER_OF_DECKS = 2;
-  const bet = req.body.betAmount;
+  const bet = parseFloat(req.body.betAmount);
   const userID = req.user.id;
   let dealerCards;
   let playerCards;
@@ -23,6 +23,7 @@ exports.newGame = async (req, res, next) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    console.log(bet);
     if (!bet) {
       throw new AppError("Could not place bet", 401, "INVALID_BET");
     }
@@ -45,8 +46,6 @@ exports.newGame = async (req, res, next) => {
     ).rows[0];
 
     if (game && !game.is_game_over) {
-      await client.query("COMMIT");
-
       throw new AppError("Game already in progress", 401, "INVALID_ACTION");
     } else if (game) {
       // Delete old game since it is over
@@ -55,7 +54,7 @@ exports.newGame = async (req, res, next) => {
 
     // Create a new blackjack game
     const { game_id, player_hand_id, dealer_hand_id } = (
-      await client.query(blackjackQueries.createNewBlackjackGame, [userID])
+      await client.query(blackjackQueries.createNewBlackjackGame, [userID, bet])
     ).rows[0];
 
     // Create a deck for the game
@@ -82,7 +81,8 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       2,
       client,
-      game_id
+      game_id,
+      6
     );
 
     const secondDealerCard = await pullCardFromDeck(
@@ -95,11 +95,32 @@ exports.newGame = async (req, res, next) => {
     dealerCards = [dealerCard, secondDealerCard];
     playerCards = [playerCard, secondPlayerCard];
 
-    // Player instantly loses
-    if (isBlackjack(dealerCards) && !isBlackjack(playerCards)) {
+    const isDealerBlackjack = isBlackjack(dealerCards);
+    const isPlayerBlackjack = isBlackjack(playerCards);
+
+    let gameWinner;
+
+    if (isDealerBlackjack && !isPlayerBlackjack) {
+      gameWinner = "dealer";
+    } else if (!isDealerBlackjack && isPlayerBlackjack) {
+      gameWinner = "player";
+      // Payout player 3:2
+      console.log("Player blackjack bet: ", bet);
+      const payout = bet + bet * 1.5;
+      console.log("Player blackjack payout: ", payout);
+      formattedData.data.payout = payout;
+      await client.query(casinoQueries.depositBalance, [payout, userID]);
+    } else if (isDealerBlackjack && isPlayerBlackjack) {
+      gameWinner = "push";
+      // Return bet to player
+      formattedData.data.payout = bet;
+      await client.query(casinoQueries.depositBalance, [bet, userID]);
+    }
+
+    if (gameWinner) {
       await client.query(blackjackQueries.setGameOver, [game_id]);
       formattedData.data.is_game_over = true;
-      formattedData.data.game_winner = "dealer";
+      formattedData.data.game_winner = gameWinner;
     }
 
     await client.query("COMMIT");
@@ -129,11 +150,13 @@ exports.newGame = async (req, res, next) => {
 
 exports.getGame = async (req, res, next) => {
   const userID = req.user.id;
+
   // Check for in-progress game
   const game = (await pool.query(blackjackQueries.findInProgressGame, [userID]))
     .rows[0];
 
   if (game) {
+    const bet = game.bet;
     const playerData = (
       await pool.query(blackjackQueries.getHandData, [game.id, true])
     ).rows;
@@ -173,6 +196,7 @@ exports.getGame = async (req, res, next) => {
         player: playerDataFormatted,
         dealer: dealerDataFormatted,
         is_game_over: game.is_game_over,
+        bet: bet,
       },
     };
 
@@ -189,6 +213,8 @@ exports.getGame = async (req, res, next) => {
 // HIT HIT HIT HIT
 exports.hit = async (req, res, next) => {
   const gameId = req.game.id;
+  const bet = parseFloat(req.game.bet);
+  const userID = req.user.id;
 
   if (req.game.is_game_over) {
     next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
@@ -250,7 +276,14 @@ exports.hit = async (req, res, next) => {
       // Determine winner
       if (dealerDrawResults.isBust || dealerDrawResults.handValue < 21) {
         formattedData.data.game_winner = "player";
+        // Payout user double
+        const payout = bet * 2;
+        formattedData.data.payout = payout;
+        await client.query(casinoQueries.depositBalance, [payout, userID]);
       } else if (dealerDrawResults.handValue === 21) {
+        // Return bet
+        formattedData.data.payout = bet;
+        await client.query(casinoQueries.depositBalance, [bet, userID]);
         formattedData.data.game_winner = "push";
       }
 
@@ -277,7 +310,85 @@ exports.hit = async (req, res, next) => {
   res.status(200).json(formattedData);
 };
 
-exports.stand = async (req, res, next) => {};
+exports.stand = async (req, res, next) => {
+  const gameId = req.game.id;
+  const bet = parseFloat(req.game.bet);
+  const userID = req.user.id;
+
+  if (req.game.is_game_over) {
+    next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
+    return;
+  }
+
+  let client;
+  let formattedData = {
+    data: {
+      dealer: null,
+      is_game_over: true,
+    },
+  };
+
+  try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    // Grab player hand
+    const playerHandData = (
+      await client.query(blackjackQueries.getHandData, [gameId, true])
+    ).rows;
+
+    let playerTotal = playerHandData.reduce(
+      (total, card) => total + card.value,
+      0
+    );
+
+    // Draw dealer cards
+    const dealerDrawResults = await dealerDrawFor17(client, gameId);
+
+    // Set game over in DB
+    await client.query(blackjackQueries.setGameOver, [gameId]);
+
+    // Check who wins
+    if (dealerDrawResults.isBust || dealerDrawResults.handValue < playerTotal) {
+      console.log("STAND, player wins and here is the total: ", playerTotal);
+      // Player wins
+      formattedData.data.game_winner = "player";
+
+      // Payout double
+      const payout = bet * 2;
+      formattedData.data.payout = payout;
+      await client.query(casinoQueries.depositBalance, [payout, userID]);
+    } else if (dealerDrawResults.handValue === playerTotal) {
+      formattedData.data.game_winner = "push";
+
+      // Return bet
+      formattedData.data.payout = bet;
+      await client.query(casinoQueries.depositBalance, [bet, userID]);
+    } else if (
+      !dealerDrawResults.isBust &&
+      dealerDrawResults.handValue > playerTotal
+    ) {
+      formattedData.data.game_winner = "dealer";
+    }
+
+    // Add dealer cards to returned data
+    formattedData.data.dealer = {
+      cards: dealerDrawResults.cards,
+      // is_soft may be deprecated soon
+      is_soft: isHandSoft(dealerDrawResults.cards),
+    };
+
+    await client.query("COMMIT");
+  } catch (err) {
+    console.log(err);
+    await client.query("ROLLBACK");
+    next(new AppError(err.message, 400, "INVALID_ACTION"));
+  } finally {
+    client.release();
+  }
+
+  res.status(200).json(formattedData);
+};
 
 // Keeps drawing untill the dealer total is at 17 or higher;
 const dealerDrawFor17 = async (client, gameId) => {
@@ -310,8 +421,7 @@ const dealerDrawFor17 = async (client, gameId) => {
       dealerHandId,
       newSequence,
       client,
-      gameId,
-      newSequence // === 3 ? 26 : null
+      gameId
     );
 
     dealerHandFormatted.cards.push(newCard);
@@ -390,6 +500,7 @@ const pullCardFromDeck = async (handId, sequence, client, gameId, rig) => {
   const deckCards = (
     await client.query(blackjackQueries.getActiveDeckCards, [gameId])
   ).rows;
+
   const randomCardNumber = secureRandomNumber(0, deckCards.length - 1);
 
   const hitCard = rig ? pullCard(deckCards, rig) : deckCards[randomCardNumber];

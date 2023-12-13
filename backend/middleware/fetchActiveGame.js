@@ -13,7 +13,7 @@ const fetchActiveGame = async (req, res, next) => {
     if (!game) {
       next(new AppError("Could not fetch game", 400, "INVALID_SESSION"));
     }
-
+    // Check if game is over then dont perform any actions
     req.game = game;
     next();
   } catch (err) {

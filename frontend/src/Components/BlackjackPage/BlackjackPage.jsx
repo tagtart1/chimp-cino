@@ -7,13 +7,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import BlackjackCardStack from "./BlackjackCardStack/BlackjackCardStack";
 import { useUser } from "../../Contexts/UserProvider";
 
+// TODO: MODULARIZE THIS COMPONENT TOO MUCH STUFF HERE
+
 const BlackjackPage = () => {
   const blackjackStartEndpoint = "http://localhost:5000/api/v1/blackjack/games";
   const blackjackInProgressEndpoint =
     "http://localhost:5000/api/v1/blackjack/games/in-progress";
   const gameScreenRef = useRef(null);
   const betAmountInput = useRef(null);
-  const { user } = useUser();
+  const { user, setUser } = useUser();
 
   const [playerCards, setPlayerCards] = useState([]);
   const [dealerCards, setDealerCards] = useState([]);
@@ -25,7 +27,9 @@ const BlackjackPage = () => {
   const [gameWinner, setGameWinner] = useState();
 
   const thresholdWidth = 875;
+  // Use this to delay actions for animation to run smooth
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   // Due to behavior with number input elements, we cannot use state
   // and assign a value directly to the value attr on input in the JSX return
   const doubleBet = () => {
@@ -73,11 +77,19 @@ const BlackjackPage = () => {
       setGameWinner("");
       setDealerCards([]);
       setPlayerCards([]);
+
       await delay(1000);
     }
+    // Change UI balance
+    setUser((prev) => {
+      const newCosmeticBal = { ...prev };
+
+      newCosmeticBal.balance -= betAmountInput.current.value;
+      return newCosmeticBal;
+    });
     // TRICKLE THE STATE
     // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
-    dealInitialCards(gameData.data);
+    dealInitialCards(gameData);
   };
 
   useEffect(() => {
@@ -164,10 +176,10 @@ const BlackjackPage = () => {
           setDealerCards(results.data.dealer.cards);
 
           // Grab total value
-          console.log("Player Soft: ", results.data.player.is_soft);
-          console.log("Dealer Soft: ", results.data.dealer.is_soft);
+
           setDealerValue(getCardValueFromArray(results.data.dealer.cards));
           setPlayerValue(getCardValueFromArray(results.data.player.cards));
+          betAmountInput.current.value = results.data.bet;
         } else {
           console.log("No game found");
         }
@@ -225,11 +237,21 @@ const BlackjackPage = () => {
   };
 
   // The delay matches the animation speed it takes to get in position
-  const dealInitialCards = async (handData) => {
-    const dealerCards = handData.dealer.cards;
-    const playerCards = handData.player.cards;
-    const dealerSoft = handData.dealer.is_soft;
-    const playerSoft = handData.player.is_soft;
+  const dealInitialCards = async (gameData) => {
+    const dealerCards = gameData.data.dealer.cards;
+    const playerCards = gameData.data.player.cards;
+
+    playerCards.forEach((card) => {
+      if (card.value === 1) {
+        card.value = 11;
+      }
+    });
+
+    dealerCards.forEach((card) => {
+      if (card.value === 1) {
+        card.value = 11;
+      }
+    });
 
     setPlayerCards((currentCards) => [...currentCards, playerCards[0]]);
 
@@ -246,6 +268,32 @@ const BlackjackPage = () => {
       { isStatic: false, isBlank: true },
     ]);
     setPlayerValue(getCardValueFromArray([playerCards[0], playerCards[1]]));
+
+    if (gameData.data.is_game_over) {
+      let dealerValue;
+
+      setDealerCards((currentCards) => {
+        let newCards = [...currentCards];
+        newCards[1] = dealerCards[1];
+
+        currentCards[1] = dealerCards[1];
+
+        dealerValue = getCardValueFromArray(newCards);
+        return newCards;
+      });
+      await delay(520);
+      setDealerValue(dealerValue);
+      await delay(520);
+      setGameOver(true);
+      setGameWinner(gameData.data.game_winner);
+      // BUG: FIX PUSH VALUE UPDATES
+      setUser((prev) => {
+        const user = { ...prev };
+        console.log(gameData.data.payout);
+        user.balance += gameData.data.payout;
+        return user;
+      });
+    }
   };
 
   const handleActionResults = async (results, isHit) => {
@@ -273,8 +321,18 @@ const BlackjackPage = () => {
     }
 
     if (results.is_game_over) {
+      await delay(520);
       setGameOver(true);
       setGameWinner(results.game_winner);
+
+      if (!results.payout) return;
+      setUser((prev) => {
+        const user = { ...prev };
+
+        user.balance += results.payout;
+
+        return user;
+      });
     }
   };
 
@@ -438,8 +496,9 @@ const BlackjackPage = () => {
                         ? "#E9113C"
                         : gameWinner === "push"
                         ? "#FF9D00"
-                        : "",
-                    color: gameOver && gameWinner !== "dealer" ? "black" : "",
+                        : "#2F4553",
+                    color:
+                      gameOver && gameWinner !== "dealer" ? "#000" : "#FFF",
                     transition: { duration: 0.2 },
                   }}
                 >
