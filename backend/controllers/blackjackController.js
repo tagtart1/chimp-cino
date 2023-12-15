@@ -81,8 +81,7 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       2,
       client,
-      game_id,
-      6
+      game_id
     );
 
     const secondDealerCard = await pullCardFromDeck(
@@ -336,7 +335,7 @@ exports.stand = async (req, res, next) => {
     const playerHandData = (
       await client.query(blackjackQueries.getHandData, [gameId, true])
     ).rows;
-
+    validateAceValue(playerHandData, false);
     let playerTotal = playerHandData.reduce(
       (total, card) => total + card.value,
       0
@@ -368,6 +367,7 @@ exports.stand = async (req, res, next) => {
       !dealerDrawResults.isBust &&
       dealerDrawResults.handValue > playerTotal
     ) {
+      console.log("PLAYER LOST WITH VALUE: ", playerTotal);
       formattedData.data.game_winner = "dealer";
     }
 

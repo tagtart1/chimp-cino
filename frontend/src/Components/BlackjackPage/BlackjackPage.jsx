@@ -68,6 +68,13 @@ const BlackjackPage = () => {
       return;
     }
     const gameData = await res.json();
+    // Change UI balance
+    setUser((prev) => {
+      const newCosmeticBal = { ...prev };
+
+      newCosmeticBal.balance -= betAmountInput.current.value;
+      return newCosmeticBal;
+    });
     if (gameOver) {
       setDealerValue(0);
       setPlayerValue(0);
@@ -80,13 +87,7 @@ const BlackjackPage = () => {
 
       await delay(1000);
     }
-    // Change UI balance
-    setUser((prev) => {
-      const newCosmeticBal = { ...prev };
 
-      newCosmeticBal.balance -= betAmountInput.current.value;
-      return newCosmeticBal;
-    });
     // TRICKLE THE STATE
     // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
     dealInitialCards(gameData);
