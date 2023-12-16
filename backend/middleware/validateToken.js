@@ -1,8 +1,9 @@
 const AppError = require("../utils/appError");
 const jwt = require("jsonwebtoken");
+const fetchJwtSecret = require("../utils/fetchJwtSecret");
 
 // Verified and grabs user payload from JWT
-const validateToken = (req, res, next) => {
+const validateToken = async (req, res, next) => {
   const token = req.cookies.token;
 
   if (!token) {
@@ -12,8 +13,8 @@ const validateToken = (req, res, next) => {
       "SESSION_INVALID"
     );
   }
-
-  jwt.verify(token, process.env.SECRETKEY, (err, data) => {
+  const key = await fetchJwtSecret();
+  jwt.verify(token, key, (err, data) => {
     if (err)
       throw new AppError(
         "Session timed out. Please sign up or log in",

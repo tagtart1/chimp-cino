@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const fetchJwtSecret = require("../utils/fetchJwtSecret");
 
-const sendTokenResponse = (req, res, next) => {
+const sendTokenResponse = async (req, res, next) => {
   // Sign everything but password and balance
 
   const jwtUser = {
@@ -11,25 +12,20 @@ const sendTokenResponse = (req, res, next) => {
   };
   const returnedUser = jwtUser;
   returnedUser.balance = req.user.balance;
+  const key = await fetchJwtSecret();
+  jwt.sign({ user: jwtUser }, key, { expiresIn: "3h" }, (err, token) => {
+    if (err) return next(err);
 
-  jwt.sign(
-    { user: jwtUser },
-    process.env.SECRETKEY,
-    { expiresIn: "3h" },
-    (err, token) => {
-      if (err) return next(err);
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 10800000,
+      path: "/",
+    });
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        maxAge: 10800000,
-        path: "/",
-      });
-
-      res.json({
-        data: returnedUser,
-      });
-    }
-  );
+    res.json({
+      data: returnedUser,
+    });
+  });
 };
 
 module.exports = sendTokenResponse;

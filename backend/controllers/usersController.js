@@ -6,6 +6,7 @@ const AppError = require("../utils/appError");
 const pool = require("../db");
 const userQueries = require("../queries/userQueries");
 const casinoQueries = require("../queries/casinoQueries");
+const fetchJwtSecret = require("../utils/fetchJwtSecret");
 
 exports.logIn = asyncHandler(async (req, res, next) => {
   console.log(req.body);
@@ -124,8 +125,9 @@ exports.logOut = (req, res) => {
 
 exports.validateUser = asyncHandler(async (req, res, next) => {
   const token = req.cookies.token;
+  const key = await fetchJwtSecret();
 
-  jwt.verify(token, process.env.SECRETKEY, async (err, userData) => {
+  jwt.verify(token, key, async (err, userData) => {
     if (err) {
       next(
         new AppError("User timed out, please log back in", 401, "TIMED_OUT")
