@@ -84,6 +84,7 @@ exports.signUp = [
     const pool = getPool();
     const errors = validationResult(req);
     console.log(pool);
+
     if (!errors.isEmpty()) {
       const formattedErrors = errors.array().map((err) => err.msg);
       throw new AppError(formattedErrors[0], 400, "VALIDATION_ERROR");

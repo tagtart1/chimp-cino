@@ -25,7 +25,7 @@ async function initializePool() {
     const sslCert = fs.readFileSync(
       path.join("/home/ubuntu", "chimps-global-bundle.pem")
     );
-
+    console.log(secret);
     pool = new Pool({
       user: secret.username,
       host: secret.host,
