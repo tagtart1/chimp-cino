@@ -1,8 +1,8 @@
 // secretManager.js
-import {
+const {
   SecretsManagerClient,
   GetSecretValueCommand,
-} from "@aws-sdk/client-secrets-manager";
+} = require("@aws-sdk/client-secrets-manager");
 
 const client = new SecretsManagerClient({ region: "us-east-1" });
 

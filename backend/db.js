@@ -5,10 +5,10 @@ const AppError = require("./utils/appError");
 const fs = require("fs");
 const path = require("path");
 
-import {
+const {
   SecretsManagerClient,
   GetSecretValueCommand,
-} from "@aws-sdk/client-secrets-manager";
+} = require("@aws-sdk/client-secrets-manager");
 
 const secret_name = "prod/chimps/postgres";
 
