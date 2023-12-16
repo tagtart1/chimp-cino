@@ -1,7 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const secureRandomNumber = require("../utils/secureRandomNumber");
 const AppError = require("../utils/appError");
-const pool = require("../db");
+const { getPool } = require("../db");
 const casinoQueries = require("../queries/casinoQueries");
 
 exports.playGame = asyncHandler(async (req, res, next) => {
@@ -9,7 +9,7 @@ exports.playGame = asyncHandler(async (req, res, next) => {
   const betMap = req.body.betMap;
   const userID = req.user.id;
   let winningNumber;
-
+  const pool = getPool();
   // START ACID
   const client = await pool.connect();
   try {

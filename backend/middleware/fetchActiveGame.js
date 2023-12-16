@@ -1,8 +1,9 @@
 const AppError = require("../utils/appError");
-const pool = require("../db");
+const { getPool } = require("../db");
 const blackjackQueries = require("../queries/blackjackQueries");
 
 const fetchActiveGame = async (req, res, next) => {
+  const pool = getPool();
   const userID = req.user.id;
 
   try {

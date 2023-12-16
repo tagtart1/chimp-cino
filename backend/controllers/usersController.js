@@ -3,13 +3,14 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const AppError = require("../utils/appError");
-const pool = require("../db");
+const { getPool } = require("../db");
 const userQueries = require("../queries/userQueries");
 const casinoQueries = require("../queries/casinoQueries");
 const fetchJwtSecret = require("../utils/fetchJwtSecret");
 
 exports.logIn = asyncHandler(async (req, res, next) => {
-  console.log(req.body);
+  const pool = getPool();
+
   const inputEmailOrUsername = req.body.emailOrUsername;
   const inputPassword = req.body.password;
 
@@ -76,6 +77,7 @@ exports.signUp = [
       "Password should have at least one uppercase letter, one number, and one special character"
     ),
   asyncHandler(async (req, res, next) => {
+    const pool = getPool();
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -91,7 +93,6 @@ exports.signUp = [
 
     // Seperate errors later
     if (usernameOrEmailExists.rows[0].count !== "0") {
-      console.log(usernameOrEmailExists);
       throw new AppError("Username or email taken", 400, "VALIDATION_ERROR");
     }
 
@@ -126,7 +127,7 @@ exports.logOut = (req, res) => {
 exports.validateUser = asyncHandler(async (req, res, next) => {
   const token = req.cookies.token;
   const key = await fetchJwtSecret();
-
+  const pool = getPool();
   jwt.verify(token, key, async (err, userData) => {
     if (err) {
       next(

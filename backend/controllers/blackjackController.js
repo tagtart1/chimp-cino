@@ -1,11 +1,12 @@
 const AppError = require("../utils/appError");
 const asyncHandler = require("express-async-handler");
-const pool = require("../db");
+const { getPool } = require("../db");
 const casinoQueries = require("../queries/casinoQueries");
 const blackjackQueries = require("../queries/blackjackQueries");
 const secureRandomNumber = require("../utils/secureRandomNumber");
 
 exports.newGame = async (req, res, next) => {
+  const pool = getPool();
   const NUMBER_OF_DECKS = 2;
   const bet = parseFloat(req.body.betAmount);
   const userID = req.user.id;
@@ -149,7 +150,7 @@ exports.newGame = async (req, res, next) => {
 
 exports.getGame = async (req, res, next) => {
   const userID = req.user.id;
-
+  const pool = getPool();
   // Check for in-progress game
   const game = (await pool.query(blackjackQueries.findInProgressGame, [userID]))
     .rows[0];
@@ -211,6 +212,7 @@ exports.getGame = async (req, res, next) => {
 // We need to send handID from the frontend for splitting
 // HIT HIT HIT HIT
 exports.hit = async (req, res, next) => {
+  const pool = getPool();
   const gameId = req.game.id;
   const bet = parseFloat(req.game.bet);
   const userID = req.user.id;
@@ -310,6 +312,7 @@ exports.hit = async (req, res, next) => {
 };
 
 exports.stand = async (req, res, next) => {
+  const pool = getPool();
   const gameId = req.game.id;
   const bet = parseFloat(req.game.bet);
   const userID = req.user.id;
