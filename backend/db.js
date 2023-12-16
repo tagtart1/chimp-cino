@@ -22,20 +22,20 @@ async function initializePool() {
     );
 
     const secret = JSON.parse(response.SecretString);
-    // const sslCert = fs.readFileSync(
-    // path.join("/home/ubuntu", "chimps-global-bundle.pem")
-    //);
+    const sslCert = fs.readFileSync(
+      path.join("/home/ubuntu", "chimps-global-bundle.pem")
+    );
 
     pool = new Pool({
       user: secret.username,
       host: secret.host,
-      database: secret.dbInstanceIdentifier,
+      database: secret.dbname,
       password: secret.password,
       port: secret.port,
-      //ssl: {
-      //  rejectUnauthorized: true,
-      // ca: sslCert,
-      // },
+      ssl: {
+        rejectUnauthorized: true,
+        ca: sslCert,
+      },
     });
   } catch (error) {
     console.log(error);
