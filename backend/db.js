@@ -29,7 +29,7 @@ async function initializePool() {
     pool = new Pool({
       user: secret.username,
       host: secret.host,
-      database: secret.dbname,
+      database: secret.dbInstanceIdentifier,
       password: secret.password,
       port: secret.port,
       //ssl: {

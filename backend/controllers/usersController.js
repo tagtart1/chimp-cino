@@ -83,7 +83,7 @@ exports.signUp = [
   asyncHandler(async (req, res, next) => {
     const pool = getPool();
     const errors = validationResult(req);
-    console.log(pool);
+    // console.log(pool);
 
     if (!errors.isEmpty()) {
       const formattedErrors = errors.array().map((err) => err.msg);
