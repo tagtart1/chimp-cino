@@ -21,4 +21,4 @@ async function fetchJwtSecret() {
   }
 }
 
-export default fetchJwtSecret;
+module.exports = fetchJwtSecret;
