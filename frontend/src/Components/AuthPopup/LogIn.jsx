@@ -5,7 +5,7 @@ import { useUser } from "../../Contexts/UserProvider";
 const LogIn = ({ close, toggleSelf }) => {
   const { setUser } = useUser();
   const [showPassword, setShowPassword] = useState(false);
-  const logInEndpoint = "http://localhost:5000/api/v1/users/log-in";
+  const logInEndpoint = "https://api.chimpcino.com/api/v1/users/log-in";
 
   const passwordInputRef = useRef(null);
 

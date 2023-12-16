@@ -2,8 +2,9 @@ import React from "react";
 import "./BlackjackActions.scss";
 
 const BlackjackActions = ({ handleAction }) => {
-  const hitEndpoint = "http://localhost:5000/api/v1/blackjack/games/hit";
-  const standEndpoint = "http://localhost:5000/api/v1/blackjack/games/stand";
+  const hitEndpoint = "https://api.chimpcino.com/api/v1/blackjack/games/hit";
+  const standEndpoint =
+    "https://api.chimpcino.com/api/v1/blackjack/games/stand";
 
   const hitNewCard = async () => {
     const response = await fetch(hitEndpoint, {

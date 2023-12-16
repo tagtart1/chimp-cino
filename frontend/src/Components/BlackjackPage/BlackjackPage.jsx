@@ -10,9 +10,10 @@ import { useUser } from "../../Contexts/UserProvider";
 // TODO: MODULARIZE THIS COMPONENT TOO MUCH STUFF HERE
 
 const BlackjackPage = () => {
-  const blackjackStartEndpoint = "http://localhost:5000/api/v1/blackjack/games";
+  const blackjackStartEndpoint =
+    "https://api.chimpcino.com/api/v1/blackjack/games";
   const blackjackInProgressEndpoint =
-    "http://localhost:5000/api/v1/blackjack/games/in-progress";
+    "https://api.chimpcino.com/api/v1/blackjack/games/in-progress";
   const gameScreenRef = useRef(null);
   const betAmountInput = useRef(null);
   const { user, setUser } = useUser();

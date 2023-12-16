@@ -11,7 +11,7 @@ const Header = () => {
   const [showLogin, setShowLogin] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-  const logoutEndpoint = "http://localhost:5000/api/v1/users/log-out";
+  const logoutEndpoint = "https://api.chimpcino.com/api/v1/users/log-out";
 
   const logOut = async () => {
     try {

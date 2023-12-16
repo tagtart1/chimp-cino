@@ -19,7 +19,7 @@ function App() {
       setLoadingUser(true);
       try {
         const response = await fetch(
-          "http://localhost:5000/api/v1/users/validate-user",
+          "https://api.chimpcino.com/api/v1/users/validate-user",
           {
             credentials: "include",
           }

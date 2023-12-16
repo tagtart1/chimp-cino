@@ -6,7 +6,7 @@ import Wheel from "../Wheel/Wheel";
 import { useUser } from "../../Contexts/UserProvider";
 
 const RoulettePage = () => {
-  const rouletteEndpooint = "http://localhost:5000/api/v1/roulette";
+  const rouletteEndpooint = "https://api.chimpcino.com/api/v1/roulette";
   const { setUser, user } = useUser();
   const [chipType, setChipType] = useState({
     value: 1,
