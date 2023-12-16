@@ -45,7 +45,7 @@ async function initializePool() {
 
 function getPool() {
   if (!pool) {
-    throw new Error("Database pool has not been initialized.");
+    throw new AppError("Server Erroor", 500, "SERVER_ERROR");
   }
   return pool;
 }

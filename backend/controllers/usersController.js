@@ -25,33 +25,37 @@ exports.logIn = asyncHandler(async (req, res, next) => {
 
   // Find user
 
-  const user = (
-    await pool.query(userQueries.getUserByUsernameOrEmail, [
-      inputEmailOrUsername,
-    ])
-  ).rows[0];
+  try {
+    const user = (
+      await pool.query(userQueries.getUserByUsernameOrEmail, [
+        inputEmailOrUsername,
+      ])
+    ).rows[0];
 
-  if (!user) {
-    throw new AppError(
-      "The username or password provided is incorrect",
-      401,
-      "INVALID_CREDENTIALS"
-    );
+    if (!user) {
+      throw new AppError(
+        "The username or password provided is incorrect",
+        401,
+        "INVALID_CREDENTIALS"
+      );
+    }
+
+    // Authenticate password
+    const result = await bcrypt.compare(inputPassword, user.password);
+    if (!result) {
+      console.log("failed compare");
+      throw new AppError(
+        "The username or password provided is incorrect",
+        401,
+        "INVALID_CREDENTIALS"
+      );
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  // Authenticate password
-  const result = await bcrypt.compare(inputPassword, user.password);
-  if (!result) {
-    console.log("failed compare");
-    throw new AppError(
-      "The username or password provided is incorrect",
-      401,
-      "INVALID_CREDENTIALS"
-    );
-  }
-
-  req.user = user;
-  next();
 });
 
 exports.signUp = [
@@ -84,38 +88,41 @@ exports.signUp = [
       const formattedErrors = errors.array().map((err) => err.msg);
       throw new AppError(formattedErrors[0], 400, "VALIDATION_ERROR");
     }
+    try {
+      // Check if user already exists
+      const usernameOrEmailExists = await pool.query(
+        userQueries.checkIfUserExists,
+        [req.body.username, req.body.email]
+      );
 
-    // Check if user already exists
-    const usernameOrEmailExists = await pool.query(
-      userQueries.checkIfUserExists,
-      [req.body.username, req.body.email]
-    );
+      // Seperate errors later
+      if (usernameOrEmailExists.rows[0].count !== "0") {
+        throw new AppError("Username or email taken", 400, "VALIDATION_ERROR");
+      }
 
-    // Seperate errors later
-    if (usernameOrEmailExists.rows[0].count !== "0") {
-      throw new AppError("Username or email taken", 400, "VALIDATION_ERROR");
+      // Hash password
+      const hashedPassword = await bcrypt.hash(req.body.password, 12);
+
+      const newUser = (
+        await pool.query(userQueries.addNewUser, [
+          req.body.username,
+          req.body.email.toLowerCase(),
+          hashedPassword,
+          10000.0,
+        ])
+      ).rows[0];
+
+      if (!newUser) {
+        throw new AppError("Failed to sign up", 500, "SERVER_ERROR");
+      }
+
+      // Add user to req
+      req.user = newUser;
+      // Send token res in next
+      next();
+    } catch (error) {
+      next(error);
     }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(req.body.password, 12);
-
-    const newUser = (
-      await pool.query(userQueries.addNewUser, [
-        req.body.username,
-        req.body.email.toLowerCase(),
-        hashedPassword,
-        10000.0,
-      ])
-    ).rows[0];
-
-    if (!newUser) {
-      throw new AppError("Failed to sign up", 500, "SERVER_ERROR");
-    }
-
-    // Add user to req
-    req.user = newUser;
-    // Send token res in next
-    next();
   }),
 ];
 
