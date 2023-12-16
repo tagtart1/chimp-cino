@@ -4,7 +4,7 @@ const {
   GetSecretValueCommand,
 } = require("@aws-sdk/client-secrets-manager");
 
-const client = new SecretsManagerClient({ region: "us-east-1" });
+const client = new SecretsManagerClient({ region: "us-east-2" });
 
 async function fetchJwtSecret() {
   const secret_name = "prod/chimps/jwt";
