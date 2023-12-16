@@ -7,8 +7,8 @@ const {
   GetSecretValueCommand,
 } = require("@aws-sdk/client-secrets-manager");
 
-const secret_name = "prod/chimps/postgres";
-const client = new SecretsManagerClient({ region: "us-east-1" });
+const secret_name = "prod/chimpcino/postgres";
+const client = new SecretsManagerClient({ region: "us-east-2" });
 let pool;
 
 async function initializePool() {
