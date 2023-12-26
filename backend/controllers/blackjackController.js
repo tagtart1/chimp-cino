@@ -148,10 +148,13 @@ exports.newGame = async (req, res, next) => {
   res.status(200).json(formattedData);
 };
 
+// BUG: FIX HANGING WHEN FETCHING INPROGRESS
+
 exports.getGame = async (req, res, next) => {
   const userID = req.user.id;
   const pool = getPool();
   // Check for in-progress game
+
   const game = (await pool.query(blackjackQueries.findInProgressGame, [userID]))
     .rows[0];
 

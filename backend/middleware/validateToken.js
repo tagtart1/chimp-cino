@@ -5,7 +5,7 @@ const fetchJwtSecret = require("../utils/fetchJwtSecret");
 // Verified and grabs user payload from JWT
 const validateToken = async (req, res, next) => {
   const token = req.cookies.token;
-
+  // maybe bug: need to see if this is actually returning an error
   if (!token) {
     throw new AppError(
       "Session timed out. Please sign up or log in",
