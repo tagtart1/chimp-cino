@@ -297,7 +297,17 @@ const BlackjackPage = () => {
     }
   };
 
-  const handleActionResults = async (results, isHit) => {
+  const handleActionResults = async (results, isHit, isDoubled) => {
+    if (isDoubled) {
+      setUser((prev) => {
+        const user = { ...prev };
+
+        user.balance -= betAmountInput.current.value;
+
+        return user;
+      });
+    }
+
     if (isHit) {
       const card = results.player.cards[results.player.cards.length - 1];
       await dealNewCard(

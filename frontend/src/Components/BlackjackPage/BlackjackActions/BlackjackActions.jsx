@@ -4,6 +4,7 @@ import "./BlackjackActions.scss";
 const BlackjackActions = ({ handleAction }) => {
   const hitEndpoint = "http://localhost:5000/api/v1/blackjack/games/hit";
   const standEndpoint = "http://localhost:5000/api/v1/blackjack/games/stand";
+  const doubleEndpoint = "http://localhost:5000/api/v1/blackjack/games/double";
 
   const hitNewCard = async () => {
     const response = await fetch(hitEndpoint, {
@@ -59,12 +60,44 @@ const BlackjackActions = ({ handleAction }) => {
 
     handleAction(actionResults.data, false);
   };
+
+  const doubleDown = async () => {
+    const response = await fetch(doubleEndpoint, {
+      credentials: "include",
+      method: "PATCH",
+    });
+
+    if (!response.ok) {
+      const errors = await response.json();
+      console.log("error", errors);
+      return;
+    }
+
+    const actionResults = await response.json();
+
+    actionResults.data.player.cards.forEach((card) => {
+      if (card.value === 1) {
+        card.value = 11;
+      }
+    });
+
+    if (actionResults.data.dealer) {
+      actionResults.data.dealer.cards.forEach((element) => {
+        if (element.value === 1) {
+          element.value = 11;
+        }
+      });
+    }
+
+    handleAction(actionResults.data, true, true);
+  };
+
   return (
     <div className="blackjack-actions">
       <button onClick={hitNewCard}>Hit</button>
       <button onClick={standHand}>Stand</button>
       <button>Split</button>
-      <button>Double</button>
+      <button onClick={doubleDown}>Double</button>
     </div>
   );
 };

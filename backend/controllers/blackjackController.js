@@ -257,10 +257,6 @@ exports.hit = async (req, res, next) => {
     playerHandFormatted.cards.push(newCard);
     validateAceValue(playerHandFormatted.cards);
 
-    // TO DO: Check for 21 or bust here
-    // If we get 21 off a hit we do the same action as a "stand"
-    // If we get over 21 we bust and set game is over
-    //
     const isPlayerBust = checkForBust(playerHandFormatted.cards);
     if (isPlayerBust) {
       await client.query(blackjackQueries.setGameOver, [gameId]);
@@ -383,6 +379,143 @@ exports.stand = async (req, res, next) => {
     console.log(err);
     await client.query("ROLLBACK");
     next(new AppError(err.message, 400, "INVALID_ACTION"));
+  } finally {
+    client.release();
+  }
+
+  res.status(200).json(formattedData);
+};
+
+// A Double doubles the bet, hits for 1 card and then stands
+
+exports.double = async (req, res, next) => {
+  // Hit once
+  const gameId = req.game.id;
+  const initBet = parseFloat(req.game.bet);
+  const totalBet = initBet * 2;
+  const userID = req.user.id;
+
+  if (req.game.is_game_over) {
+    return next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
+  }
+
+  let client;
+  let formattedData = {
+    data: {
+      player: null,
+      dealer: null,
+      is_game_over: true,
+    },
+  };
+
+  try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    // Withdraw bet from user's balance again
+    const withdrawBet = await client.query(casinoQueries.withdrawBalance, [
+      initBet,
+      userID,
+    ]);
+
+    if (withdrawBet.rowCount === 0) {
+      throw new AppError(
+        "Could not place bet: Insufficient funds",
+        401,
+        "INVALID_BET"
+      );
+    }
+    // End the game
+    await client.query(blackjackQueries.setGameOver, [gameId]);
+
+    // Grab player hand
+    const playerHandData = (
+      await client.query(blackjackQueries.getHandData, [gameId, true])
+    ).rows;
+
+    const playerHandId = playerHandData[0].hand_id;
+    const newSequence = playerHandData.length + 1;
+
+    // Format previous cards
+    const playerHandFormatted = {
+      cards: playerHandData.map((row) => ({
+        suit: row.suit,
+        rank: row.rank,
+        value: row.value,
+
+        sequence: row.sequence,
+      })),
+    };
+
+    // Hit for card
+    const newCard = await pullCardFromDeck(
+      playerHandId,
+      newSequence,
+      client,
+      gameId
+    );
+
+    playerHandFormatted.cards.push(newCard);
+    validateAceValue(playerHandFormatted.cards);
+
+    const isPlayerBust = checkForBust(playerHandFormatted.cards);
+
+    if (isPlayerBust) {
+      formattedData.data.game_winner = "dealer";
+    } else {
+      // We stand now, so pull for dealer
+      // Handle payout as well here if we win
+
+      // Draw dealer cards
+      const dealerDrawResults = await dealerDrawFor17(client, gameId);
+      // Get player total
+      let playerTotal = playerHandFormatted.cards.reduce(
+        (total, card) => total + card.value,
+        0
+      );
+      // Check who wins
+      if (
+        dealerDrawResults.isBust ||
+        dealerDrawResults.handValue < playerTotal
+      ) {
+        // Player wins
+        formattedData.data.game_winner = "player";
+
+        // Payout doubled double
+        const payout = totalBet * 2;
+        formattedData.data.payout = payout;
+        await client.query(casinoQueries.depositBalance, [payout, userID]);
+      } else if (dealerDrawResults.handValue === playerTotal) {
+        // Push, no one wins
+        formattedData.data.game_winner = "push";
+
+        // Return bet
+        formattedData.data.payout = totalBet;
+        await client.query(casinoQueries.depositBalance, [totalBet, userID]);
+      } else if (
+        !dealerDrawResults.isBust &&
+        dealerDrawResults.handValue > playerTotal
+      ) {
+        formattedData.data.game_winner = "dealer";
+      }
+
+      // Add dealer cards to the formatted data
+      formattedData.data.dealer = {
+        cards: dealerDrawResults.cards,
+      };
+    }
+
+    formattedData.data.player = playerHandFormatted;
+    console.log(formattedData);
+    await client.query("COMMIT");
+  } catch (err) {
+    console.log(err);
+    await client.query("ROLLBACK");
+    if (err.isOperational) {
+      return next(err);
+    } else {
+      return next(new AppError("Internal Server Error.", 400, "SERVER_ERROR"));
+    }
   } finally {
     client.release();
   }

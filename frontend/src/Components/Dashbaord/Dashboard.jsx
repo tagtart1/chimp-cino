@@ -8,7 +8,6 @@ const Dashboard = () => {
     <main>
       <button onClick={() => navigate("/roulette")}>Go to Roulette</button>
       <button onClick={() => navigate("/blackjack")}>Go to Blackjack</button>
-      <button>Test Button</button>
     </main>
   );
 };
