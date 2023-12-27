@@ -447,6 +447,11 @@ exports.double = async (req, res, next) => {
       })),
     };
 
+    // Check for 3 or more card
+    if (playerHandData.length >= 3) {
+      throw new AppError("Cannot double after hitting!", 401, "INVALID_ACTION");
+    }
+
     // Hit for card
     const newCard = await pullCardFromDeck(
       playerHandId,

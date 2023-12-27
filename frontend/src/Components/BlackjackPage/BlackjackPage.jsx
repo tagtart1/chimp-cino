@@ -287,13 +287,15 @@ const BlackjackPage = () => {
       await delay(520);
       setGameOver(true);
       setGameWinner(gameData.data.game_winner);
-      // BUG: FIX PUSH VALUE UPDATES
-      setUser((prev) => {
-        const user = { ...prev };
-        console.log(gameData.data.payout);
-        user.balance += gameData.data.payout;
-        return user;
-      });
+
+      if (gameData.data.game_winner === "push") {
+        setUser((prev) => {
+          const user = { ...prev };
+          console.log(gameData.data.payout);
+          user.balance += gameData.data.payout;
+          return user;
+        });
+      }
     }
   };
 
