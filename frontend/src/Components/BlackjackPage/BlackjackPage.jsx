@@ -340,8 +340,9 @@ const BlackjackPage = () => {
 
       if (!results.payout) return;
       setUser((prev) => {
+        // BUG: Balance does NOT update when we refresh and then stand and win.
         const user = { ...prev };
-
+        console.log(results.payout);
         user.balance += results.payout;
 
         return user;
