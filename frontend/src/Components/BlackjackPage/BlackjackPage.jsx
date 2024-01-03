@@ -288,7 +288,10 @@ const BlackjackPage = () => {
       setGameOver(true);
       setGameWinner(gameData.data.game_winner);
 
-      if (gameData.data.game_winner === "push") {
+      if (
+        gameData.data.game_winner === "push" ||
+        gameData.data.game_winner === "player"
+      ) {
         setUser((prev) => {
           const user = { ...prev };
           console.log(gameData.data.payout);

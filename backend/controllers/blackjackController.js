@@ -85,7 +85,8 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       1,
       client,
-      game_id
+      game_id,
+      26
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -99,7 +100,8 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       2,
       client,
-      game_id
+      game_id,
+      9
     );
 
     const secondDealerCard = await pullCardFromDeck(
