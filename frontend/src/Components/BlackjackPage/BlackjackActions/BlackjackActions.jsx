@@ -74,7 +74,7 @@ const BlackjackActions = ({ handleAction }) => {
     }
 
     const actionResults = await response.json();
-
+    console.log("DOUBLE results", actionResults);
     actionResults.data.player.cards.forEach((card) => {
       if (card.value === 1) {
         card.value = 11;

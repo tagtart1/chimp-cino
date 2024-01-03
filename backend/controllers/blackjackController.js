@@ -19,6 +19,7 @@ const split = require("./blackjackOperations/split");
 const hit = require("./blackjackOperations/hit");
 const stand = require("./blackjackOperations/stand");
 const payoutPlayer = require("../utils/payoutPlayer");
+const double = require("./blackjackOperations/double");
 
 exports.split = split;
 
@@ -324,7 +325,6 @@ exports.stand = async (req, res, next) => {
 };
 
 // A Double doubles the bet, hits for 1 card and then stands
-
 exports.double = async (req, res, next) => {
   // Hit once
   const gameId = req.game.id;
@@ -337,118 +337,30 @@ exports.double = async (req, res, next) => {
   }
 
   let client;
-  let formattedData = {
-    data: {
-      player: null,
-      dealer: null,
-      is_game_over: true,
-    },
-  };
+  let formattedData = {};
 
   try {
     client = await pool.connect();
     await client.query("BEGIN");
 
-    // Withdraw bet from user's balance again
-    const withdrawBet = await client.query(casinoQueries.withdrawBalance, [
-      initBet,
-      userID,
-    ]);
-
-    if (withdrawBet.rowCount === 0) {
-      throw new AppError(
-        "Could not place bet: Insufficient funds",
-        401,
-        "INVALID_BET"
-      );
-    }
     // End the game
     await client.query(blackjackQueries.setGameOver, [gameId]);
-
     // Grab player hand
-    const playerHandData = (
+    const handData = (
       await client.query(blackjackQueries.getHandData, [gameId, true])
     ).rows;
 
-    const playerHandId = playerHandData[0].hand_id;
-    const newSequence = playerHandData.length + 1;
+    formattedData = await double(client, gameId, userID, handData, initBet);
 
-    // Format previous cards
-    const playerHandFormatted = {
-      cards: playerHandData.map((row) => ({
-        suit: row.suit,
-        rank: row.rank,
-        value: row.value,
-
-        sequence: row.sequence,
-      })),
-    };
-
-    // Check for 3 or more card
-    if (playerHandData.length >= 3) {
-      throw new AppError("Cannot double after hitting!", 401, "INVALID_ACTION");
-    }
-
-    // Hit for card
-    const newCard = await pullCardFromDeck(
-      playerHandId,
-      newSequence,
+    formattedData.data.payout = await payoutPlayer(
       client,
-      gameId
+      userID,
+      formattedData.data.game_winner,
+      totalBet
     );
 
-    playerHandFormatted.cards.push(newCard);
-    validateAceValue(playerHandFormatted.cards);
+    formattedData.data.is_game_over = true;
 
-    const isPlayerBust = checkForBust(playerHandFormatted.cards);
-
-    if (isPlayerBust) {
-      formattedData.data.game_winner = "dealer";
-    } else {
-      // We stand now, so pull for dealer
-      // Handle payout as well here if we win
-
-      // Draw dealer cards
-      const dealerDrawResults = await dealerDrawFor17(client, gameId);
-      // Get player total
-      let playerTotal = playerHandFormatted.cards.reduce(
-        (total, card) => total + card.value,
-        0
-      );
-      // Check who wins
-      if (
-        dealerDrawResults.isBust ||
-        dealerDrawResults.handValue < playerTotal
-      ) {
-        // Player wins
-        formattedData.data.game_winner = "player";
-
-        // Payout doubled double
-        const payout = totalBet * 2;
-        formattedData.data.payout = payout;
-        await client.query(casinoQueries.depositBalance, [payout, userID]);
-      } else if (dealerDrawResults.handValue === playerTotal) {
-        // Push, no one wins
-        formattedData.data.game_winner = "push";
-
-        // Return bet
-        formattedData.data.payout = totalBet;
-        await client.query(casinoQueries.depositBalance, [totalBet, userID]);
-      } else if (
-        !dealerDrawResults.isBust &&
-        dealerDrawResults.handValue > playerTotal
-      ) {
-        formattedData.data.game_winner = "dealer";
-      }
-
-      // Add dealer cards to the formatted data
-      formattedData.data.dealer = {
-        cards: dealerDrawResults.cards,
-      };
-    }
-
-    formattedData.data.player = playerHandFormatted;
-    console.log(formattedData);
     await client.query("COMMIT");
   } catch (err) {
     console.log(err);
@@ -461,7 +373,6 @@ exports.double = async (req, res, next) => {
   } finally {
     client.release();
   }
-
   res.status(200).json(formattedData);
 };
 
