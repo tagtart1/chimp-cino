@@ -28,6 +28,8 @@ const stand = async (client, gameId, handData) => {
 
     // Determine winner
     // Check who wins
+    console.log("Dealer Value:", dealerDrawResults.handValue);
+    console.log("Player value:", playerTotal);
     if (dealerDrawResults.isBust || dealerDrawResults.handValue < playerTotal) {
       // Player wins
       results.data.game_winner = "player";

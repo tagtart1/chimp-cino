@@ -32,4 +32,11 @@ router.patch(
   blackjackController.double
 );
 
+router.patch(
+  "/games/split",
+  validateToken,
+  fetchActiveGame,
+  blackjackController.split
+);
+
 module.exports = router;

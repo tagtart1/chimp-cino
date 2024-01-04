@@ -343,9 +343,9 @@ const BlackjackPage = () => {
 
       if (!results.payout) return;
       setUser((prev) => {
-        // BUG: Balance does NOT update when we refresh and then stand and win.
         const user = { ...prev };
-        console.log(results.payout);
+
+        parseFloat(user.balance);
         user.balance += results.payout;
 
         return user;
@@ -373,7 +373,7 @@ const BlackjackPage = () => {
         // Replace the first null element if it exists, otherwise add the new card to the end
         if (nullIndex !== -1) {
           let newCards = [...currentCards];
-          console.log("BLANK TO card: ", newCards);
+
           newCards[nullIndex] = card;
 
           newValue = getCardValueFromArray(newCards);
@@ -402,7 +402,6 @@ const BlackjackPage = () => {
     }
 
     if (hasAce && totalValue < 21) {
-      console.log("soft");
       return true;
     } else {
       return false;

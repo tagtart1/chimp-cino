@@ -50,7 +50,7 @@ const dealerDrawFor17 = async (client, gameId) => {
   dealerHandFormatted.handValue = handValue;
   dealerHandFormatted.isSoft = isHandSoft(dealerHandFormatted.cards);
   dealerHandFormatted.isBust = checkForBust(dealerHandFormatted.cards);
-  console.log(dealerHandFormatted);
+
   return dealerHandFormatted;
 };
 

@@ -10,7 +10,7 @@ const sendTokenResponse = (req, res, next) => {
     last_bonus_claimed: req.user.last_bonus_claimed,
   };
   const returnedUser = jwtUser;
-  returnedUser.balance = req.user.balance;
+  returnedUser.balance = parseFloat(req.user.balance);
 
   jwt.sign(
     { user: jwtUser },

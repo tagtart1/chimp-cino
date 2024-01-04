@@ -21,8 +21,6 @@ const stand = require("./blackjackOperations/stand");
 const payoutPlayer = require("../utils/payoutPlayer");
 const double = require("./blackjackOperations/double");
 
-exports.split = split;
-
 exports.newGame = async (req, res, next) => {
   const NUMBER_OF_DECKS = 2;
   const bet = parseFloat(req.body.betAmount);
@@ -78,15 +76,14 @@ exports.newGame = async (req, res, next) => {
     // Create a deck for the game
     const [queryText, values] = buildDeckQuery(game_id, NUMBER_OF_DECKS);
     await client.query(queryText, values);
-    console.log(game_id);
+
     // Hit twice for player
     // BUG: REMOVE any "rigging" from functions and params
     const playerCard = await pullCardFromDeck(
       player_hand_id,
       1,
       client,
-      game_id,
-      26
+      game_id
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -100,8 +97,7 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       2,
       client,
-      game_id,
-      9
+      game_id
     );
 
     const secondDealerCard = await pullCardFromDeck(
@@ -228,17 +224,11 @@ exports.getGame = async (req, res, next) => {
   }
 };
 
-// We need to send handID from the frontend for splitting
 // HIT HIT HIT HIT
 exports.hit = async (req, res, next) => {
   const gameId = req.game.id;
   const bet = parseFloat(req.game.bet);
   const userID = req.user.id;
-
-  if (req.game.is_game_over) {
-    next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
-    return;
-  }
 
   let client;
   let results;
@@ -258,7 +248,13 @@ exports.hit = async (req, res, next) => {
       results.data.is_game_over = true;
     } else if (checkFor21(results.data.player.cards)) {
       // If we are at 21, then we stand
-      const standResults = await stand(client, gameId, handData);
+
+      // Pass in the cards from the results at it is the most up to date
+      const standResults = await stand(
+        client,
+        gameId,
+        results.data.player.cards
+      );
       results.data.dealer = standResults.data.dealer;
       results.data.is_game_over = true;
       results.data.game_winner = standResults.data.game_winner;
@@ -287,11 +283,6 @@ exports.stand = async (req, res, next) => {
   const gameId = req.game.id;
   const bet = parseFloat(req.game.bet);
   const userID = req.user.id;
-
-  if (req.game.is_game_over) {
-    next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
-    return;
-  }
 
   let client;
   let formattedData = {};
@@ -334,10 +325,6 @@ exports.double = async (req, res, next) => {
   const totalBet = initBet * 2;
   const userID = req.user.id;
 
-  if (req.game.is_game_over) {
-    return next(new AppError("Game is already over!", 401, "INVALID_ACTION"));
-  }
-
   let client;
   let formattedData = {};
 
@@ -378,7 +365,33 @@ exports.double = async (req, res, next) => {
   res.status(200).json(formattedData);
 };
 
-// Keeps drawing untill the dealer total is at 17 or higher;
+exports.split = async (req, res, next) => {
+  let client;
+  // Check for pair
+
+  try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    //  -Grab player hand
+    const handData = (
+      await client.query(blackjackQueries.getHandData, [gameId, true])
+    ).rows;
+    //  - Check for 3 or more cards
+
+    if (handData.length >= 3) {
+      return next(
+        new AppError("Cannot double after hitting!", 401, "INVALID_ACTION")
+      );
+    }
+
+    // await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+  } finally {
+    client.release();
+  }
+};
 
 const endGame = async (gameId, client) => {
   await client.query(blackjackQueries.deleteGame, [gameId]);

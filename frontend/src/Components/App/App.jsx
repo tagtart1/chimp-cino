@@ -26,6 +26,7 @@ function App() {
         );
 
         if (!response.ok) {
+          // Show login notification
           return;
         }
 
