@@ -364,7 +364,7 @@ exports.double = async (req, res, next) => {
   }
   res.status(200).json(formattedData);
 };
-
+// Split hand flow is you play the the rightmost hand first, then move left after decision has been made
 exports.split = async (req, res, next) => {
   let client;
   // Check for pair
@@ -377,15 +377,82 @@ exports.split = async (req, res, next) => {
     const handData = (
       await client.query(blackjackQueries.getHandData, [gameId, true])
     ).rows;
+
+    const playerHandsAmount = await client.query(
+      blackjackQueries.getCountOfPlayerHands,
+      [gameId]
+    );
+    // TODO: Double the bet
+
+    if (playerHandsAmount > 1) {
+      return next(
+        new AppError("You can only split once!", 401, "INVALID_ACTION")
+      );
+    }
     //  - Check for 3 or more cards
 
     if (handData.length >= 3) {
       return next(
-        new AppError("Cannot double after hitting!", 401, "INVALID_ACTION")
+        new AppError("Cannot split after hitting!", 401, "INVALID_ACTION")
       );
     }
 
-    // await client.query("COMMIT");
+    if (handData[0].rank !== handData[1].rank) {
+      return next(
+        new AppError("Cannot split non-pairs", 401, "INVALID_ACTION")
+      );
+    }
+
+    // Split the hand, create a new hand from the first card
+    // Remove first card from original hand
+    const removedCard = (
+      await client.query(blackjackQueries.removeCardFromHand, [
+        handData[0].hand_id,
+        1,
+      ])
+    ).rows[0];
+
+    // Remove on local object
+    handData.shift();
+
+    // Create a new hand but make it unselected
+    const newHandId = (
+      await client.query(blackjackQueries.createNewHand, [gameId, true, false])
+    ).rows[0].id;
+
+    // Add removed card to new hand
+    await client.query(blackjackQueries.addCardToHand, [
+      newHandId,
+      removedCard.card_id,
+      1,
+    ]);
+
+    // Create for hit function
+    let newHandData = [
+      {
+        hand_id: newHandId,
+        suit: handData[0].suit,
+        rank: handData[0].rank,
+        value: handData[0].value,
+        sequence: handData[0].sequence,
+      },
+    ];
+
+    // At this point the original hand is still the selected one so now we hit once for each hand
+
+    // Hit for original hand
+    const rightResults = await hit(client, gameId, handData);
+
+    // Hit for new hand
+    const leftResults = await hit(client, gameId, newHandData);
+
+    // TODO: IF any of the results show 21 then the hand is deselected and stands and moves on, if both hands get
+    // 21 then we confirm stand and dealer draw
+
+    // TODO: Edit DOUBLE rules to comply with this setup
+    // TODO: Return formatted new split deck to client
+
+    await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");
   } finally {

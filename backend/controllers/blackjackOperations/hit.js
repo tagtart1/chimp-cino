@@ -18,7 +18,8 @@ const hit = async (client, gameId, handData) => {
   };
   try {
     const playerHandId = handData[0].hand_id;
-    const newSequence = handData.length + 1;
+    const newSequence = handData[handData.length - 1].sequence + 1;
+
     const playerHandFormatted = {
       cards: handData.map((row) => ({
         suit: row.suit,
@@ -39,10 +40,9 @@ const hit = async (client, gameId, handData) => {
     playerHandFormatted.cards.push(newCard);
     validateAceValue(playerHandFormatted.cards);
 
-    const isHandBust = checkForBust(playerHandFormatted.cards);
-    if (isHandBust) {
-      formattedData.data.is_hand_bust = true;
-    }
+    formattedData.data.is_hand_bust = checkForBust(playerHandFormatted.cards);
+    // TODO: remove the checkfor21 outsite of this.
+    formattedData.data.is_21 = checkFor21(playerHandFormatted.cards);
 
     formattedData.data.player = playerHandFormatted;
   } catch (err) {
