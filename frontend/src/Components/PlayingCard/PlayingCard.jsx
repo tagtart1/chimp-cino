@@ -41,22 +41,14 @@ export const PlayingCard = ({
         },
 
         leave: {
-          // backgroundColor: "rgba(255, 255, 255, 0)",
           transform: "translate(-10px, 10px) rotateY(180deg)",
-
           opacity: 0,
           transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
       }
     : {
-        rotate: {
-          transform: "rotateY(180deg) ",
-          transition: { duration: 0.5 },
-        },
         leave: {
-          //backgroundColor: "rgba(255, 255, 255, 0)",
           transform: "translate(-10px, 10px) rotateY(180deg) ",
-
           opacity: 0,
           transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
@@ -73,10 +65,21 @@ export const PlayingCard = ({
           transform: "rotateY(180deg)",
           transition: { duration: 0.5 },
         },
+        leave: {
+          transform: !isBlank
+            ? "translate(-10px, 10px) rotateY(180deg)"
+            : "translate(-10px, 10px)",
+          opacity: 0,
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
+        },
       }
     : {
-        exit: {
+        leave: {
+          transform: !isBlank
+            ? "translate(-10px, 10px) rotateY(180deg)"
+            : "translate(-10px, 10px)",
           opacity: 0,
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
       };
 
@@ -88,7 +91,8 @@ export const PlayingCard = ({
         if (isBlank) return;
         await controls.start("rotate");
       } else {
-        card.current.removeChild(card.current.querySelector(".back"));
+        if (!isBlank)
+          card.current.removeChild(card.current.querySelector(".back"));
         await controls.start("leave");
       }
     };

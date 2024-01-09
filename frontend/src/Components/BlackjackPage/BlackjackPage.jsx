@@ -86,11 +86,12 @@ const BlackjackPage = () => {
       setGameOver(false);
       setGameWinner("");
       await delay(1);
-      setDealerCards([]);
+
       setStartCardExit(true);
 
-      await delay(1000);
+      await delay(500);
       setPlayerHands([]);
+      setDealerCards([]);
       await delay(500);
     }
 
@@ -457,6 +458,7 @@ const BlackjackPage = () => {
             isBlank={true}
             dealerCard={isDealer}
             staticCard={card.isStatic}
+            startExit={startCardExit}
           />
         );
 
@@ -470,6 +472,7 @@ const BlackjackPage = () => {
           dealerCard={isDealer}
           staticCard={card.isStatic}
           gameResults={gameWinner}
+          startExit={startCardExit}
         />
       );
     });
