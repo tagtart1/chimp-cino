@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./PlayingCard.scss";
 import { motion, useAnimation } from "framer-motion";
 
@@ -15,6 +15,7 @@ export const PlayingCard = ({
   startExit,
 }) => {
   const controls = useAnimation();
+  const card = useRef();
 
   // The first card's container is usually off on the start so we account for it with the offset
   // nthcard of 0 receives a greater buffer
@@ -35,18 +36,27 @@ export const PlayingCard = ({
         },
         rotate: {
           transform: "rotateY(180deg) ",
+
           transition: { duration: 0.5 },
         },
 
         leave: {
-          // transform: "translate(-10px, 10px)",
+          // backgroundColor: "rgba(255, 255, 255, 0)",
+          transform: "translate(-10px, 10px) rotateY(180deg)",
+
           opacity: 0,
           transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
       }
     : {
+        rotate: {
+          transform: "rotateY(180deg) ",
+          transition: { duration: 0.5 },
+        },
         leave: {
-          // transform: "translate(-10px, 10px)",
+          //backgroundColor: "rgba(255, 255, 255, 0)",
+          transform: "translate(-10px, 10px) rotateY(180deg) ",
+
           opacity: 0,
           transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
@@ -78,7 +88,7 @@ export const PlayingCard = ({
         if (isBlank) return;
         await controls.start("rotate");
       } else {
-        await controls.start("rotate2");
+        card.current.removeChild(card.current.querySelector(".back"));
         await controls.start("leave");
       }
     };
@@ -105,6 +115,7 @@ export const PlayingCard = ({
       variants={dealerCard ? dealerCardVariants : playerCardVariants}
       initial="initial"
       animate={controls}
+      ref={card}
     >
       <div className="front">
         {!isBlank ? (
