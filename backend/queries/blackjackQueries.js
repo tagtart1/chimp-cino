@@ -2,7 +2,7 @@ const findInProgressGame =
   "SELECT * FROM active_blackjack_games WHERE user_id = $1";
 
 const getHandData = `
-    SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id
+    SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id, ah.is_selected
     FROM active_hands AS ah
     JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
     JOIN cards as c ON ahc.card_id = c.id
@@ -51,8 +51,16 @@ const setGameOver =
 const getCountOfPlayerHands =
   "SELECT COUNT(*) FROM active_hands WHERE is_player = true AND game_id = $1";
 
+const getSplitHandIds =
+  "SELECT id FROM active_hands WHERE is_player = true AND game_id = $1 AND is_selected = false ORDER BY id";
+
 const createNewHand =
   "INSERT INTO active_hands (game_id, is_player, is_selected) VALUES ($1,$2,$3) RETURNING id";
+
+const deselectHand =
+  "UPDATE active_hands SET is_selected = false, is_completed = true WHERE id = $1";
+
+const selectHand = "UPDATE active_hands SET is_selected = true WHERE id = $1";
 
 module.exports = {
   getHandData,
@@ -66,4 +74,7 @@ module.exports = {
   getCountOfPlayerHands,
   createNewHand,
   removeCardFromHand,
+  getSplitHandIds,
+  deselectHand,
+  selectHand,
 };

@@ -5,6 +5,7 @@ const BlackjackActions = ({ handleAction }) => {
   const hitEndpoint = "http://localhost:5000/api/v1/blackjack/games/hit";
   const standEndpoint = "http://localhost:5000/api/v1/blackjack/games/stand";
   const doubleEndpoint = "http://localhost:5000/api/v1/blackjack/games/double";
+  const splitEndpoint = "http://localhost:5000/api/v1/blackjack/games/split";
 
   const hitNewCard = async () => {
     const response = await fetch(hitEndpoint, {
@@ -92,11 +93,28 @@ const BlackjackActions = ({ handleAction }) => {
     handleAction(actionResults.data, true, true);
   };
 
+  const splitHand = async () => {
+    const response = await fetch(splitEndpoint, {
+      credentials: "include",
+      method: "PATCH",
+    });
+
+    if (!response.ok) {
+      const errors = await response.json();
+      console.log("error", errors);
+      return;
+    }
+
+    const actionResults = await response.json();
+
+    console.log("SPLIT results", actionResults);
+  };
+
   return (
     <div className="blackjack-actions">
       <button onClick={hitNewCard}>Hit</button>
       <button onClick={standHand}>Stand</button>
-      <button>Split</button>
+      <button onClick={splitHand}>Split</button>
       <button onClick={doubleDown}>Double</button>
     </div>
   );

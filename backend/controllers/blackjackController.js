@@ -20,6 +20,8 @@ const hit = require("./blackjackOperations/hit");
 const stand = require("./blackjackOperations/stand");
 const payoutPlayer = require("../utils/payoutPlayer");
 const double = require("./blackjackOperations/double");
+const swapSelectedHand = require("../utils/swapSelectedHand");
+const calculateWinnings = require("../utils/calculateWinnings");
 
 exports.newGame = async (req, res, next) => {
   const NUMBER_OF_DECKS = 2;
@@ -83,7 +85,8 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       1,
       client,
-      game_id
+      game_id,
+      4
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -97,7 +100,8 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       2,
       client,
-      game_id
+      game_id,
+      17
     );
 
     const secondDealerCard = await pullCardFromDeck(
@@ -158,7 +162,7 @@ exports.newGame = async (req, res, next) => {
   validateAceValue(playerCards);
   validateAceValue(dealerCards);
 
-  formattedData.data.player.cards = playerCards;
+  formattedData.data.player.hands = [playerCards];
   formattedData.data.dealer.cards = dealerCards;
   res.status(200).json(formattedData);
 };
@@ -172,7 +176,7 @@ exports.getGame = async (req, res, next) => {
 
   if (game) {
     const bet = game.bet;
-    const playerData = (
+    const playerHand = (
       await pool.query(blackjackQueries.getHandData, [game.id, true])
     ).rows;
 
@@ -180,16 +184,15 @@ exports.getGame = async (req, res, next) => {
       await pool.query(blackjackQueries.getHandData, [game.id, false])
     ).rows;
 
-    const playerDataFormatted = {
-      cards: playerData.map((row) => ({
-        suit: row.suit,
-        rank: row.rank,
-        value: row.value,
-        sequence: row.sequence,
-      })),
-    };
-    validateAceValue(playerDataFormatted.cards);
-    playerDataFormatted.is_soft = isHandSoft(playerDataFormatted.cards);
+    const playerHandFormatted = playerHand.map((row) => ({
+      suit: row.suit,
+      rank: row.rank,
+      value: row.value,
+      sequence: row.sequence,
+    }));
+
+    validateAceValue(playerHandFormatted);
+    playerHandFormatted.is_soft = isHandSoft(playerHandFormatted);
 
     const dealerDataFormatted = {
       cards: dealerData.map((row) => ({
@@ -208,7 +211,10 @@ exports.getGame = async (req, res, next) => {
 
     const formattedData = {
       data: {
-        player: playerDataFormatted,
+        player: {
+          hands: [playerHandFormatted],
+          selectedHandIndex: 0,
+        },
         dealer: dealerDataFormatted,
         is_game_over: game.is_game_over,
         bet: bet,
@@ -225,39 +231,50 @@ exports.getGame = async (req, res, next) => {
 };
 
 // HIT HIT HIT HIT
+// TODO: if the hand is split, we need to check when to conclude the game
 exports.hit = async (req, res, next) => {
   const gameId = req.game.id;
   const bet = parseFloat(req.game.bet);
   const userID = req.user.id;
-
+  const activeHand = req.game.activeHand;
+  const nextHandId = req.game.nextHand;
   let client;
   let results;
 
   try {
     client = await pool.connect();
     await client.query("BEGIN");
-    // Grab player hand
-    const handData = (
-      await client.query(blackjackQueries.getHandData, [gameId, true])
-    ).rows;
-    results = await hit(client, gameId, handData);
+
+    results = await hit(client, gameId, activeHand);
 
     if (results.data.is_hand_bust) {
-      await client.query(blackjackQueries.setGameOver, [gameId]);
-      results.data.game_winner = "dealer";
-      results.data.is_game_over = true;
-    } else if (checkFor21(results.data.player.cards)) {
+      if (!nextHandId) {
+        await client.query(blackjackQueries.setGameOver, [gameId]);
+        results.data.game_winner = "dealer";
+        results.data.is_game_over = true;
+      } else {
+        // Hand is split so we just move to the next hand without ending game
+        await swapSelectedHand(client, activeHand[0].hand_id, nextHandId);
+        results.data.goToNextHand = true;
+      }
+    } else if (results.data.is_21) {
       // If we are at 21, then we stand
 
       // Pass in the cards from the results at it is the most up to date
-      const standResults = await stand(
-        client,
-        gameId,
-        results.data.player.cards
-      );
-      results.data.dealer = standResults.data.dealer;
-      results.data.is_game_over = true;
-      results.data.game_winner = standResults.data.game_winner;
+      if (!nextHandId) {
+        const standResults = await stand(
+          client,
+          gameId,
+          results.data.player.cards
+        );
+        results.data.dealer = standResults.data.dealer;
+        results.data.is_game_over = true;
+        results.data.game_winner = standResults.data.game_winner;
+      } else {
+        // Hand is split so we just move to the next hand without ending game
+        await swapSelectedHand(client, activeHand[0].hand_id, nextHandId);
+        results.data.goToNextHand = true;
+      }
     }
 
     results.data.payout = await payoutPlayer(
@@ -268,6 +285,8 @@ exports.hit = async (req, res, next) => {
     );
 
     await client.query("COMMIT");
+
+    res.status(200).json(results);
   } catch (err) {
     console.log(err);
     await client.query("ROLLBACK");
@@ -275,8 +294,6 @@ exports.hit = async (req, res, next) => {
   } finally {
     client.release();
   }
-
-  res.status(200).json(results);
 };
 
 exports.stand = async (req, res, next) => {
@@ -367,39 +384,56 @@ exports.double = async (req, res, next) => {
 // Split hand flow is you play the the rightmost hand first, then move left after decision has been made
 exports.split = async (req, res, next) => {
   let client;
+  let gameId = req.game.id;
+  const initBet = parseFloat(req.game.bet);
+  const userID = req.user.id;
+
+  let activeHand = req.game.activeHand;
+  let formattedData = {
+    data: {
+      player: {
+        hands: [],
+        selectedHandIndex: 0,
+      },
+      dealer: {},
+    },
+  };
   // Check for pair
 
   try {
     client = await pool.connect();
     await client.query("BEGIN");
 
-    //  -Grab player hand
-    const handData = (
-      await client.query(blackjackQueries.getHandData, [gameId, true])
-    ).rows;
-
     const playerHandsAmount = await client.query(
       blackjackQueries.getCountOfPlayerHands,
       [gameId]
     );
-    // TODO: Double the bet
+    t;
 
     if (playerHandsAmount > 1) {
-      return next(
-        new AppError("You can only split once!", 401, "INVALID_ACTION")
-      );
+      throw new AppError("You can only split once!", 401, "INVALID_ACTION");
     }
     //  - Check for 3 or more cards
 
-    if (handData.length >= 3) {
-      return next(
-        new AppError("Cannot split after hitting!", 401, "INVALID_ACTION")
-      );
+    if (activeHand.length >= 3) {
+      throw new AppError("Cannot split after hitting!", 401, "INVALID_ACTION");
     }
 
-    if (handData[0].rank !== handData[1].rank) {
-      return next(
-        new AppError("Cannot split non-pairs", 401, "INVALID_ACTION")
+    if (activeHand[0].rank !== activeHand[1].rank) {
+      throw new AppError("Cannot split non-pairs", 401, "INVALID_ACTION");
+    }
+
+    // Double the bet again
+    const withdrawBet = await client.query(casinoQueries.withdrawBalance, [
+      initBet,
+      userID,
+    ]);
+
+    if (withdrawBet.rowCount === 0) {
+      throw new AppError(
+        "Could not place bet: Insufficient funds",
+        401,
+        "INVALID_BET"
       );
     }
 
@@ -407,13 +441,10 @@ exports.split = async (req, res, next) => {
     // Remove first card from original hand
     const removedCard = (
       await client.query(blackjackQueries.removeCardFromHand, [
-        handData[0].hand_id,
+        activeHand[0].hand_id,
         1,
       ])
     ).rows[0];
-
-    // Remove on local object
-    handData.shift();
 
     // Create a new hand but make it unselected
     const newHandId = (
@@ -431,30 +462,71 @@ exports.split = async (req, res, next) => {
     let newHandData = [
       {
         hand_id: newHandId,
-        suit: handData[0].suit,
-        rank: handData[0].rank,
-        value: handData[0].value,
-        sequence: handData[0].sequence,
+        suit: activeHand[0].suit,
+        rank: activeHand[0].rank,
+        value: activeHand[0].value,
+        sequence: activeHand[0].sequence,
       },
     ];
+
+    // Remove on local object
+    activeHand.shift();
 
     // At this point the original hand is still the selected one so now we hit once for each hand
 
     // Hit for original hand
-    const rightResults = await hit(client, gameId, handData);
+    const originalHandResults = await hit(client, gameId, activeHand);
 
     // Hit for new hand
-    const leftResults = await hit(client, gameId, newHandData);
+    const newHandResults = await hit(client, gameId, newHandData);
 
-    // TODO: IF any of the results show 21 then the hand is deselected and stands and moves on, if both hands get
-    // 21 then we confirm stand and dealer draw
+    formattedData.data.player.hands.push(originalHandResults.data.player.cards);
+    formattedData.data.player.hands.push(newHandResults.data.player.cards);
+
+    if (newHandResults.is_21 && originalHandResults.is_21) {
+      // Both hands get 21 so we now officially stand and draw for dealer
+      // We do not have to set the hands to completed in the DB as the game is now officially over here
+      formattedData.data.is_game_over = true;
+      await client.query(blackjackQueries.setGameOver, [gameId]);
+
+      // Draw for dealer
+      const dealerDrawResulsts = await dealerDrawFor17(client, gameId);
+      const winnings = calculateWinnings(
+        dealerDrawResulsts,
+        [
+          newHandResults.data.player.cards,
+          originalHandResults.data.player.cards,
+        ],
+        initBet
+      );
+      formattedData.data.payout = winnings.totalPayout;
+      formattedData.data.game_winner = winnings.winners;
+      // Deposit winning
+      if (winnings.totalPayout > 0) {
+        await client.query(casinoQueries.depositBalance, [
+          winnings.totalPayout,
+          userID,
+        ]);
+      }
+
+      // Set game over in DB
+      await client.query(blackjackQueries.setGameOver, [gameId]);
+    } else if (originalHandResults.is_21) {
+      await swapSelectedHand(client, activeHand[0].hand_id, newHandId);
+      formattedData.data.player.selectedHandIndex = 1;
+    } else if (newHandResults.is_21) {
+      // If the new hand gets 21 then it "stands" so we complete the hand
+      await client.query(blackjackQueries.completeHand, [newHandId]);
+    }
 
     // TODO: Edit DOUBLE rules to comply with this setup
-    // TODO: Return formatted new split deck to client
 
-    await client.query("COMMIT");
+    // await client.query("COMMIT");
+
+    res.status(200).json(formattedData);
   } catch (error) {
     await client.query("ROLLBACK");
+    return next(error);
   } finally {
     client.release();
   }

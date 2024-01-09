@@ -12,12 +12,13 @@ export const PlayingCard = ({
   suit,
   gameResults,
   isBlank,
+  startExit,
 }) => {
   const controls = useAnimation();
 
   // The first card's container is usually off on the start so we account for it with the offset
   // nthcard of 0 receives a greater buffer
-  const startOffsetX = nthCard === 0 ? -100 : nthCard * -33;
+  const startOffsetX = nthCard === 0 ? -25 : nthCard * -33;
   const startOffsetY = nthCard === 0 ? 100 : 0;
 
   const playerCardVariants = !staticCard
@@ -36,17 +37,18 @@ export const PlayingCard = ({
           transform: "rotateY(180deg) ",
           transition: { duration: 0.5 },
         },
-        exit: {
+
+        leave: {
+          // transform: "translate(-10px, 10px)",
           opacity: 0,
-          transform: `translateY(20px) rotateY(180deg) `,
-          transition: { delay: 0.1 * nthCard },
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
       }
     : {
-        exit: {
+        leave: {
+          // transform: "translate(-10px, 10px)",
           opacity: 0,
-          transform: `translateY(20px) rotateY(180deg)`,
-          transition: { delay: 0.1 * nthCard },
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
       };
 
@@ -65,22 +67,25 @@ export const PlayingCard = ({
     : {
         exit: {
           opacity: 0,
-          transform: `translateY(20px) `,
-          transition: { delay: 0.1 * nthCard },
         },
       };
 
   useEffect(() => {
-    if (staticCard) return;
+    if (staticCard && !startExit) return;
     const sequence = async () => {
-      await controls.start("toPosition");
-      if (isBlank) return;
-      await controls.start("rotate");
+      if (!startExit) {
+        await controls.start("toPosition");
+        if (isBlank) return;
+        await controls.start("rotate");
+      } else {
+        await controls.start("rotate2");
+        await controls.start("leave");
+      }
     };
 
     sequence();
     // Log
-  }, [controls, staticCard, isBlank]);
+  }, [controls, staticCard, isBlank, startExit]);
 
   const gameResultsStyle =
     gameResults === "player"
@@ -100,7 +105,6 @@ export const PlayingCard = ({
       variants={dealerCard ? dealerCardVariants : playerCardVariants}
       initial="initial"
       animate={controls}
-      exit="exit"
     >
       <div className="front">
         {!isBlank ? (
