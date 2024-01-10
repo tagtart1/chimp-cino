@@ -1,7 +1,7 @@
 import React from "react";
 import "./BlackjackActions.scss";
 
-const BlackjackActions = ({ handleAction }) => {
+const BlackjackActions = ({ handleAction, handleSplit }) => {
   const hitEndpoint = "http://localhost:5000/api/v1/blackjack/games/hit";
   const standEndpoint = "http://localhost:5000/api/v1/blackjack/games/stand";
   const doubleEndpoint = "http://localhost:5000/api/v1/blackjack/games/double";
@@ -106,6 +106,8 @@ const BlackjackActions = ({ handleAction }) => {
     }
 
     const actionResults = await response.json();
+
+    handleSplit(actionResults.data);
 
     console.log("SPLIT results", actionResults);
   };

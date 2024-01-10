@@ -408,7 +408,6 @@ exports.split = async (req, res, next) => {
       blackjackQueries.getCountOfPlayerHands,
       [gameId]
     );
-    t;
 
     if (playerHandsAmount > 1) {
       throw new AppError("You can only split once!", 401, "INVALID_ACTION");

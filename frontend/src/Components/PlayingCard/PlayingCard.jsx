@@ -13,6 +13,7 @@ export const PlayingCard = ({
   gameResults,
   isBlank,
   startExit,
+  splitCard,
 }) => {
   const controls = useAnimation();
   const card = useRef();
@@ -22,14 +23,22 @@ export const PlayingCard = ({
   const startOffsetX = nthCard === 0 ? -25 : nthCard * -33;
   const startOffsetY = nthCard === 0 ? 100 : 0;
 
+  const initialState = splitCard
+    ? {
+        transform: "translate(-50px, 0px) rotateY(180deg)",
+        opacity: 1,
+      }
+    : {};
+
   const playerCardVariants = !staticCard
     ? {
         initial: {
           transform: `translate(${startOffsetX + 375}%, -${
             320 + startOffsetY
-          }%) `,
+          }%)`,
           opacity: 1,
         },
+
         toPosition: {
           transform: "translate(0, 0)",
           transition: { duration: 0.5 },
@@ -47,6 +56,11 @@ export const PlayingCard = ({
         },
       }
     : {
+        initial: initialState,
+        toPosition: {
+          transform: "translate(0, 0) rotateY(180deg)",
+          transition: { duration: 0.5 },
+        },
         leave: {
           transform: "translate(-10px, 10px) rotateY(180deg) ",
           opacity: 0,
@@ -83,8 +97,27 @@ export const PlayingCard = ({
         },
       };
 
+  const splitCardVariants = {
+    initial: {
+      transform: "translate(-60px, 10px)",
+    },
+    toPosition: {
+      transform: "translate(0, 0)",
+      transition: { duration: 0.5 },
+    },
+    leave: {
+      transform: "translate(-10px, 10px) rotateY(180deg) ",
+      opacity: 0,
+      transition: { duration: 0.2, delay: 0.15 * nthCard },
+    },
+  };
+
   useEffect(() => {
-    if (staticCard && !startExit) return;
+    const moveSplitCard = async () => {
+      console.log("moving split card");
+      await controls.start("toPosition");
+    };
+
     const sequence = async () => {
       if (!startExit) {
         await controls.start("toPosition");
@@ -96,10 +129,13 @@ export const PlayingCard = ({
         await controls.start("leave");
       }
     };
-
+    if (splitCard) {
+      moveSplitCard();
+    }
+    if (staticCard && !startExit) return;
     sequence();
     // Log
-  }, [controls, staticCard, isBlank, startExit]);
+  }, [controls, staticCard, isBlank, startExit, splitCard]);
 
   const gameResultsStyle =
     gameResults === "player"
@@ -117,7 +153,7 @@ export const PlayingCard = ({
       }
       style={style}
       variants={dealerCard ? dealerCardVariants : playerCardVariants}
-      initial="initial"
+      initial={"initial"}
       animate={controls}
       ref={card}
     >
