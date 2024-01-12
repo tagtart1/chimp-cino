@@ -7,7 +7,7 @@ const fetchHandData = async (req, res, next) => {
 
   try {
     const activeHand = (
-      await pool.query(blackjackQueries.getHandData, [gameId, true])
+      await pool.query(blackjackQueries.getActiveHand, [gameId, true])
     ).rows;
 
     req.game.activeHand = activeHand;

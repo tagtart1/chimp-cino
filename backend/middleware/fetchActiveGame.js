@@ -12,7 +12,7 @@ const fetchActiveGame = async (req, res, next) => {
 
     // Check if game exists
     if (!game) {
-      next(new AppError("Could not fetch game", 400, "INVALID_SESSION"));
+      next(new AppError("Game not found!", 400, "INVALID_SESSION"));
     }
 
     // Check if game is over then dont perform any actions

@@ -19,10 +19,10 @@ const BlackjackPage = () => {
 
   const [playerHands, setPlayerHands] = useState([[], []]);
   const [selectedHandIndex, setSelectedHandIndex] = useState(0);
+  const [showSelectedOutline, setShowSelectedOutline] = useState(false);
   const [playerValues, setPlayerValues] = useState([]);
   const [dealerCards, setDealerCards] = useState([]);
   const [dealerValue, setDealerValue] = useState(0);
-  const [playerValue, setPlayerValue] = useState(0);
   const [startCardExit, setStartCardExit] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [gameLoaded, setGameLoaded] = useState(false);
@@ -80,7 +80,7 @@ const BlackjackPage = () => {
     });
     if (gameOver) {
       setDealerValue(0);
-      setPlayerValue(0);
+      setPlayerValues([0]);
 
       setGameLoaded(false);
       setGameOver(false);
@@ -171,6 +171,7 @@ const BlackjackPage = () => {
 
           const playerHands = results.data.player.hands;
           const dealerCards = results.data.dealer.cards;
+
           // Check if game is new to send a blank
           if (dealerCards.length === 1) {
             dealerCards.push({ isStatic: true, isBlank: true });
@@ -186,15 +187,25 @@ const BlackjackPage = () => {
             card.isStatic = true;
           }
           setGameLoaded(true);
-
+          //playerHands.reverse();
           setPlayerHands(playerHands);
           setDealerCards(dealerCards);
 
           // Grab total value
 
           setDealerValue(getCardValueFromArray(dealerCards));
-          setPlayerValue(getCardValueFromArray(playerHands[0]));
+          let playerValueArray = [];
+          for (const hand of playerHands) {
+            playerValueArray.push(getCardValueFromArray(hand));
+          }
+          setPlayerValues(playerValueArray);
           betAmountInput.current.value = results.data.bet;
+
+          if (results.data.player.hands.length > 1) {
+            console.log("YOOO heree");
+            setShowSelectedOutline(true);
+            setSelectedHandIndex(results.data.player.selectedHandIndex);
+          }
         } else {
           console.log("No game found");
         }
@@ -271,7 +282,7 @@ const BlackjackPage = () => {
     setPlayerHands([playerHand]);
 
     await delay(520);
-    setPlayerValue(getCardValueFromArray([playerCards[0]]));
+    setPlayerValues([getCardValueFromArray([playerCards[0]])]);
     setDealerCards((currentCards) => [...currentCards, dealerCards[0]]);
 
     await delay(520);
@@ -283,7 +294,7 @@ const BlackjackPage = () => {
       ...currentCards,
       { isStatic: false, isBlank: true },
     ]);
-    setPlayerValue(getCardValueFromArray([playerCards[0], playerCards[1]]));
+    setPlayerValues([getCardValueFromArray([playerCards[0], playerCards[1]])]);
 
     if (gameData.data.is_game_over) {
       let dealerValue;
@@ -374,9 +385,11 @@ const BlackjackPage = () => {
 
   const handleSplit = async (resultData) => {
     const playerResult = resultData.player;
-    const rightCard = playerResult.hands[0][playerResult.hands[0].length - 1];
-    const leftCard = playerResult.hands[1][playerResult.hands[1].length - 1];
-    playerResult.hands.reverse();
+    const leftCard = playerResult.hands[0][playerResult.hands[0].length - 1];
+    const rightCard = playerResult.hands[1][playerResult.hands[1].length - 1];
+    // playerResult.hands.reverse();
+
+    console.log("Selected index", playerResult.selectedHandIndex);
     setSelectedHandIndex(playerResult.selectedHandIndex);
     setPlayerHands((hands) => {
       const newHands = [...hands];
@@ -396,6 +409,12 @@ const BlackjackPage = () => {
 
       return newHands;
     });
+    // Set player values
+    // getCardValueFromArray handles Aces
+    setPlayerValues([
+      getCardValueFromArray([playerResult.hands[0][0]]),
+      getCardValueFromArray([playerResult.hands[1][0]]),
+    ]);
 
     // Deal right hand new card
     await delay(720);
@@ -415,6 +434,9 @@ const BlackjackPage = () => {
       leftCard,
       0
     );
+
+    await delay(500);
+    setShowSelectedOutline(true);
   };
 
   const dealNewCard = async (hand, isPlayer, card, handIndex) => {
@@ -442,7 +464,14 @@ const BlackjackPage = () => {
       });
 
       await delay(520);
-      setPlayerValue(newValue);
+      setPlayerValues((values) => {
+        const newValues = [...values];
+
+        // Modfiy the value
+        newValues[handIndex] = newValue;
+
+        return newValues;
+      });
     } else if (!isPlayer) {
       setDealerCards((currentCards) => {
         // Find the index of the first null element
@@ -488,16 +517,6 @@ const BlackjackPage = () => {
     }
   };
 
-  const cardValueVariants = {
-    initial: {
-      opacity: 1,
-    },
-    exit: {
-      opacity: 0,
-      transition: { duration: 0.2 },
-    },
-  };
-
   const renderCardStack = (cards, isDealer = false) => {
     return cards.map((card, index) => {
       const style =
@@ -510,6 +529,7 @@ const BlackjackPage = () => {
                 card.isStatic && card.value ? "rotateY(180deg)" : ""
               }`,
             };
+
       if (!card.value)
         return (
           <PlayingCard
@@ -548,9 +568,13 @@ const BlackjackPage = () => {
           key={index}
         >
           <AnimatePresence>
-            {playerValue !== 0 ? (
+            {playerValues.length !== 0 && !startCardExit ? (
               <motion.div
-                className="cards-value"
+                className={`cards-value ${
+                  selectedHandIndex === index && showSelectedOutline
+                    ? "selected-value"
+                    : ""
+                }`}
                 layout="position"
                 animate={{
                   backgroundColor:
@@ -560,14 +584,13 @@ const BlackjackPage = () => {
                       ? "#E9113C"
                       : gameWinner === "push"
                       ? "#FF9D00"
-                      : "#2F4553",
+                      : "",
+
                   color: gameOver && gameWinner !== "dealer" ? "#000" : "#FFF",
                   transition: { duration: 0.2 },
                 }}
-                variants={cardValueVariants}
-                exit={"exit"}
               >
-                {playerValue}
+                {playerValues[index]}
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -584,17 +607,9 @@ const BlackjackPage = () => {
                       card.isStatic && card.value ? "rotateY(180deg)" : ""
                     }`,
                   };
-            if (!card.value)
-              return (
-                <PlayingCard
-                  key={cardIndex}
-                  style={style}
-                  nthCard={cardIndex}
-                  isBlank={true}
-                  dealerCard={false}
-                  staticCard={card.isStatic}
-                />
-              );
+
+            const isSelected =
+              selectedHandIndex === index && showSelectedOutline;
 
             return (
               <PlayingCard
@@ -608,10 +623,10 @@ const BlackjackPage = () => {
                 gameResults={gameWinner}
                 startExit={startCardExit}
                 splitCard={card.isSplit}
+                selected={isSelected}
               />
             );
           })}
-          ;
         </motion.div>
       );
     });
@@ -660,14 +675,7 @@ const BlackjackPage = () => {
             >
               <AnimatePresence>
                 {dealerValue !== 0 ? (
-                  <motion.div
-                    className="cards-value"
-                    layout="position"
-                    key={0}
-                    variants={cardValueVariants}
-                    initial="initial"
-                    exit={"exit"}
-                  >
+                  <motion.div className="cards-value" layout="position" key={0}>
                     {dealerValue}
                   </motion.div>
                 ) : null}

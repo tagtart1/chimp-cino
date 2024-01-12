@@ -62,6 +62,10 @@
   }
 }
 
+.selected-hand {
+  box-shadow: 0 0 0 0.3em #1475e1; // #4391e7;
+}
+
 .lost {
   box-shadow: 0 0 0 0.3em #e9113c;
 }

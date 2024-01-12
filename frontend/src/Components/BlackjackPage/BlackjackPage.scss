@@ -167,25 +167,34 @@
           font-size: 14px;
           width: 60px;
           height: 21px;
-
+          z-index: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           position: absolute;
-          right: 0;
+          right: 4px;
 
-          top: -23px;
+          top: -20px;
 
           box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2),
             0 1px 2px 0 rgba(0, 0, 0, 0.12);
         }
+
+        .selected-value {
+          color: black !important;
+          background-color: #4391e7;
+        }
       }
 
       .player-side {
-        gap: 64px;
+        justify-content: space-around;
       }
     }
   }
+}
+
+.selected-hand-arrow {
+  width: 32px;
 }
 
 @media (min-width: 875px) {

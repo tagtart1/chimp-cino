@@ -14,6 +14,7 @@ export const PlayingCard = ({
   isBlank,
   startExit,
   splitCard,
+  selected,
 }) => {
   const controls = useAnimation();
   const card = useRef();
@@ -25,7 +26,7 @@ export const PlayingCard = ({
 
   const initialState = splitCard
     ? {
-        transform: "translate(-50px, 0px) rotateY(180deg)",
+        transform: "translateX(-195%) rotateY(180deg)",
         opacity: 1,
       }
     : {};
@@ -97,21 +98,6 @@ export const PlayingCard = ({
         },
       };
 
-  const splitCardVariants = {
-    initial: {
-      transform: "translate(-60px, 10px)",
-    },
-    toPosition: {
-      transform: "translate(0, 0)",
-      transition: { duration: 0.5 },
-    },
-    leave: {
-      transform: "translate(-10px, 10px) rotateY(180deg) ",
-      opacity: 0,
-      transition: { duration: 0.2, delay: 0.15 * nthCard },
-    },
-  };
-
   useEffect(() => {
     const moveSplitCard = async () => {
       console.log("moving split card");
@@ -146,10 +132,14 @@ export const PlayingCard = ({
       ? "push"
       : "";
 
+  const isSplitAndSelected = selected ? "selected-hand" : "";
+
   return (
     <motion.div
       className={
-        !dealerCard ? `playing-card ${gameResultsStyle}` : "playing-card"
+        !dealerCard
+          ? `playing-card ${gameResultsStyle} ${isSplitAndSelected} `
+          : "playing-card"
       }
       style={style}
       variants={dealerCard ? dealerCardVariants : playerCardVariants}

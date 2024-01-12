@@ -2,12 +2,30 @@ const findInProgressGame =
   "SELECT * FROM active_blackjack_games WHERE user_id = $1";
 
 const getHandData = `
-    SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id, ah.is_selected
+    SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id
     FROM active_hands AS ah
     JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
     JOIN cards as c ON ahc.card_id = c.id
     WHERE ah.game_id = $1 AND ah.is_player = $2
     ORDER BY ah.id, ahc.sequence;
+  `;
+
+const getActiveHand = `
+  SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id
+  FROM active_hands AS ah
+  JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
+  JOIN cards as c ON ahc.card_id = c.id
+  WHERE ah.game_id = $1 AND ah.is_player = $2 AND ah.is_selected = true
+  ORDER BY ah.id, ahc.sequence;
+  `;
+
+const getSpecificHand = `
+  SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id
+  FROM active_hands AS ah
+  JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
+  JOIN cards as c ON ahc.card_id = c.id
+  WHERE ah.id = $1
+  ORDER BY ah.id, ahc.sequence;
   `;
 
 const createNewBlackjackGame = `WITH new_game AS (
@@ -62,6 +80,8 @@ const deselectHand =
 
 const selectHand = "UPDATE active_hands SET is_selected = true WHERE id = $1";
 
+const completeHand = "UPDATE active_hands SET is_completed = true WHERE id =$1";
+
 module.exports = {
   getHandData,
   findInProgressGame,
@@ -77,4 +97,7 @@ module.exports = {
   getSplitHandIds,
   deselectHand,
   selectHand,
+  completeHand,
+  getActiveHand,
+  getSpecificHand,
 };

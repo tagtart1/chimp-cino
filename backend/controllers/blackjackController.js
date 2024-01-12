@@ -168,66 +168,71 @@ exports.newGame = async (req, res, next) => {
 };
 
 exports.getGame = async (req, res, next) => {
-  const userID = req.user.id;
+  const bet = req.game.bet;
+  const activeHand = req.game.activeHand;
+  const nextHandId = req.game.nextHand;
+  let nextHand;
+  let nextHandFormatted;
+  const formattedData = {
+    data: {
+      player: {
+        hands: [],
+        selectedHandIndex: 0,
+      },
+      dealer: {},
+      is_game_over: req.game.is_game_over,
+      bet: bet,
+    },
+  };
 
-  // Check for in-progress game
-  const game = (await pool.query(blackjackQueries.findInProgressGame, [userID]))
-    .rows[0];
+  const dealerData = (
+    await pool.query(blackjackQueries.getHandData, [req.game.id, false])
+  ).rows;
 
-  if (game) {
-    const bet = game.bet;
-    const playerHand = (
-      await pool.query(blackjackQueries.getHandData, [game.id, true])
+  const activeHandFormatted = activeHand.map((row) => ({
+    suit: row.suit,
+    rank: row.rank,
+    value: row.value,
+    sequence: row.sequence,
+  }));
+
+  validateAceValue(activeHandFormatted);
+  formattedData.data.player.hands.push(activeHandFormatted);
+
+  if (nextHandId) {
+    nextHand = (
+      await pool.query(blackjackQueries.getSpecificHand, [nextHandId.id])
     ).rows;
-
-    const dealerData = (
-      await pool.query(blackjackQueries.getHandData, [game.id, false])
-    ).rows;
-
-    const playerHandFormatted = playerHand.map((row) => ({
+    nextHandFormatted = nextHand.map((row) => ({
       suit: row.suit,
       rank: row.rank,
       value: row.value,
       sequence: row.sequence,
     }));
 
-    validateAceValue(playerHandFormatted);
-    playerHandFormatted.is_soft = isHandSoft(playerHandFormatted);
-
-    const dealerDataFormatted = {
-      cards: dealerData.map((row) => ({
-        suit: row.suit,
-        rank: row.rank,
-        value: row.value,
-        sequence: row.sequence,
-      })),
-    };
-    // Remove the face down card to not reveal
-    if (dealerDataFormatted.cards.length === 2) {
-      dealerDataFormatted.cards.pop();
-    }
-    validateAceValue(dealerDataFormatted.cards);
-    dealerDataFormatted.is_soft = isHandSoft(dealerDataFormatted.cards);
-
-    const formattedData = {
-      data: {
-        player: {
-          hands: [playerHandFormatted],
-          selectedHandIndex: 0,
-        },
-        dealer: dealerDataFormatted,
-        is_game_over: game.is_game_over,
-        bet: bet,
-      },
-    };
-
-    res.status(200).json(formattedData);
-    return;
-  } else {
-    res.status(404).json({
-      data: "No game found",
-    });
+    if (nextHandId.id > activeHand[0].hand_id) {
+      formattedData.data.player.selectedHandIndex = 1;
+      formattedData.data.player.hands.unshift(nextHandFormatted);
+    } else formattedData.data.player.hands.push(nextHandFormatted);
   }
+
+  const dealerDataFormatted = {
+    cards: dealerData.map((row) => ({
+      suit: row.suit,
+      rank: row.rank,
+      value: row.value,
+      sequence: row.sequence,
+    })),
+  };
+  // Remove the face down card to not reveal
+  if (dealerDataFormatted.cards.length === 2) {
+    dealerDataFormatted.cards.pop();
+  }
+  validateAceValue(dealerDataFormatted.cards);
+  formattedData.data.dealer = dealerDataFormatted;
+
+  res.status(200).json(formattedData);
+  return;
 };
 
 // HIT HIT HIT HIT
@@ -393,7 +398,7 @@ exports.split = async (req, res, next) => {
     data: {
       player: {
         hands: [],
-        selectedHandIndex: 0,
+        selectedHandIndex: 1,
       },
       dealer: {},
     },
@@ -479,8 +484,8 @@ exports.split = async (req, res, next) => {
     // Hit for new hand
     const newHandResults = await hit(client, gameId, newHandData);
 
-    formattedData.data.player.hands.push(originalHandResults.data.player.cards);
     formattedData.data.player.hands.push(newHandResults.data.player.cards);
+    formattedData.data.player.hands.push(originalHandResults.data.player.cards);
 
     if (newHandResults.is_21 && originalHandResults.is_21) {
       // Both hands get 21 so we now officially stand and draw for dealer
@@ -512,7 +517,7 @@ exports.split = async (req, res, next) => {
       await client.query(blackjackQueries.setGameOver, [gameId]);
     } else if (originalHandResults.is_21) {
       await swapSelectedHand(client, activeHand[0].hand_id, newHandId);
-      formattedData.data.player.selectedHandIndex = 1;
+      formattedData.data.player.selectedHandIndex = 0;
     } else if (newHandResults.is_21) {
       // If the new hand gets 21 then it "stands" so we complete the hand
       await client.query(blackjackQueries.completeHand, [newHandId]);

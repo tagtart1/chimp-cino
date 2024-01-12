@@ -7,7 +7,13 @@ const fetchHandData = require("../middleware/fetchHandData");
 
 router.post("/games", validateToken, blackjackController.newGame);
 
-router.get("/games/in-progress", validateToken, blackjackController.getGame);
+router.get(
+  "/games/in-progress",
+  validateToken,
+  fetchActiveGame,
+  fetchHandData,
+  blackjackController.getGame
+);
 
 // Make serpate actions for changing game state
 // like hit, stand, double down, and split
