@@ -32,14 +32,14 @@ const stand = async (client, gameId, handData) => {
     console.log("Player value:", playerTotal);
     if (dealerDrawResults.isBust || dealerDrawResults.handValue < playerTotal) {
       // Player wins
-      results.data.game_winner = "player";
+      results.data.game_winners = ["player"];
     } else if (dealerDrawResults.handValue === playerTotal) {
-      results.data.game_winner = "push";
+      results.data.game_winners = ["push"];
     } else if (
       !dealerDrawResults.isBust &&
       dealerDrawResults.handValue > playerTotal
     ) {
-      results.data.game_winner = "dealer";
+      results.data.game_winners = ["dealer"];
     }
 
     // Add dealer cards to returned data

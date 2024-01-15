@@ -17,7 +17,7 @@ const BlackjackPage = () => {
   const betAmountInput = useRef(null);
   const { user, setUser } = useUser();
 
-  const [playerHands, setPlayerHands] = useState([[], []]);
+  const [playerHands, setPlayerHands] = useState([[]]);
   const [selectedHandIndex, setSelectedHandIndex] = useState(0);
   const [showSelectedOutline, setShowSelectedOutline] = useState(false);
   const [playerValues, setPlayerValues] = useState([]);
@@ -27,7 +27,7 @@ const BlackjackPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [gameLoaded, setGameLoaded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const [gameWinner, setGameWinner] = useState();
+  const [gameWinners, setGameWinners] = useState([]);
 
   const thresholdWidth = 875;
   // Use this to delay actions for animation to run smooth
@@ -84,7 +84,7 @@ const BlackjackPage = () => {
 
       setGameLoaded(false);
       setGameOver(false);
-      setGameWinner("");
+      setGameWinners([]);
       await delay(1);
 
       setStartCardExit(true);
@@ -202,7 +202,6 @@ const BlackjackPage = () => {
           betAmountInput.current.value = results.data.bet;
 
           if (results.data.player.hands.length > 1) {
-            console.log("YOOO heree");
             setShowSelectedOutline(true);
             setSelectedHandIndex(results.data.player.selectedHandIndex);
           }
@@ -312,11 +311,11 @@ const BlackjackPage = () => {
       setDealerValue(dealerValue);
       await delay(520);
       setGameOver(true);
-      setGameWinner(gameData.data.game_winner);
+      setGameWinners(gameData.data.game_winners);
 
       if (
-        gameData.data.game_winner === "push" ||
-        gameData.data.game_winner === "player"
+        gameData.data.game_winners[0] === "push" ||
+        gameData.data.game_winners[0] === "player"
       ) {
         setUser((prev) => {
           const user = { ...prev };
@@ -347,6 +346,13 @@ const BlackjackPage = () => {
         card,
         selectedHandIndex
       );
+
+      // When hitting on a split, you can only move from right to left. If the split selection started on the left then the right hand is completed already by 21
+      if (results.goToNextHand && selectedHandIndex > 0) {
+        await delay(300);
+        setSelectedHandIndex((prev) => prev - 1);
+        console.log("NEXT HAND NICE");
+      }
     }
 
     if (results.dealer && results.is_game_over) {
@@ -369,8 +375,8 @@ const BlackjackPage = () => {
     if (results.is_game_over) {
       await delay(520);
       setGameOver(true);
-      setGameWinner(results.game_winner);
-
+      setGameWinners(results.game_winners);
+      console.log(results);
       if (!results.payout) return;
       setUser((prev) => {
         const user = { ...prev };
@@ -450,8 +456,6 @@ const BlackjackPage = () => {
         // Get the hand you want to update
         const handToUpdate = updatedHands[handIndex];
 
-        console.log("Player hands", updatedHands);
-        console.log("Hand to update", handToUpdate);
         // Calculate new value or perform other operations as needed
         newValue = getCardValueFromArray([...handToUpdate, card]);
 
@@ -552,7 +556,7 @@ const BlackjackPage = () => {
           rank={card.rank}
           dealerCard={isDealer}
           staticCard={card.isStatic}
-          gameResults={gameWinner}
+          gameResults={gameWinners[index]}
           startExit={startCardExit}
         />
       );
@@ -568,25 +572,32 @@ const BlackjackPage = () => {
           key={index}
         >
           <AnimatePresence>
-            {playerValues.length !== 0 && !startCardExit ? (
+            {playerValues.length !== 0 &&
+            !startCardExit &&
+            playerValues[index] !== 0 ? (
               <motion.div
                 className={`cards-value ${
-                  selectedHandIndex === index && showSelectedOutline
+                  selectedHandIndex === index &&
+                  showSelectedOutline &&
+                  !gameOver
                     ? "selected-value"
                     : ""
                 }`}
                 layout="position"
                 animate={{
                   backgroundColor:
-                    gameWinner === "player"
+                    gameWinners[index] === "player"
                       ? "#1FFF20"
-                      : gameWinner === "dealer"
+                      : gameWinners[index] === "dealer"
                       ? "#E9113C"
-                      : gameWinner === "push"
+                      : gameWinners[index] === "push"
                       ? "#FF9D00"
-                      : "",
+                      : null,
 
-                  color: gameOver && gameWinner !== "dealer" ? "#000" : "#FFF",
+                  color:
+                    gameOver && gameWinners[index] !== "dealer"
+                      ? "#000"
+                      : "#FFF",
                   transition: { duration: 0.2 },
                 }}
               >
@@ -620,7 +631,7 @@ const BlackjackPage = () => {
                 rank={card.rank}
                 dealerCard={false}
                 staticCard={card.isStatic}
-                gameResults={gameWinner}
+                gameResults={gameWinners[index]}
                 startExit={startCardExit}
                 splitCard={card.isSplit}
                 selected={isSelected}

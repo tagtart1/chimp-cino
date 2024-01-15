@@ -69,14 +69,14 @@ const setGameOver =
 const getCountOfPlayerHands =
   "SELECT COUNT(*) FROM active_hands WHERE is_player = true AND game_id = $1";
 
-const getSplitHandIds =
-  "SELECT id FROM active_hands WHERE is_player = true AND game_id = $1 AND is_selected = false ORDER BY id";
+const getSplitHandInfo =
+  "SELECT id, is_completed, is_bust FROM active_hands WHERE is_player = true AND game_id = $1 AND is_selected = false ORDER BY id";
 
 const createNewHand =
   "INSERT INTO active_hands (game_id, is_player, is_selected) VALUES ($1,$2,$3) RETURNING id";
 
-const deselectHand =
-  "UPDATE active_hands SET is_selected = false, is_completed = true WHERE id = $1";
+const deselectHandWithChanges =
+  "UPDATE active_hands SET is_selected = false, is_completed = true, is_bust = $2 WHERE id = $1";
 
 const selectHand = "UPDATE active_hands SET is_selected = true WHERE id = $1";
 
@@ -94,8 +94,8 @@ module.exports = {
   getCountOfPlayerHands,
   createNewHand,
   removeCardFromHand,
-  getSplitHandIds,
-  deselectHand,
+  getSplitHandInfo,
+  deselectHandWithChanges,
   selectHand,
   completeHand,
   getActiveHand,

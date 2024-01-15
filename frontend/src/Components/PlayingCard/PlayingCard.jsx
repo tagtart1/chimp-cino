@@ -100,7 +100,6 @@ export const PlayingCard = ({
 
   useEffect(() => {
     const moveSplitCard = async () => {
-      console.log("moving split card");
       await controls.start("toPosition");
     };
 

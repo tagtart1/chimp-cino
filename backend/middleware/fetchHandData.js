@@ -12,11 +12,14 @@ const fetchHandData = async (req, res, next) => {
 
     req.game.activeHand = activeHand;
 
-    const splitHandIds = (
-      await pool.query(blackjackQueries.getSplitHandIds, [gameId])
+    // Fetches hands that are the players, and unselected
+    // Returns the id and completed status
+    // Note to futre, this implementation here can only accept 1 other hand. If wanting to be able to split more than once you must rewrite some stuff bucko
+    const splitHandInfo = (
+      await pool.query(blackjackQueries.getSplitHandInfo, [gameId])
     ).rows;
 
-    req.game.nextHand = splitHandIds[0];
+    req.game.nextHand = splitHandInfo[0];
 
     next();
   } catch (error) {

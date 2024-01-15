@@ -86,7 +86,7 @@ exports.newGame = async (req, res, next) => {
       1,
       client,
       game_id,
-      4
+      9
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -101,7 +101,7 @@ exports.newGame = async (req, res, next) => {
       2,
       client,
       game_id,
-      17
+      22
     );
 
     const secondDealerCard = await pullCardFromDeck(
@@ -139,7 +139,7 @@ exports.newGame = async (req, res, next) => {
     if (gameWinner) {
       await client.query(blackjackQueries.setGameOver, [game_id]);
       formattedData.data.is_game_over = true;
-      formattedData.data.game_winner = gameWinner;
+      formattedData.data.game_winners = [gameWinner];
     }
 
     await client.query("COMMIT");
@@ -238,11 +238,9 @@ exports.getGame = async (req, res, next) => {
 // HIT HIT HIT HIT
 // TODO: if the hand is split, we need to check when to conclude the game
 exports.hit = async (req, res, next) => {
-  const gameId = req.game.id;
-  const bet = parseFloat(req.game.bet);
   const userID = req.user.id;
-  const activeHand = req.game.activeHand;
-  const nextHandId = req.game.nextHand;
+  const { id: gameId, bet: rawBet, activeHand, nextHand } = req.game;
+  const bet = parseFloat(rawBet);
   let client;
   let results;
 
@@ -251,22 +249,37 @@ exports.hit = async (req, res, next) => {
     await client.query("BEGIN");
 
     results = await hit(client, gameId, activeHand);
+    const { is_hand_bust, is_21 } = results.data;
 
-    if (results.data.is_hand_bust) {
-      if (!nextHandId) {
+    if (is_hand_bust) {
+      if (!nextHand) {
         await client.query(blackjackQueries.setGameOver, [gameId]);
-        results.data.game_winner = "dealer";
+        results.data.game_winners = ["dealer"];
         results.data.is_game_over = true;
       } else {
         // Hand is split so we just move to the next hand without ending game
-        await swapSelectedHand(client, activeHand[0].hand_id, nextHandId);
-        results.data.goToNextHand = true;
+        // The deselected hand is automatically completed in the DB
+        if (nextHand.is_bust) {
+          // Next hand is also bust so we just end the game on a loss, do not draw for dealer
+          await client.query(blackjackQueries.setGameOver, [gameId]);
+        } else if (nextHand.is_completed) {
+          // Next hand is over but not due to a bust, so we draw for dealer, end game.
+        } else {
+          await swapSelectedHand(
+            client,
+            activeHand[0].hand_id,
+            nextHand.id,
+            true
+          );
+
+          results.data.goToNextHand = true;
+        }
       }
-    } else if (results.data.is_21) {
+    } else if (is_21) {
       // If we are at 21, then we stand
 
       // Pass in the cards from the results at it is the most up to date
-      if (!nextHandId) {
+      if (!nextHand) {
         const standResults = await stand(
           client,
           gameId,
@@ -274,10 +287,17 @@ exports.hit = async (req, res, next) => {
         );
         results.data.dealer = standResults.data.dealer;
         results.data.is_game_over = true;
-        results.data.game_winner = standResults.data.game_winner;
+        results.data.game_winners = [standResults.data.game_winner];
       } else {
         // Hand is split so we just move to the next hand without ending game
-        await swapSelectedHand(client, activeHand[0].hand_id, nextHandId);
+
+        // TODO: check if other hand is completed, then we global stand
+        await swapSelectedHand(
+          client,
+          activeHand[0].hand_id,
+          nextHand.id,
+          false
+        );
         results.data.goToNextHand = true;
       }
     }
@@ -285,7 +305,7 @@ exports.hit = async (req, res, next) => {
     results.data.payout = await payoutPlayer(
       client,
       userID,
-      results.data.game_winner,
+      results.data.game_winners,
       bet
     );
 
@@ -324,7 +344,7 @@ exports.stand = async (req, res, next) => {
     formattedData.data.payout = await payoutPlayer(
       client,
       userID,
-      formattedData.data.game_winner,
+      formattedData.data.game_winners,
       bet
     );
 
@@ -487,7 +507,7 @@ exports.split = async (req, res, next) => {
     formattedData.data.player.hands.push(newHandResults.data.player.cards);
     formattedData.data.player.hands.push(originalHandResults.data.player.cards);
 
-    if (newHandResults.is_21 && originalHandResults.is_21) {
+    if (newHandResults.data.is_21 && originalHandResults.data.is_21) {
       // Both hands get 21 so we now officially stand and draw for dealer
       // We do not have to set the hands to completed in the DB as the game is now officially over here
       formattedData.data.is_game_over = true;
@@ -504,7 +524,7 @@ exports.split = async (req, res, next) => {
         initBet
       );
       formattedData.data.payout = winnings.totalPayout;
-      formattedData.data.game_winner = winnings.winners;
+      formattedData.data.game_winners = winnings.winners;
       // Deposit winning
       if (winnings.totalPayout > 0) {
         await client.query(casinoQueries.depositBalance, [
@@ -515,17 +535,24 @@ exports.split = async (req, res, next) => {
 
       // Set game over in DB
       await client.query(blackjackQueries.setGameOver, [gameId]);
-    } else if (originalHandResults.is_21) {
-      await swapSelectedHand(client, activeHand[0].hand_id, newHandId);
+    } else if (originalHandResults.data.is_21) {
+      console.log("yo");
+      await swapSelectedHand(
+        client,
+        activeHand[0].hand_id,
+        newHandId.id,
+        false
+      );
+
       formattedData.data.player.selectedHandIndex = 0;
-    } else if (newHandResults.is_21) {
+    } else if (newHandResults.data.is_21) {
       // If the new hand gets 21 then it "stands" so we complete the hand
-      await client.query(blackjackQueries.completeHand, [newHandId]);
+      await client.query(blackjackQueries.completeHand, [newHandId.id]);
     }
 
     // TODO: Edit DOUBLE rules to comply with this setup
 
-    // await client.query("COMMIT");
+    await client.query("COMMIT");
 
     res.status(200).json(formattedData);
   } catch (error) {

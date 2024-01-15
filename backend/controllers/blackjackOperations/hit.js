@@ -9,7 +9,7 @@ const {
 } = require("../../utils/deckChecks");
 
 // In charge of hitting a new card, and reporting back results
-const hit = async (client, gameId, handData) => {
+const hit = async (client, gameId, handData, rig) => {
   let formattedData = {
     data: {
       player: null,
@@ -34,7 +34,8 @@ const hit = async (client, gameId, handData) => {
       playerHandId,
       newSequence,
       client,
-      gameId
+      gameId,
+      rig
     );
 
     playerHandFormatted.cards.push(newCard);
