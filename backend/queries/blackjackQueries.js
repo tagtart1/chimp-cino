@@ -19,6 +19,15 @@ const getActiveHand = `
   ORDER BY ah.id, ahc.sequence;
   `;
 
+const getSplitHandInfo = `
+SELECT c.suit, c.rank, c.value, ahc.sequence, ah.id, ah.is_completed, ah.is_bust 
+FROM active_hands AS ah
+JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
+JOIN cards as c ON ahc.card_id = c.id
+WHERE ah.game_id = $1 AND ah.is_player = true AND ah.is_selected = false
+ORDER BY ah.id, ahc.sequence;
+`;
+
 const getSpecificHand = `
   SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id
   FROM active_hands AS ah
@@ -68,9 +77,6 @@ const setGameOver =
 
 const getCountOfPlayerHands =
   "SELECT COUNT(*) FROM active_hands WHERE is_player = true AND game_id = $1";
-
-const getSplitHandInfo =
-  "SELECT id, is_completed, is_bust FROM active_hands WHERE is_player = true AND game_id = $1 AND is_selected = false ORDER BY id";
 
 const createNewHand =
   "INSERT INTO active_hands (game_id, is_player, is_selected) VALUES ($1,$2,$3) RETURNING id";

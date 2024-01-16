@@ -32,6 +32,7 @@ router.patch(
   "/games/stand",
   validateToken,
   fetchActiveGame,
+  fetchHandData,
   blackjackController.stand
 );
 

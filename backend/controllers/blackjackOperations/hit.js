@@ -12,23 +12,16 @@ const {
 const hit = async (client, gameId, handData, rig) => {
   let formattedData = {
     data: {
-      player: null,
+      player: {
+        cards: [],
+      },
       is_game_over: false,
+      game_winners: [],
     },
   };
   try {
-    const playerHandId = handData[0].hand_id;
-    const newSequence = handData[handData.length - 1].sequence + 1;
-
-    const playerHandFormatted = {
-      cards: handData.map((row) => ({
-        suit: row.suit,
-        rank: row.rank,
-        value: row.value,
-
-        sequence: row.sequence,
-      })),
-    };
+    const playerHandId = handData.id;
+    const newSequence = handData.cards[handData.cards.length - 1].sequence + 1;
 
     const newCard = await pullCardFromDeck(
       playerHandId,
@@ -38,14 +31,14 @@ const hit = async (client, gameId, handData, rig) => {
       rig
     );
 
-    playerHandFormatted.cards.push(newCard);
-    validateAceValue(playerHandFormatted.cards);
+    handData.cards.push(newCard);
+    validateAceValue(handData.cards);
 
-    formattedData.data.is_hand_bust = checkForBust(playerHandFormatted.cards);
+    formattedData.data.is_hand_bust = checkForBust(handData.cards);
     // TODO: remove the checkfor21 outsite of this.
-    formattedData.data.is_21 = checkFor21(playerHandFormatted.cards);
+    formattedData.data.is_21 = checkFor21(handData.cards);
 
-    formattedData.data.player = playerHandFormatted;
+    formattedData.data.player.cards = handData.cards;
   } catch (err) {
     console.log(err);
 

@@ -53,11 +53,13 @@ const BlackjackActions = ({ handleAction, handleSplit }) => {
 
     const actionResults = await response.json();
 
-    actionResults.data.dealer.cards.forEach((element) => {
-      if (element.value === 1) {
-        element.value = 11;
-      }
-    });
+    if (actionResults.data.dealer) {
+      actionResults.data.dealer.cards.forEach((element) => {
+        if (element.value === 1) {
+          element.value = 11;
+        }
+      });
+    }
 
     handleAction(actionResults.data, false);
   };

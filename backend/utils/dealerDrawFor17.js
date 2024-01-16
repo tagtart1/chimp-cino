@@ -29,6 +29,7 @@ const dealerDrawFor17 = async (client, gameId) => {
     })),
   };
 
+  validateAceValue(dealerHandFormatted.cards);
   let handValue = dealerHandFormatted.cards.reduce((value, card) => {
     return value + card.value;
   }, 0);

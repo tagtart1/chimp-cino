@@ -88,10 +88,11 @@ const BlackjackPage = () => {
       await delay(1);
 
       setStartCardExit(true);
-
+      setShowSelectedOutline(false);
       await delay(500);
       setPlayerHands([]);
       setDealerCards([]);
+
       await delay(200);
     }
 
@@ -346,13 +347,12 @@ const BlackjackPage = () => {
         card,
         selectedHandIndex
       );
+    }
 
-      // When hitting on a split, you can only move from right to left. If the split selection started on the left then the right hand is completed already by 21
-      if (results.goToNextHand && selectedHandIndex > 0) {
-        await delay(300);
-        setSelectedHandIndex((prev) => prev - 1);
-        console.log("NEXT HAND NICE");
-      }
+    // When hitting on a split, you can only move from right to left. If the split selection started on the left then the right hand is completed already by 21
+    if (results.goToNextHand && selectedHandIndex > 0) {
+      if (isHit) await delay(720);
+      setSelectedHandIndex((prev) => prev - 1);
     }
 
     if (results.dealer && results.is_game_over) {
@@ -376,6 +376,7 @@ const BlackjackPage = () => {
       await delay(520);
       setGameOver(true);
       setGameWinners(results.game_winners);
+
       console.log(results);
       if (!results.payout) return;
       setUser((prev) => {
@@ -563,6 +564,34 @@ const BlackjackPage = () => {
     });
   };
 
+  const determineStyles = (index) => {
+    let backgroundColor, color;
+
+    // Determine if the current item is selected
+    const isSelected =
+      selectedHandIndex === index && showSelectedOutline && !gameOver;
+
+    // Determine background color based on game winners
+    if (gameWinners[index] === "player") {
+      backgroundColor = "#1FFF20";
+      color = "#000";
+    } else if (gameWinners[index] === "dealer") {
+      backgroundColor = "#E9113C";
+      color = "#FFF";
+    } else if (gameWinners[index] === "push") {
+      backgroundColor = "#FF9D00";
+      color = "#000";
+    } else if (isSelected) {
+      backgroundColor = "#4391e7";
+      color = "#000";
+    } else {
+      color = "#FFF";
+      backgroundColor = "#2F4553";
+    }
+
+    return { backgroundColor, color };
+  };
+
   const renderPlayerStacks = (hands) => {
     return hands.map((hand, index) => {
       return (
@@ -576,28 +605,20 @@ const BlackjackPage = () => {
             !startCardExit &&
             playerValues[index] !== 0 ? (
               <motion.div
-                className={`cards-value ${
-                  selectedHandIndex === index &&
-                  showSelectedOutline &&
-                  !gameOver
-                    ? "selected-value"
-                    : ""
-                }`}
+                className={`cards-value`}
                 layout="position"
+                initial={
+                  gameLoaded
+                    ? {
+                        backgroundColor: determineStyles(index).backgroundColor,
+                        color: determineStyles(index).color,
+                      }
+                    : null
+                }
                 animate={{
-                  backgroundColor:
-                    gameWinners[index] === "player"
-                      ? "#1FFF20"
-                      : gameWinners[index] === "dealer"
-                      ? "#E9113C"
-                      : gameWinners[index] === "push"
-                      ? "#FF9D00"
-                      : null,
+                  backgroundColor: determineStyles(index).backgroundColor,
 
-                  color:
-                    gameOver && gameWinners[index] !== "dealer"
-                      ? "#000"
-                      : "#FFF",
+                  color: determineStyles(index).color,
                   transition: { duration: 0.2 },
                 }}
               >

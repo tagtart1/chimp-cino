@@ -3,6 +3,7 @@ const validateAceValue = (cards) => {
   let totalValue = 0;
   for (const card of cards) {
     totalValue += card.value;
+
     if (totalValue > 21) {
       const ace = cards.find((c) => c.rank === "A" && c.value === 11);
       if (ace) {
