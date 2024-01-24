@@ -164,50 +164,51 @@ const BlackjackPage = () => {
           method: "GET",
         });
 
-        if (response.ok) {
-          const results = await response.json();
-          if (results.data.is_game_over) {
-            return;
-          }
+        if (!response.ok) {
+          console.log("No game found");
+          return;
+        }
 
-          const playerHands = results.data.player.hands;
-          const dealerCards = results.data.dealer.cards;
+        const results = await response.json();
+        if (results.data.is_game_over) {
+          return;
+        }
 
-          // Check if game is new to send a blank
-          if (dealerCards.length === 1) {
-            dealerCards.push({ isStatic: true, isBlank: true });
-          }
-          // Set cards to the array of cards
-          for (const hand of playerHands) {
-            for (const card of hand) {
-              card.isStatic = true;
-            }
-          }
+        const playerHands = results.data.player.hands;
+        const dealerCards = results.data.dealer.cards;
 
-          for (const card of dealerCards) {
+        // Check if game is new to send a blank
+        if (dealerCards.length === 1) {
+          dealerCards.push({ isStatic: true, isBlank: true });
+        }
+        // Set cards to the array of cards
+        for (const hand of playerHands) {
+          for (const card of hand) {
             card.isStatic = true;
           }
-          setGameLoaded(true);
-          //playerHands.reverse();
-          setPlayerHands(playerHands);
-          setDealerCards(dealerCards);
+        }
 
-          // Grab total value
+        for (const card of dealerCards) {
+          card.isStatic = true;
+        }
+        setGameLoaded(true);
+        //playerHands.reverse();
+        setPlayerHands(playerHands);
+        setDealerCards(dealerCards);
 
-          setDealerValue(getCardValueFromArray(dealerCards));
-          let playerValueArray = [];
-          for (const hand of playerHands) {
-            playerValueArray.push(getCardValueFromArray(hand));
-          }
-          setPlayerValues(playerValueArray);
-          betAmountInput.current.value = results.data.bet;
+        // Grab total value
 
-          if (results.data.player.hands.length > 1) {
-            setShowSelectedOutline(true);
-            setSelectedHandIndex(results.data.player.selectedHandIndex);
-          }
-        } else {
-          console.log("No game found");
+        setDealerValue(getCardValueFromArray(dealerCards));
+        let playerValueArray = [];
+        for (const hand of playerHands) {
+          playerValueArray.push(getCardValueFromArray(hand));
+        }
+        setPlayerValues(playerValueArray);
+        betAmountInput.current.value = results.data.bet;
+
+        if (results.data.player.hands.length > 1) {
+          setShowSelectedOutline(true);
+          setSelectedHandIndex(results.data.player.selectedHandIndex);
         }
       } catch (err) {
         console.log(err);
@@ -656,6 +657,7 @@ const BlackjackPage = () => {
                 startExit={startCardExit}
                 splitCard={card.isSplit}
                 selected={isSelected}
+                // Pass in the handIndex and if the card is from a split hand
               />
             );
           })}

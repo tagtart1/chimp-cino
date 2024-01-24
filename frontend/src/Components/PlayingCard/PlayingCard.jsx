@@ -31,44 +31,6 @@ export const PlayingCard = ({
       }
     : {};
 
-  const playerCardVariants = !staticCard
-    ? {
-        initial: {
-          transform: `translate(${startOffsetX + 375}%, -${
-            320 + startOffsetY
-          }%)`,
-          opacity: 1,
-        },
-
-        toPosition: {
-          transform: "translate(0, 0)",
-          transition: { duration: 0.5 },
-        },
-        rotate: {
-          transform: "rotateY(180deg) ",
-
-          transition: { duration: 0.5 },
-        },
-
-        leave: {
-          transform: "translate(-10px, 10px) rotateY(180deg)",
-          opacity: 0,
-          transition: { duration: 0.2, delay: 0.15 * nthCard },
-        },
-      }
-    : {
-        initial: initialState,
-        toPosition: {
-          transform: "translate(0, 0) rotateY(180deg)",
-          transition: { duration: 0.5 },
-        },
-        leave: {
-          transform: "translate(-10px, 10px) rotateY(180deg) ",
-          opacity: 0,
-          transition: { duration: 0.2, delay: 0.15 * nthCard },
-        },
-      };
-
   const dealerCardVariants = !staticCard
     ? {
         initial: { transform: `translate(${startOffsetX + 375}%, -100%)` },
@@ -106,6 +68,7 @@ export const PlayingCard = ({
     const sequence = async () => {
       if (!startExit) {
         await controls.start("toPosition");
+
         if (isBlank) return;
         await controls.start("rotate");
       } else {
@@ -132,6 +95,45 @@ export const PlayingCard = ({
       : "";
 
   const isSplitAndSelected = selected ? "selected-hand" : "";
+
+  const playerCardVariants = !staticCard
+    ? // If the card is from a split hand then do different initials based on the handIndex
+      {
+        initial: {
+          transform: `translate(${320 + nthCard * 30}px, -${
+            420 + nthCard * 100
+          }px)`,
+          opacity: 1,
+        },
+
+        toPosition: {
+          transform: "translate(0, 0)",
+          transition: { duration: 0.5 },
+        },
+        rotate: {
+          transform: "rotateY(180deg) ",
+
+          transition: { duration: 0.5 },
+        },
+
+        leave: {
+          transform: "translate(-10px, 10px) rotateY(180deg)",
+          opacity: 0,
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
+        },
+      }
+    : {
+        initial: initialState,
+        toPosition: {
+          transform: "translate(0, 0) rotateY(180deg)",
+          transition: { duration: 0.5 },
+        },
+        leave: {
+          transform: "translate(-10px, 10px) rotateY(180deg) ",
+          opacity: 0,
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
+        },
+      };
 
   return (
     <motion.div
@@ -168,6 +170,7 @@ export const PlayingCard = ({
           </div>
         ) : null}
       </div>
+
       <div className="back"></div>
     </motion.div>
   );
