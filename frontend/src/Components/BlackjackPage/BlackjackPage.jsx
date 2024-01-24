@@ -395,9 +395,16 @@ const BlackjackPage = () => {
     const playerResult = resultData.player;
     const leftCard = playerResult.hands[0][playerResult.hands[0].length - 1];
     const rightCard = playerResult.hands[1][playerResult.hands[1].length - 1];
-    // playerResult.hands.reverse();
 
-    console.log("Selected index", playerResult.selectedHandIndex);
+    // Subtract bet again for UI
+    setUser((prev) => {
+      const user = { ...prev };
+
+      user.balance -= betAmountInput.current.value;
+
+      return user;
+    });
+
     setSelectedHandIndex(playerResult.selectedHandIndex);
     setPlayerHands((hands) => {
       const newHands = [...hands];
@@ -657,7 +664,7 @@ const BlackjackPage = () => {
                 startExit={startCardExit}
                 splitCard={card.isSplit}
                 selected={isSelected}
-                // Pass in the handIndex and if the card is from a split hand
+                // Pass in the handIndex and if the hands are split
               />
             );
           })}
