@@ -92,6 +92,7 @@ const BlackjackPage = () => {
       await delay(500);
       setPlayerHands([]);
       setDealerCards([]);
+      setSelectedHandIndex(0);
 
       await delay(200);
     }
@@ -465,7 +466,7 @@ const BlackjackPage = () => {
         // Get the hand you want to update
         const handToUpdate = updatedHands[handIndex];
 
-        // Calculate new value or perform other operations as needed
+        // Calculate new value
         newValue = getCardValueFromArray([...handToUpdate, card]);
 
         // Add the new card to the specific hand
