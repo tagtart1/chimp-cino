@@ -38,7 +38,8 @@ const dealerDrawFor17 = async (client, gameId) => {
       dealerHandId,
       newSequence,
       client,
-      gameId
+      gameId,
+      23
     );
 
     dealerHandFormatted.cards.push(newCard);

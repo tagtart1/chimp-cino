@@ -40,6 +40,7 @@ router.patch(
   "/games/double",
   validateToken,
   fetchActiveGame,
+  fetchHandData,
   blackjackController.double
 );
 

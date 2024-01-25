@@ -193,7 +193,7 @@ const BlackjackPage = () => {
           card.isStatic = true;
         }
         setGameLoaded(true);
-        //playerHands.reverse();
+
         setPlayerHands(playerHands);
         setDealerCards(dealerCards);
 
@@ -603,6 +603,7 @@ const BlackjackPage = () => {
 
   const renderPlayerStacks = (hands) => {
     return hands.map((hand, index) => {
+      console.log("Game Loaded: ", gameLoaded);
       return (
         <motion.div
           className="card-stack"

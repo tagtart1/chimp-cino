@@ -42,14 +42,14 @@ const stand = async (client, gameId, playerHandsInfo) => {
         // Player wins
 
         results.data.game_winners.push("player");
-      } else if (dealerDrawResults.handValue === handTotal) {
-        results.data.game_winners.push("push");
       } else if (
         (!dealerDrawResults.isBust &&
           dealerDrawResults.handValue > handTotal) ||
         hand.is_bust
       ) {
         results.data.game_winners.push("dealer");
+      } else if (dealerDrawResults.handValue === handTotal) {
+        results.data.game_winners.push("push");
       }
     }
 

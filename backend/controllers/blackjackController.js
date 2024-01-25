@@ -363,35 +363,51 @@ exports.stand = async (req, res, next) => {
 // A Double doubles the bet, hits for 1 card and then stands
 exports.double = async (req, res, next) => {
   // Hit once
-  const gameId = req.game.id;
+  const { id: gameId, activeHand, nextHand } = req.game;
   const initBet = parseFloat(req.game.bet);
   const totalBet = initBet * 2;
   const userID = req.user.id;
 
   let client;
-  let formattedData = {};
+  let formattedData = {
+    data: {},
+  };
 
   try {
     client = await pool.connect();
     await client.query("BEGIN");
 
-    // End the game
-    await client.query(blackjackQueries.setGameOver, [gameId]);
     // Grab player hand
-    const handData = (
-      await client.query(blackjackQueries.getHandData, [gameId, true])
-    ).rows;
+    formattedData = await double(client, gameId, userID, activeHand, initBet);
 
-    formattedData = await double(client, gameId, userID, handData, initBet);
+    const { is_hand_bust } = formattedData.data;
+    activeHand.is_bust = is_hand_bust;
+    if (!nextHand) {
+      formattedData.data.is_game_over = true;
+      if (is_hand_bust) {
+        await client.query(blackjackQueries.setGameOver, [gameId]);
+        formattedData.data.game_winners = ["dealer"];
+      } else {
+        const results = await stand(client, gameId, [activeHand]);
+        formattedData.data.game_winners = results.data.game_winners;
+        formattedData.data.dealer = results.data.dealer;
+      }
+    } else if (nextHand.is_completed || nextHand.is_bust) {
+      formattedData.data.is_game_over = true;
+      const results = await stand(client, gameId, [activeHand, nextHand]);
+      formattedData.data.game_winners = results.data.game_winners;
+      formattedData.data.dealer = results.data.dealer;
+    } else {
+      await swapSelectedHand(client, activeHand.id, nextHand.id, is_hand_bust);
+      formattedData.data.goToNextHand = true;
+    }
 
     formattedData.data.payout = await payoutPlayer(
       client,
       userID,
-      formattedData.data.game_winner,
+      formattedData.data.game_winners,
       totalBet
     );
-
-    formattedData.data.is_game_over = true;
 
     await client.query("COMMIT");
   } catch (err) {
