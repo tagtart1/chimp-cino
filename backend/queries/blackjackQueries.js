@@ -20,7 +20,7 @@ const getActiveHand = `
   `;
 
 const getSplitHandInfo = `
-SELECT c.suit, c.rank, c.value, ahc.sequence, ah.id, ah.is_completed, ah.is_bust 
+SELECT c.suit, c.rank, c.value, ahc.sequence, ah.id, ah.is_completed, ah.is_bust , ah.is_doubled
 FROM active_hands AS ah
 JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
 JOIN cards as c ON ahc.card_id = c.id
@@ -82,7 +82,7 @@ const createNewHand =
   "INSERT INTO active_hands (game_id, is_player, is_selected) VALUES ($1,$2,$3) RETURNING id";
 
 const deselectHandWithChanges =
-  "UPDATE active_hands SET is_selected = false, is_completed = true, is_bust = $2 WHERE id = $1";
+  "UPDATE active_hands SET is_selected = false, is_completed = true, is_bust = $2, is_doubled = $3 WHERE id = $1";
 
 const selectHand = "UPDATE active_hands SET is_selected = true WHERE id = $1";
 
