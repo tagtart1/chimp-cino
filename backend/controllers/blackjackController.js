@@ -229,9 +229,10 @@ exports.getGame = async (req, res, next) => {
 exports.hit = async (req, res, next) => {
   const userID = req.user.id;
   const { id: gameId, activeHand, nextHand } = req.game;
-  const bet = activeHand.bet;
+
   let client;
   let results;
+  const handArray = [activeHand, nextHand].filter(Boolean);
 
   try {
     client = await pool.connect();
@@ -259,22 +260,13 @@ exports.hit = async (req, res, next) => {
         } else if (nextHand.is_completed) {
           // Next hand is over but not due to a bust, so we draw for dealer, end game.
 
-          const standResults = await stand(client, gameId, [
-            activeHand,
-            nextHand,
-          ]);
+          const standResults = await stand(client, gameId, handArray);
           results.data.is_game_over = true;
           results.data.game_winners = standResults.data.game_winners;
           results.data.dealer = standResults.data.dealer;
         } else {
           // Swaps and sets the active hand to bust and completed
-          await swapSelectedHand(
-            client,
-            activeHand.id,
-            nextHand.id,
-            true,
-            false
-          );
+          await swapSelectedHand(client, activeHand.id, nextHand.id, true);
 
           results.data.goToNextHand = true;
         }
@@ -284,26 +276,19 @@ exports.hit = async (req, res, next) => {
 
       // Pass in the cards from the results at it is the most up to date
       if (!nextHand) {
-        const standResults = await stand(client, gameId, [activeHand]);
+        const standResults = await stand(client, gameId, handArray);
         results.data.dealer = standResults.data.dealer;
         results.data.is_game_over = true;
         results.data.game_winners = standResults.data.game_winners;
       } else {
         // Hand is split so we just move to the next hand without ending game
         if (nextHand.is_bust || nextHand.is_completed) {
-          const handsArray = [activeHand, nextHand];
           const standResults = await stand(client, gameId, handsArray);
           results.data.is_game_over = true;
           results.data.game_winners = standResults.data.game_winners;
           results.data.dealer = standResults.data.dealer;
         } else {
-          await swapSelectedHand(
-            client,
-            activeHand.id,
-            nextHand.id,
-            false,
-            false
-          );
+          await swapSelectedHand(client, activeHand.id, nextHand.id, false);
           results.data.goToNextHand = true;
         }
       }
@@ -313,7 +298,7 @@ exports.hit = async (req, res, next) => {
       client,
       userID,
       results.data.game_winners,
-      bet
+      handArray
     );
 
     await client.query("COMMIT");
@@ -330,9 +315,9 @@ exports.hit = async (req, res, next) => {
 
 exports.stand = async (req, res, next) => {
   const { id: gameId, activeHand, nextHand } = req.game;
-  const bet = activeHand.bet;
   const userID = req.user.id;
 
+  const handArray = [activeHand, nextHand].filter(Boolean);
   let client;
   let formattedData = {
     data: {
@@ -344,22 +329,16 @@ exports.stand = async (req, res, next) => {
     client = await pool.connect();
     await client.query("BEGIN");
     if (!nextHand) {
-      formattedData = await stand(client, gameId, [activeHand]);
+      formattedData = await stand(client, gameId, handArray);
       formattedData.data.is_game_over = true;
     } else {
       if (nextHand.is_completed || nextHand.is_bust) {
-        formattedData = await stand(client, gameId, [activeHand, nextHand]);
+        formattedData = await stand(client, gameId, handArray);
 
         formattedData.data.is_game_over = true;
       } else {
         // Swap the hand
-        await swapSelectedHand(
-          client,
-          activeHand.id,
-          nextHand.id,
-          false,
-          false
-        );
+        await swapSelectedHand(client, activeHand.id, nextHand.id, false);
         formattedData.data.goToNextHand = true;
       }
     }
@@ -368,7 +347,7 @@ exports.stand = async (req, res, next) => {
       client,
       userID,
       formattedData.data.game_winners,
-      bet
+      handArray
     );
 
     await client.query("COMMIT");
@@ -387,12 +366,9 @@ exports.double = async (req, res, next) => {
   const { id: gameId, activeHand, nextHand } = req.game;
   const userID = req.user.id;
 
-  // Initial game bet
-  const initBet = activeHand.bet;
-
   // payableBet is the bet amount the player can be payed out for. Prevents paying out double on activeHands that bust but nextHands that win without doubling
   let handArray = [activeHand, nextHand].filter(Boolean);
-
+  console.log(handArray);
   let client;
   let formattedData = {
     data: {},
@@ -402,12 +378,13 @@ exports.double = async (req, res, next) => {
     client = await pool.connect();
     await client.query("BEGIN");
 
-    // Grab player hand
     formattedData = await double(client, gameId, userID, activeHand);
 
     const { is_hand_bust } = formattedData.data;
+
     activeHand.is_bust = is_hand_bust;
-    activeHand.is_doubled = true;
+    // TODO: is_doubled is obselete after the new bet column in DB, so remove later
+
     if (!nextHand) {
       formattedData.data.is_game_over = true;
       if (is_hand_bust) {
@@ -432,22 +409,15 @@ exports.double = async (req, res, next) => {
         formattedData.data.dealer = results.data.dealer;
       }
     } else {
-      await swapSelectedHand(
-        client,
-        activeHand.id,
-        nextHand.id,
-        is_hand_bust,
-        true
-      );
+      await swapSelectedHand(client, activeHand.id, nextHand.id, is_hand_bust);
       formattedData.data.goToNextHand = true;
     }
 
-    // TODO: edit payoutPlayer to take the array of hands and use that to grab their bets and do a correct payout, 3 references too
     formattedData.data.payout = await payoutPlayer(
       client,
       userID,
       formattedData.data.game_winners,
-      initBet
+      handArray
     );
 
     await client.query("COMMIT");
@@ -564,7 +534,7 @@ exports.split = async (req, res, next) => {
     // At this point the original hand is still the selected one so now we hit once for each hand
 
     // Hit for original hand
-    const originalHandResults = await hit(client, gameId, activeHand, 26);
+    const originalHandResults = await hit(client, gameId, activeHand);
 
     // Hit for new hand
     const newHandResults = await hit(client, gameId, newHandData);
@@ -575,13 +545,14 @@ exports.split = async (req, res, next) => {
     if (newHandResults.data.is_21 && originalHandResults.data.is_21) {
       // Both hands get 21 so we now officially stand and draw for dealer
       // We do not have to set the hands to completed in the DB as the game is now officially over here
+
       formattedData.data.is_game_over = true;
       await client.query(blackjackQueries.setGameOver, [gameId]);
 
       // Draw for dealer
-      const dealerDrawResulsts = await dealerDrawFor17(client, gameId);
+      const dealerDrawResults = await dealerDrawFor17(client, gameId);
       const winnings = calculateWinnings(
-        dealerDrawResulsts,
+        dealerDrawResults,
         [
           newHandResults.data.player.cards,
           originalHandResults.data.player.cards,
@@ -590,6 +561,7 @@ exports.split = async (req, res, next) => {
       );
       formattedData.data.payout = winnings.totalPayout;
       formattedData.data.game_winners = winnings.winners;
+      formattedData.data.dealer.cards = dealerDrawResults.cards;
       // Deposit winning
       if (winnings.totalPayout > 0) {
         await client.query(casinoQueries.depositBalance, [
@@ -601,8 +573,7 @@ exports.split = async (req, res, next) => {
       // Set game over in DB
       await client.query(blackjackQueries.setGameOver, [gameId]);
     } else if (originalHandResults.data.is_21) {
-      console.log("ORIGINAL HAND IS 21 ");
-      await swapSelectedHand(client, activeHand.id, newHandId, false, false);
+      await swapSelectedHand(client, activeHand.id, newHandId, false);
 
       formattedData.data.player.selectedHandIndex = 0;
     } else if (newHandResults.data.is_21) {

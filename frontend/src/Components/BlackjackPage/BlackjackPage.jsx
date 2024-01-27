@@ -451,8 +451,37 @@ const BlackjackPage = () => {
       0
     );
 
-    await delay(500);
-    setShowSelectedOutline(true);
+    if (resultData.dealer.cards) {
+      for (let i = 1; i < resultData.dealer.cards.length; i++) {
+        await dealNewCard(
+          resultData.dealer.cards.slice(0, i),
+          false,
+          resultData.dealer.cards[i],
+          0
+        );
+
+        if (i < resultData.dealer.cards.length - 1) {
+          await delay(520);
+        }
+      }
+    }
+
+    await delay(520);
+    if (resultData.is_game_over) {
+      setGameOver(true);
+      setGameWinners(resultData.game_winners);
+
+      setUser((prev) => {
+        const user = { ...prev };
+
+        parseFloat(user.balance);
+        user.balance += resultData.payout;
+
+        return user;
+      });
+    } else {
+      setShowSelectedOutline(true);
+    }
   };
 
   const dealNewCard = async (hand, isPlayer, card, handIndex) => {

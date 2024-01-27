@@ -47,7 +47,6 @@ const fetchHandData = async (req, res, next) => {
       id: splitHandResult[0].id,
       is_bust: splitHandResult[0].is_bust,
       is_completed: splitHandResult[0].is_completed,
-      is_doubled: splitHandResult[0].is_doubled,
       bet: parseFloat(splitHandResult[0].bet),
     };
 

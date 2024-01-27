@@ -34,6 +34,9 @@ const double = async (client, gameId, userID, handData) => {
     // Increase hands bet
     await client.query(blackjackQueries.doubleHandBet, [handData.id]);
 
+    // Increase the activehands bet property
+    handData.bet += handData.bet;
+
     // Hit
     const hitResults = await hit(client, gameId, handData);
     return hitResults;
