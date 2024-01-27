@@ -1,7 +1,5 @@
 const casinoQueries = require("../queries/casinoQueries");
 
-// TODO: needs to be variable with multiple hands
-
 const payoutPlayer = async (client, userId, winners, bet) => {
   let totalPayout = 0;
   // Handle payout if applicable

@@ -71,6 +71,7 @@ exports.newGame = async (req, res, next) => {
     }
 
     // Create a new blackjack game
+    // TODO: delete bet for game, it is now accociated with a hand
     const { game_id, player_hand_id, dealer_hand_id } = (
       await client.query(blackjackQueries.createNewBlackjackGame, [userID, bet])
     ).rows[0];
@@ -124,9 +125,9 @@ exports.newGame = async (req, res, next) => {
     } else if (!isDealerBlackjack && isPlayerBlackjack) {
       gameWinner = "player";
       // Payout player 3:2
-      console.log("Player blackjack bet: ", bet);
+
       const payout = bet + bet * 1.5;
-      console.log("Player blackjack payout: ", payout);
+
       formattedData.data.payout = payout;
       await client.query(casinoQueries.depositBalance, [payout, userID]);
     } else if (isDealerBlackjack && isPlayerBlackjack) {
@@ -168,11 +169,16 @@ exports.newGame = async (req, res, next) => {
 };
 
 exports.getGame = async (req, res, next) => {
-  const bet = req.game.bet;
   const activeHand = req.game.activeHand;
   const nextHand = req.game.nextHand;
+  let bet = activeHand.bet;
 
-  let nextHandFormatted;
+  if (nextHand) {
+    bet += nextHand.bet;
+  }
+
+  bet = bet.toFixed(2);
+
   const formattedData = {
     data: {
       player: {
@@ -222,8 +228,8 @@ exports.getGame = async (req, res, next) => {
 // TODO: if the hand is split, we need to check when to conclude the game
 exports.hit = async (req, res, next) => {
   const userID = req.user.id;
-  const { id: gameId, bet: rawBet, activeHand, nextHand } = req.game;
-  const bet = parseFloat(rawBet);
+  const { id: gameId, activeHand, nextHand } = req.game;
+  const bet = activeHand.bet;
   let client;
   let results;
 
@@ -233,7 +239,7 @@ exports.hit = async (req, res, next) => {
 
     results = await hit(client, gameId, activeHand);
     const { is_hand_bust, is_21 } = results.data;
-    console.log(nextHand);
+
     activeHand.is_bust = is_hand_bust;
 
     if (is_hand_bust) {
@@ -285,10 +291,8 @@ exports.hit = async (req, res, next) => {
       } else {
         // Hand is split so we just move to the next hand without ending game
         if (nextHand.is_bust || nextHand.is_completed) {
-          const standResults = await stand(client, gameId, [
-            activeHand,
-            nextHand,
-          ]);
+          const handsArray = [activeHand, nextHand];
+          const standResults = await stand(client, gameId, handsArray);
           results.data.is_game_over = true;
           results.data.game_winners = standResults.data.game_winners;
           results.data.dealer = standResults.data.dealer;
@@ -326,7 +330,7 @@ exports.hit = async (req, res, next) => {
 
 exports.stand = async (req, res, next) => {
   const { id: gameId, activeHand, nextHand } = req.game;
-  const bet = parseFloat(req.game.bet);
+  const bet = activeHand.bet;
   const userID = req.user.id;
 
   let client;
@@ -384,10 +388,10 @@ exports.double = async (req, res, next) => {
   const userID = req.user.id;
 
   // Initial game bet
-  const initBet = parseFloat(req.game.bet);
+  const initBet = activeHand.bet;
 
   // payableBet is the bet amount the player can be payed out for. Prevents paying out double on activeHands that bust but nextHands that win without doubling
-  let payableBet = initBet;
+  let handArray = [activeHand, nextHand].filter(Boolean);
 
   let client;
   let formattedData = {
@@ -399,32 +403,33 @@ exports.double = async (req, res, next) => {
     await client.query("BEGIN");
 
     // Grab player hand
-    formattedData = await double(client, gameId, userID, activeHand, initBet);
+    formattedData = await double(client, gameId, userID, activeHand);
 
     const { is_hand_bust } = formattedData.data;
     activeHand.is_bust = is_hand_bust;
+    activeHand.is_doubled = true;
     if (!nextHand) {
       formattedData.data.is_game_over = true;
       if (is_hand_bust) {
         await client.query(blackjackQueries.setGameOver, [gameId]);
         formattedData.data.game_winners = ["dealer"];
       } else {
-        const results = await stand(client, gameId, [activeHand]);
+        const results = await stand(client, gameId, handArray);
         formattedData.data.game_winners = results.data.game_winners;
         formattedData.data.dealer = results.data.dealer;
-        payableBet += initBet;
       }
     } else if (nextHand.is_completed || nextHand.is_bust) {
       formattedData.data.is_game_over = true;
+      // Both hands are bust so dealer wins
       if (is_hand_bust && nextHand.is_bust) {
         await client.query(blackjackQueries.setGameOver, [gameId]);
         formattedData.data.game_winners = ["dealer", "dealer"];
+        // Calculate winners
       } else {
-        const results = await stand(client, gameId, [activeHand, nextHand]);
+        // Stand sorts handArray by id, greatest first
+        const results = await stand(client, gameId, handArray);
         formattedData.data.game_winners = results.data.game_winners;
         formattedData.data.dealer = results.data.dealer;
-
-        // TODO: conditionally place in correct bet amounts if the next hand is doubled
       }
     } else {
       await swapSelectedHand(
@@ -436,12 +441,13 @@ exports.double = async (req, res, next) => {
       );
       formattedData.data.goToNextHand = true;
     }
-    // TODO: totalbet will accidently  apply hands that arent double if the activehand loses and the nexthand wins
+
+    // TODO: edit payoutPlayer to take the array of hands and use that to grab their bets and do a correct payout, 3 references too
     formattedData.data.payout = await payoutPlayer(
       client,
       userID,
       formattedData.data.game_winners,
-      payableBet
+      initBet
     );
 
     await client.query("COMMIT");
@@ -462,10 +468,11 @@ exports.double = async (req, res, next) => {
 exports.split = async (req, res, next) => {
   let client;
   let gameId = req.game.id;
-  const initBet = parseFloat(req.game.bet);
+  let activeHand = req.game.activeHand;
+
+  const initBet = activeHand.bet;
   const userID = req.user.id;
 
-  let activeHand = req.game.activeHand;
   let formattedData = {
     data: {
       player: {
@@ -523,7 +530,12 @@ exports.split = async (req, res, next) => {
 
     // Create a new hand but make it unselected
     const newHandId = (
-      await client.query(blackjackQueries.createNewHand, [gameId, true, false])
+      await client.query(blackjackQueries.createNewHand, [
+        gameId,
+        true,
+        false,
+        initBet,
+      ])
     ).rows[0].id;
 
     // Add removed card to new hand

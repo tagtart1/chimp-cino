@@ -11,10 +11,10 @@ const {
 const hit = require("./hit");
 const stand = require("./stand");
 
-const double = async (client, gameId, userID, handData, initBet) => {
+const double = async (client, gameId, userID, handData) => {
   try {
     const withdrawBet = await client.query(casinoQueries.withdrawBalance, [
-      initBet,
+      handData.bet,
       userID,
     ]);
 
@@ -31,6 +31,9 @@ const double = async (client, gameId, userID, handData, initBet) => {
       console.log("AYO ERROR OUT LOL");
       throw new AppError("Cannot double after hitting!", 401, "INVALID_ACTION");
     }
+    // Increase hands bet
+    await client.query(blackjackQueries.doubleHandBet, [handData.id]);
+
     // Hit
     const hitResults = await hit(client, gameId, handData);
     return hitResults;

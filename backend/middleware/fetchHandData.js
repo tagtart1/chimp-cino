@@ -7,7 +7,7 @@ const fetchHandData = async (req, res, next) => {
 
   try {
     const activeHandResult = (
-      await pool.query(blackjackQueries.getActiveHand, [gameId, true])
+      await pool.query(blackjackQueries.getActiveHand, [gameId])
     ).rows;
 
     const activeHandFormatted = activeHandResult.map((card) => ({
@@ -20,6 +20,7 @@ const fetchHandData = async (req, res, next) => {
     const activeHandInfo = {
       cards: activeHandFormatted,
       id: activeHandResult[0].hand_id,
+      bet: parseFloat(activeHandResult[0].bet),
     };
 
     req.game.activeHand = activeHandInfo;
@@ -47,6 +48,7 @@ const fetchHandData = async (req, res, next) => {
       is_bust: splitHandResult[0].is_bust,
       is_completed: splitHandResult[0].is_completed,
       is_doubled: splitHandResult[0].is_doubled,
+      bet: parseFloat(splitHandResult[0].bet),
     };
 
     req.game.nextHand = splitHandInfo;

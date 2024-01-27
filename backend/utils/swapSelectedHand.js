@@ -16,8 +16,8 @@ const swapSelectedHand = async (
       isDoubled,
     ]);
     await client.query(blackjackQueries.selectHand, [nextHandId]);
-  } catch {
-    throw new AppError("Could not hit", 400, "SERVER_ERROR");
+  } catch (err) {
+    throw err;
   }
 };
 

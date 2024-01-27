@@ -11,16 +11,16 @@ const getHandData = `
   `;
 
 const getActiveHand = `
-  SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id
+  SELECT c.suit, c.rank, c.value, ahc.sequence, ahc.hand_id, ah.bet
   FROM active_hands AS ah
   JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
   JOIN cards as c ON ahc.card_id = c.id
-  WHERE ah.game_id = $1 AND ah.is_player = $2 AND ah.is_selected = true
+  WHERE ah.game_id = $1 AND ah.is_player = true AND ah.is_selected = true
   ORDER BY ah.id, ahc.sequence;
   `;
 
 const getSplitHandInfo = `
-SELECT c.suit, c.rank, c.value, ahc.sequence, ah.id, ah.is_completed, ah.is_bust , ah.is_doubled
+SELECT c.suit, c.rank, c.value, ahc.sequence, ah.id, ah.is_completed, ah.is_bust , ah.is_doubled, ah.bet
 FROM active_hands AS ah
 JOIN active_hand_cards AS ahc ON ah.id = ahc.hand_id
 JOIN cards as c ON ahc.card_id = c.id
@@ -38,13 +38,13 @@ const getSpecificHand = `
   `;
 
 const createNewBlackjackGame = `WITH new_game AS (
-    INSERT INTO active_blackjack_games (is_game_over, user_id, bet)
-    VALUES (FALSE, $1, $2)  
+    INSERT INTO active_blackjack_games (is_game_over, user_id)
+    VALUES (FALSE, $1)  
     RETURNING id as game_id
     ),
     player_hand as (
-      INSERT INTO active_hands (game_id, is_player, is_selected)
-      SELECT game_id, TRUE, TRUE FROM new_game
+      INSERT INTO active_hands (game_id, is_player, is_selected, bet)
+      SELECT game_id, TRUE, TRUE, $2 FROM new_game
       RETURNING id as player_hand_id
     ),
     dealer_hand as (
@@ -79,7 +79,7 @@ const getCountOfPlayerHands =
   "SELECT COUNT(*) FROM active_hands WHERE is_player = true AND game_id = $1";
 
 const createNewHand =
-  "INSERT INTO active_hands (game_id, is_player, is_selected) VALUES ($1,$2,$3) RETURNING id";
+  "INSERT INTO active_hands (game_id, is_player, is_selected, bet) VALUES ($1,$2,$3, $4) RETURNING id";
 
 const deselectHandWithChanges =
   "UPDATE active_hands SET is_selected = false, is_completed = true, is_bust = $2, is_doubled = $3 WHERE id = $1";
@@ -87,6 +87,8 @@ const deselectHandWithChanges =
 const selectHand = "UPDATE active_hands SET is_selected = true WHERE id = $1";
 
 const completeHand = "UPDATE active_hands SET is_completed = true WHERE id =$1";
+
+const doubleHandBet = "UPDATE active_hands SET bet = bet * 2 WHERE id = $1 ";
 
 module.exports = {
   getHandData,
@@ -106,4 +108,5 @@ module.exports = {
   completeHand,
   getActiveHand,
   getSpecificHand,
+  doubleHandBet,
 };
