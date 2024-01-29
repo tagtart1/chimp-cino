@@ -176,26 +176,6 @@ export const PlayingCard = ({
   );
 };
 
-const CardSuit = ({ symbol }) => {
-  switch (symbol) {
-    case "H": {
-      console.log("hey");
-      return <HeartIcon />;
-    }
-    case "D":
-      return <DiamondIcon />;
-    case "S":
-      return <SpadeIcon />;
-    case "C":
-      return <ClubIcon />;
-    case undefined:
-      return <div>hey</div>;
-
-    default:
-      return <div>hey</div>;
-  }
-};
-
 const HeartIcon = () => {
   return (
     <svg fill="#E9113C" viewBox="0 0 64 64">

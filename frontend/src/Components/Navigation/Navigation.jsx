@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Navigation.scss";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,11 +6,19 @@ import MiniNavigation from "./MiniNavigation";
 
 const Navigation = () => {
   const navigate = useNavigate();
-  const [minimize, setMinimize] = useState(false);
+  const [minimize, setMinimize] = useState(() => {
+    const storedValue = localStorage.getItem("isSidebarOpen");
+    return storedValue ? JSON.parse(storedValue) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("isSidebarOpen", JSON.stringify(minimize));
+  }, [minimize]);
 
   return (
     <motion.div
       className="navigation-container"
+      initial={{ maxWidth: minimize ? "60px" : "240px" }}
       animate={{ maxWidth: minimize ? "60px" : "240px" }}
       transition={{ duration: 0.2 }}
     >

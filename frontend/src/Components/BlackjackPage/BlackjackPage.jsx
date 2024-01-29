@@ -3,9 +3,16 @@ import "./BlackjackPage.scss";
 import { useRef, useEffect } from "react";
 import BlackjackActions from "./BlackjackActions/BlackjackActions";
 import { PlayingCard } from "../PlayingCard/PlayingCard";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import BlackjackCardStack from "./BlackjackCardStack/BlackjackCardStack";
 import { useUser } from "../../Contexts/UserProvider";
+import { v4 as uuid } from "uuid";
+import {
+  delay,
+  isHandSoft,
+  getCardValueFromArray,
+} from "../../Helpers/blackjackHelpers";
+import { BlackjackBetInput } from "./BlackjackBetInput/BlackjackBetInput";
 
 // TODO: MODULARIZE THIS COMPONENT TOO MUCH STUFF HERE
 
@@ -14,7 +21,7 @@ const BlackjackPage = () => {
   const blackjackInProgressEndpoint =
     "http://localhost:5000/api/v1/blackjack/games/in-progress";
   const gameScreenRef = useRef(null);
-  const betAmountInput = useRef(null);
+
   const { user, setUser } = useUser();
 
   const [playerHands, setPlayerHands] = useState([[]]);
@@ -24,36 +31,14 @@ const BlackjackPage = () => {
   const [dealerCards, setDealerCards] = useState([]);
   const [dealerValue, setDealerValue] = useState(0);
   const [startCardExit, setStartCardExit] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [gameLoaded, setGameLoaded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameWinners, setGameWinners] = useState([]);
+  const [betAmount, setBetAmount] = useState(0);
+  const [loadedBet, setLoadedBet] = useState(0);
 
   const thresholdWidth = 875;
-  // Use this to delay actions for animation to run smooth
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  // Due to behavior with number input elements, we cannot use state
-  // and assign a value directly to the value attr on input in the JSX return
-  const doubleBet = () => {
-    if (betAmountInput.current.value === "0.00") {
-      betAmountInput.current.value = 0.01;
-      return;
-    }
-    betAmountInput.current.value = (betAmountInput.current.value * 2).toFixed(
-      2
-    );
-  };
-
-  const halfBet = () => {
-    if (betAmountInput.current.value === "0.00") {
-      return;
-    }
-
-    betAmountInput.current.value = (betAmountInput.current.value / 2).toFixed(
-      2
-    );
-  };
 
   const playGame = async () => {
     const res = await fetch(blackjackStartEndpoint, {
@@ -61,7 +46,7 @@ const BlackjackPage = () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        betAmount: betAmountInput.current.value,
+        betAmount: betAmount,
       }),
     });
 
@@ -75,7 +60,7 @@ const BlackjackPage = () => {
     setUser((prev) => {
       const newCosmeticBal = { ...prev };
 
-      newCosmeticBal.balance -= betAmountInput.current.value;
+      newCosmeticBal.balance -= betAmount;
       return newCosmeticBal;
     });
     if (gameOver) {
@@ -104,8 +89,6 @@ const BlackjackPage = () => {
   };
 
   useEffect(() => {
-    const betAmountInputCopy = betAmountInput.current;
-
     // Scales down the game screen when its width is below the threshold
     // Calculation numbers may need changing once we add nav bar to the left
     const handleResize = () => {
@@ -132,26 +115,11 @@ const BlackjackPage = () => {
       }
     };
 
-    const handleZeroingInput = () => {
-      if (!betAmountInputCopy.value) {
-        betAmountInputCopy.value = (0).toFixed(2);
-      } else {
-        // Formats value to have trail ing 0's
-        betAmountInputCopy.value = parseFloat(betAmountInputCopy.value).toFixed(
-          2
-        );
-      }
-    };
-
     window.addEventListener("resize", handleResize);
-    if (betAmountInputCopy)
-      betAmountInputCopy.addEventListener("focusout", handleZeroingInput);
 
     // Initial check
     handleResize();
-    handleZeroingInput();
     return () => {
-      betAmountInputCopy.removeEventListener("focusout", handleZeroingInput);
       window.removeEventListener("resize", handleResize);
     };
   }, []);
@@ -166,7 +134,6 @@ const BlackjackPage = () => {
         });
 
         if (!response.ok) {
-          console.log("No game found");
           return;
         }
 
@@ -192,11 +159,16 @@ const BlackjackPage = () => {
         for (const card of dealerCards) {
           card.isStatic = true;
         }
-        setGameLoaded(true);
 
+        if (playerHands.length > 1) {
+          console.log("MULTIUPLE HANDS");
+        }
+
+        setSelectedHandIndex(results.data.player.selectedHandIndex);
         setPlayerHands(playerHands);
         setDealerCards(dealerCards);
 
+        setGameLoaded(true);
         // Grab total value
 
         setDealerValue(getCardValueFromArray(dealerCards));
@@ -205,12 +177,10 @@ const BlackjackPage = () => {
           playerValueArray.push(getCardValueFromArray(hand));
         }
         setPlayerValues(playerValueArray);
-        betAmountInput.current.value = results.data.bet;
+        setLoadedBet(results.data.bet);
+        setBetAmount(results.data.bet);
 
-        if (results.data.player.hands.length > 1) {
-          setShowSelectedOutline(true);
-          setSelectedHandIndex(results.data.player.selectedHandIndex);
-        }
+        if (playerHands.length > 1) setShowSelectedOutline(true);
       } catch (err) {
         console.log(err);
       } finally {
@@ -224,45 +194,8 @@ const BlackjackPage = () => {
   // Once game loads the cards into the card states we turn of the game is loaded
   useEffect(() => {
     setGameLoaded(false);
+    console.log(playerHands);
   }, [playerHands, dealerCards]);
-
-  const getCardValueFromArray = (cards) => {
-    let total = 0;
-    let aceCount = 0;
-
-    validateAceValue(cards);
-    const isSoft = isHandSoft(cards);
-
-    for (const card of cards) {
-      // checking for null card catches the last null in array if there is
-      total += card.value || 0;
-      if (card.rank === "A") aceCount++;
-    }
-    if (cards.length === 1 && aceCount === 0) {
-      return total;
-    }
-    if (cards.length === 1 && aceCount === 1 && isSoft) {
-      return `1, 11`;
-    }
-    if (isSoft && aceCount > 0) {
-      return `${total - 10}, ${total}`;
-    }
-    return total;
-  };
-
-  const validateAceValue = (cards, isDealer) => {
-    let totalValue = 0;
-    for (const card of cards) {
-      totalValue += card.value;
-      if (totalValue > 21) {
-        const ace = cards.find((c) => c.rank === "A" && c.value === 11);
-        if (ace) {
-          ace.value = 1;
-          totalValue -= 10;
-        }
-      }
-    }
-  };
 
   // The delay matches the animation speed it takes to get in position
   const dealInitialCards = async (gameData) => {
@@ -335,7 +268,7 @@ const BlackjackPage = () => {
       setUser((prev) => {
         const user = { ...prev };
 
-        user.balance -= betAmountInput.current.value;
+        user.balance -= betAmount;
 
         return user;
       });
@@ -401,7 +334,7 @@ const BlackjackPage = () => {
     setUser((prev) => {
       const user = { ...prev };
 
-      user.balance -= betAmountInput.current.value;
+      user.balance -= betAmount;
 
       return user;
     });
@@ -486,6 +419,7 @@ const BlackjackPage = () => {
 
   const dealNewCard = async (hand, isPlayer, card, handIndex) => {
     setGameLoaded(false);
+
     let newValue;
     if (isPlayer) {
       setPlayerHands((currentHands) => {
@@ -541,25 +475,6 @@ const BlackjackPage = () => {
     }
   };
 
-  const isHandSoft = (cards) => {
-    // Checks for ace
-    let hasAce = false;
-    let totalValue = 0;
-    for (const card of cards) {
-      totalValue += card.value || 0;
-
-      if (card.rank === "A" && card.value === 11) {
-        hasAce = true;
-      }
-    }
-
-    if (hasAce && totalValue < 21) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
   const renderCardStack = (cards, isDealer = false) => {
     return cards.map((card, index) => {
       const style =
@@ -591,6 +506,7 @@ const BlackjackPage = () => {
           key={index}
           style={style}
           nthCard={index}
+          isBlank={!card.value ? true : false}
           suit={card.suit}
           rank={card.rank}
           dealerCard={isDealer}
@@ -631,40 +547,40 @@ const BlackjackPage = () => {
   };
 
   const renderPlayerStacks = (hands) => {
+    const loaded = gameLoaded;
+
     return hands.map((hand, index) => {
-      console.log("Game Loaded: ", gameLoaded);
       return (
         <motion.div
-          className="card-stack"
-          layout={gameLoaded ? false : "position"}
+          className={`card-stack ${index}`}
+          layout={loaded && index === 0 ? false : "position"}
           key={index}
         >
-          <AnimatePresence>
-            {playerValues.length !== 0 &&
-            !startCardExit &&
-            playerValues[index] !== 0 ? (
-              <motion.div
-                className={`cards-value`}
-                layout="position"
-                initial={
-                  gameLoaded
-                    ? {
-                        backgroundColor: determineStyles(index).backgroundColor,
-                        color: determineStyles(index).color,
-                      }
-                    : null
-                }
-                animate={{
-                  backgroundColor: determineStyles(index).backgroundColor,
+          {playerValues.length !== 0 &&
+          !startCardExit &&
+          playerValues[index] !== 0 ? (
+            <motion.div
+              className={`cards-value`}
+              layout="position"
+              initial={
+                gameLoaded
+                  ? {
+                      backgroundColor: determineStyles(index).backgroundColor,
+                      color: determineStyles(index).color,
+                    }
+                  : null
+              }
+              animate={{
+                backgroundColor: determineStyles(index).backgroundColor,
 
-                  color: determineStyles(index).color,
-                  transition: { duration: 0.2 },
-                }}
-              >
-                {playerValues[index]}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+                color: determineStyles(index).color,
+                transition: { duration: 0.2 },
+              }}
+            >
+              {playerValues[index]}
+            </motion.div>
+          ) : null}
+
           {hand.map((card, cardIndex) => {
             const style =
               cardIndex === 0
@@ -704,41 +620,30 @@ const BlackjackPage = () => {
     });
   };
 
-  const cardsMap = renderPlayerStacks(playerHands);
-
   const dealerCardsMap = renderCardStack(dealerCards, true);
+
+  const cardsMap = renderPlayerStacks(playerHands);
 
   return (
     <main className="blackjack-main">
       <section className="blackjack-game-section">
-        <div className="bet-controls">
-          <div className="amount-input-group">
-            <label htmlFor="bet-amount">Amount</label>
-            <div className="input-wrapper">
-              <input
-                ref={betAmountInput}
-                type="number"
-                id="bet-amount"
-                step={0.01}
-              />
-              <div className="bet-buttons">
-                <button className="half-bet-button" onClick={halfBet}>
-                  ½
-                </button>
-                <button className="double-bet-button" onClick={doubleBet}>
-                  2×
-                </button>
-              </div>
-            </div>
+        {isLoading ? (
+          <div></div>
+        ) : (
+          <div className="bet-controls">
+            <BlackjackBetInput
+              setBetAmount={setBetAmount}
+              loadedBet={loadedBet}
+            />
+            <BlackjackActions
+              handleAction={handleActionResults}
+              handleSplit={handleSplit}
+            />
+            <button className="blackjack-play-button" onClick={playGame}>
+              Play
+            </button>
           </div>
-          <BlackjackActions
-            handleAction={handleActionResults}
-            handleSplit={handleSplit}
-          />
-          <button className="blackjack-play-button" onClick={playGame}>
-            Play
-          </button>
-        </div>
+        )}
         <div className="game-screen" ref={gameScreenRef}>
           <div className="card-group dealer-side">
             <motion.div

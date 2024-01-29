@@ -38,8 +38,8 @@ const getSpecificHand = `
   `;
 
 const createNewBlackjackGame = `WITH new_game AS (
-    INSERT INTO active_blackjack_games (is_game_over, user_id)
-    VALUES (FALSE, $1)  
+    INSERT INTO active_blackjack_games (is_game_over, user_id, start_bet)
+    VALUES (FALSE, $1, $2)  
     RETURNING id as game_id
     ),
     player_hand as (

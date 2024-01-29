@@ -71,7 +71,6 @@ exports.newGame = async (req, res, next) => {
     }
 
     // Create a new blackjack game
-    // TODO: delete bet for game, it is now accociated with a hand
     const { game_id, player_hand_id, dealer_hand_id } = (
       await client.query(blackjackQueries.createNewBlackjackGame, [userID, bet])
     ).rows[0];
@@ -87,7 +86,7 @@ exports.newGame = async (req, res, next) => {
       1,
       client,
       game_id,
-      9
+      7
     );
     // Hit once for dealer
     const dealerCard = await pullCardFromDeck(
@@ -102,7 +101,7 @@ exports.newGame = async (req, res, next) => {
       2,
       client,
       game_id,
-      22
+      33
     );
 
     const secondDealerCard = await pullCardFromDeck(
@@ -187,7 +186,7 @@ exports.getGame = async (req, res, next) => {
       },
       dealer: {},
       is_game_over: req.game.is_game_over,
-      bet: bet,
+      bet: req.game.start_bet,
     },
   };
 
@@ -283,7 +282,7 @@ exports.hit = async (req, res, next) => {
       } else {
         // Hand is split so we just move to the next hand without ending game
         if (nextHand.is_bust || nextHand.is_completed) {
-          const standResults = await stand(client, gameId, handsArray);
+          const standResults = await stand(client, gameId, handArray);
           results.data.is_game_over = true;
           results.data.game_winners = standResults.data.game_winners;
           results.data.dealer = standResults.data.dealer;

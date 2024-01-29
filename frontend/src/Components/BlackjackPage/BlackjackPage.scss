@@ -155,7 +155,8 @@
 
         .card-stack {
           display: flex;
-
+          min-height: 7.9em;
+          min-width: 5em;
           justify-content: center;
           position: relative;
         }
