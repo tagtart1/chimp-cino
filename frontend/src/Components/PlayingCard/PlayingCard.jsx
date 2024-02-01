@@ -4,7 +4,6 @@ import { motion, useAnimation } from "framer-motion";
 
 export const PlayingCard = ({
   style,
-
   staticCard,
   dealerCard,
   nthCard,
@@ -15,6 +14,8 @@ export const PlayingCard = ({
   startExit,
   splitCard,
   selected,
+  shiftX,
+  shiftY,
 }) => {
   const controls = useAnimation();
   const card = useRef();
@@ -33,10 +34,10 @@ export const PlayingCard = ({
 
   const dealerCardVariants = !staticCard
     ? {
-        initial: { transform: `translate(${startOffsetX + 375}%, -100%)` },
+        initial: { transform: `translate(${shiftX}px, ${shiftY}px)` },
         toPosition: {
           transform: "translate(0, 0)",
-          transition: { duration: 0.5 },
+          transition: { duration: 0.3, ease: "easeOut" },
         },
         rotate: {
           transform: "rotateY(180deg)",
@@ -85,6 +86,14 @@ export const PlayingCard = ({
     // Log
   }, [controls, staticCard, isBlank, startExit, splitCard]);
 
+  useEffect(() => {
+    if (!card) return;
+    if (dealerCard || rank === undefined || staticCard) return;
+    const computed = window.getComputedStyle(card.current);
+    const marginLeft = computed.getPropertyValue("margin-left");
+    console.log("Left Margin", marginLeft);
+  }, [rank, dealerCard, nthCard, staticCard]);
+
   const gameResultsStyle =
     gameResults === "player"
       ? "won"
@@ -95,20 +104,21 @@ export const PlayingCard = ({
       : "";
 
   const isSplitAndSelected = selected ? "selected-hand" : "";
+  if (rank !== undefined && !dealerCard) {
+    console.log("I am the:", nthCard, "And have the X shift of", shiftX);
+  }
 
   const playerCardVariants = !staticCard
     ? // If the card is from a split hand then do different initials based on the handIndex
       {
         initial: {
-          transform: `translate(${320 + nthCard * 30}px, -${
-            420 + nthCard * 100
-          }px)`,
-          opacity: 1,
+          transform: `translate(${shiftX}px, ${shiftY}px)`,
         },
 
         toPosition: {
           transform: "translate(0, 0)",
-          transition: { duration: 0.5 },
+
+          transition: { duration: 0.3, ease: "easeOut" },
         },
         rotate: {
           transform: "rotateY(180deg) ",

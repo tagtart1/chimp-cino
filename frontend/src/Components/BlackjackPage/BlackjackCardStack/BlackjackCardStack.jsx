@@ -2,38 +2,37 @@ import React from "react";
 import { PlayingCard } from "../../PlayingCard/PlayingCard";
 import "./BlackjackCardStack.scss";
 
-const BlackjackCardStack = () => {
+const BlackjackCardStack = ({ theRef }) => {
   return (
-    <div className="static-stack">
-      <PlayingCard staticCard={true} />
+    <div className="static-stack" ref={theRef}>
       <PlayingCard
         staticCard={true}
         style={{
-          transform: `translate(0, -2%)`,
+          transform: `translate(0, 10%)`,
         }}
       />
       <PlayingCard
         staticCard={true}
         style={{
-          transform: `translate(0, -4%)`,
+          transform: `translate(0, 8%)`,
         }}
       />
       <PlayingCard
         staticCard={true}
         style={{
-          transform: `translate(0, -6%)`,
+          transform: `translate(0, 6%)`,
         }}
       />
       <PlayingCard
         staticCard={true}
         style={{
-          transform: `translate(0, -8%)`,
+          transform: `translate(0, 4%)`,
         }}
       />
       <PlayingCard
         staticCard={true}
         style={{
-          transform: `translate(0, -10%)`,
+          transform: `translate(0, 2%)`,
         }}
       />
     </div>

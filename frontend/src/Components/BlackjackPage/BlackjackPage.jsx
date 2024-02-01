@@ -21,6 +21,9 @@ const BlackjackPage = () => {
   const blackjackInProgressEndpoint =
     "http://localhost:5000/api/v1/blackjack/games/in-progress";
   const gameScreenRef = useRef(null);
+  const playerStackRef = useRef(null);
+  const dealerStackRef = useRef(null);
+  const staticCardsRef = useRef(null);
 
   const { user, setUser } = useUser();
 
@@ -57,6 +60,7 @@ const BlackjackPage = () => {
     }
     const gameData = await res.json();
     // Change UI balance
+
     setUser((prev) => {
       const newCosmeticBal = { ...prev };
 
@@ -75,7 +79,7 @@ const BlackjackPage = () => {
       setStartCardExit(true);
       setShowSelectedOutline(false);
       await delay(500);
-      setPlayerHands([]);
+      setPlayerHands([[]]);
       setDealerCards([]);
       setSelectedHandIndex(0);
 
@@ -92,26 +96,26 @@ const BlackjackPage = () => {
     // Scales down the game screen when its width is below the threshold
     // Calculation numbers may need changing once we add nav bar to the left
     const handleResize = () => {
-      if (gameScreenRef.current) {
-        const width = gameScreenRef.current.offsetWidth;
-        if (width < thresholdWidth && width > 535) {
-          const widthDifference = thresholdWidth - width;
-          const heightReduction = widthDifference * 0.8; // 0.8px reduction for every 1px width reduction
-          const newMinHeight = 630 - heightReduction;
+      if (!gameScreenRef.current) return;
 
-          // Calcualte font size
-          const range = thresholdWidth - 535;
-          const difference = width - 535;
-          const mult = (difference / range) * 0.44 + 0.56;
+      const width = gameScreenRef.current.offsetWidth;
+      if (width < thresholdWidth && width > 535) {
+        const widthDifference = thresholdWidth - width;
+        const heightReduction = widthDifference * 0.8; // 0.8px reduction for every 1px width reduction
+        const newMinHeight = 630 - heightReduction;
 
-          if (gameScreenRef.current) {
-            gameScreenRef.current.style.minHeight = newMinHeight + "px";
-            gameScreenRef.current.style.fontSize = mult + "em";
-          }
-        } else if (width > thresholdWidth) {
-          gameScreenRef.current.style.minHeight = 630 + "px";
-          gameScreenRef.current.style.fontSize = 1 + "em";
+        // Calcualte font size
+        const range = thresholdWidth - 535;
+        const difference = width - 535;
+        const mult = (difference / range) * 0.44 + 0.56;
+
+        if (gameScreenRef.current) {
+          gameScreenRef.current.style.minHeight = newMinHeight + "px";
+          gameScreenRef.current.style.fontSize = mult + "em";
         }
+      } else if (width > thresholdWidth) {
+        gameScreenRef.current.style.minHeight = 630 + "px";
+        gameScreenRef.current.style.fontSize = 1 + "em";
       }
     };
 
@@ -194,11 +198,11 @@ const BlackjackPage = () => {
   // Once game loads the cards into the card states we turn of the game is loaded
   useEffect(() => {
     setGameLoaded(false);
-    console.log(playerHands);
   }, [playerHands, dealerCards]);
 
   // The delay matches the animation speed it takes to get in position
   const dealInitialCards = async (gameData) => {
+    const actionDelay = 510;
     const dealerCards = gameData.data.dealer.cards;
     const playerCards = gameData.data.player.hands[0];
 
@@ -216,15 +220,16 @@ const BlackjackPage = () => {
     let playerHand = [playerCards[0]];
     setPlayerHands([playerHand]);
 
-    await delay(520);
+    await delay(actionDelay);
     setPlayerValues([getCardValueFromArray([playerCards[0]])]);
     setDealerCards((currentCards) => [...currentCards, dealerCards[0]]);
 
-    await delay(520);
+    await delay(actionDelay);
     setDealerValue(getCardValueFromArray([dealerCards[0]]));
     playerHand.push(playerCards[1]);
     setPlayerHands([playerHand]);
-    await delay(520);
+
+    await delay(actionDelay);
     setDealerCards((currentCards) => [
       ...currentCards,
       { isStatic: false, isBlank: true },
@@ -243,9 +248,9 @@ const BlackjackPage = () => {
         dealerValue = getCardValueFromArray(newCards);
         return newCards;
       });
-      await delay(520);
+      await delay(actionDelay);
       setDealerValue(dealerValue);
-      await delay(520);
+      await delay(actionDelay);
       setGameOver(true);
       setGameWinners(gameData.data.game_winners);
 
@@ -289,7 +294,6 @@ const BlackjackPage = () => {
       if (isHit) await delay(720);
       setSelectedHandIndex((prev) => prev - 1);
     }
-
     if (results.dealer && results.is_game_over) {
       // Show dealer cards
       for (let i = 1; i < results.dealer.cards.length; i++) {
@@ -475,7 +479,37 @@ const BlackjackPage = () => {
     }
   };
 
+  const calculateShift = (stackRef) => {
+    if (!staticCardsRef.current || !stackRef.current) return;
+    const staticCardsRect = staticCardsRef.current.getBoundingClientRect();
+    const cardStackRect = stackRef.current.getBoundingClientRect();
+
+    // Add a temporary margin-left for calculation
+    staticCardsRef.current.style.marginLeft = "-2.2em";
+
+    // Get the computed style of staticCardsRef after adding the margin
+    const computed = window.getComputedStyle(staticCardsRef.current);
+
+    const marginLeft = computed.getPropertyValue("margin-left");
+
+    let trueMargin = parseFloat(marginLeft);
+    console.log(trueMargin);
+    if (playerHands[0].length === 1) {
+      trueMargin = 0;
+    }
+    // Calculate pixel shift for card
+    const initX = staticCardsRect.right - cardStackRect.right;
+    let initY = staticCardsRect.bottom - cardStackRect.bottom;
+    console.log("Shift: ", trueMargin);
+    // the -6 proves that we need to use the magin left of the new cards being added NOT the truemargin from the static stack
+    return {
+      x: initX + trueMargin - 6,
+      y: initY,
+    };
+  };
+
   const renderCardStack = (cards, isDealer = false) => {
+    const shifts = calculateShift(dealerStackRef);
     return cards.map((card, index) => {
       const style =
         index === 0
@@ -498,6 +532,8 @@ const BlackjackPage = () => {
             dealerCard={isDealer}
             staticCard={card.isStatic}
             startExit={startCardExit}
+            shiftX={shifts.x}
+            shiftY={shifts.y}
           />
         );
 
@@ -513,6 +549,8 @@ const BlackjackPage = () => {
           staticCard={card.isStatic}
           gameResults={gameWinners[index]}
           startExit={startCardExit}
+          shiftX={shifts.x}
+          shiftY={shifts.y}
         />
       );
     });
@@ -548,74 +586,83 @@ const BlackjackPage = () => {
 
   const renderPlayerStacks = (hands) => {
     const loaded = gameLoaded;
+    // Grab furst card. apply the initial margin style then return that and apple that to the shift ??
 
     return hands.map((hand, index) => {
+      const shifts = calculateShift(playerStackRef);
       return (
-        <motion.div
-          className={`card-stack ${index}`}
-          layout={loaded && index === 0 ? false : "position"}
-          key={index}
-        >
-          {playerValues.length !== 0 &&
-          !startCardExit &&
-          playerValues[index] !== 0 ? (
-            <motion.div
-              className={`cards-value`}
-              layout="position"
-              initial={
-                gameLoaded
+        <div>
+          <motion.div
+            className={`card-stack ${index}`}
+            layout={loaded && index === 0 ? false : "position"}
+            key={index}
+            ref={playerStackRef}
+            transition={{ duration: 0.3 }}
+          >
+            {playerValues.length !== 0 &&
+            !startCardExit &&
+            playerValues[index] !== 0 ? (
+              <motion.div
+                className={`cards-value`}
+                layout="position"
+                initial={
+                  gameLoaded
+                    ? {
+                        backgroundColor: determineStyles(index).backgroundColor,
+                        color: determineStyles(index).color,
+                      }
+                    : null
+                }
+                animate={{
+                  backgroundColor: determineStyles(index).backgroundColor,
+
+                  color: determineStyles(index).color,
+                  transition: { duration: 0.15 },
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                {playerValues[index]}
+              </motion.div>
+            ) : null}
+
+            {hand.map((card, cardIndex) => {
+              const style =
+                cardIndex === 0
                   ? {
-                      backgroundColor: determineStyles(index).backgroundColor,
-                      color: determineStyles(index).color,
+                      transform: `${card.isStatic ? "rotateY(180deg)" : ""}`,
                     }
-                  : null
-              }
-              animate={{
-                backgroundColor: determineStyles(index).backgroundColor,
+                  : {
+                      marginTop: `${cardIndex}em`,
+                      marginLeft: "-2.2em",
+                      transform: `${
+                        card.isStatic && card.value ? "rotateY(180deg)" : ""
+                      }`,
+                    };
 
-                color: determineStyles(index).color,
-                transition: { duration: 0.2 },
-              }}
-            >
-              {playerValues[index]}
-            </motion.div>
-          ) : null}
+              const isSelected =
+                selectedHandIndex === index && showSelectedOutline;
 
-          {hand.map((card, cardIndex) => {
-            const style =
-              cardIndex === 0
-                ? {
-                    transform: `${card.isStatic ? "rotateY(180deg)" : ""}`,
-                  }
-                : {
-                    marginTop: `${cardIndex}em`,
-                    marginLeft: "-2.2em",
-                    transform: `${
-                      card.isStatic && card.value ? "rotateY(180deg)" : ""
-                    }`,
-                  };
-
-            const isSelected =
-              selectedHandIndex === index && showSelectedOutline;
-
-            return (
-              <PlayingCard
-                key={cardIndex}
-                style={style}
-                nthCard={cardIndex}
-                suit={card.suit}
-                rank={card.rank}
-                dealerCard={false}
-                staticCard={card.isStatic}
-                gameResults={gameWinners[index]}
-                startExit={startCardExit}
-                splitCard={card.isSplit}
-                selected={isSelected}
-                // Pass in the handIndex and if the hands are split
-              />
-            );
-          })}
-        </motion.div>
+              return (
+                <PlayingCard
+                  key={cardIndex}
+                  style={style}
+                  nthCard={cardIndex}
+                  suit={card.suit}
+                  rank={card.rank}
+                  dealerCard={false}
+                  staticCard={card.isStatic}
+                  gameResults={gameWinners[index]}
+                  startExit={startCardExit}
+                  splitCard={card.isSplit}
+                  selected={isSelected}
+                  shiftX={shifts.x}
+                  shiftY={shifts.y}
+                  // Pass in the handIndex and if the hands are split
+                />
+              );
+            })}
+          </motion.div>
+        </div>
       );
     });
   };
@@ -649,10 +696,17 @@ const BlackjackPage = () => {
             <motion.div
               className="card-stack"
               layout={gameLoaded ? false : "position"}
+              transition={{ duration: 0.3 }}
+              ref={dealerStackRef}
             >
               <AnimatePresence>
                 {dealerValue !== 0 ? (
-                  <motion.div className="cards-value" layout="position" key={0}>
+                  <motion.div
+                    className="cards-value"
+                    layout="position"
+                    key={0}
+                    transition={{ duration: 0.3 }}
+                  >
                     {dealerValue}
                   </motion.div>
                 ) : null}
@@ -664,7 +718,7 @@ const BlackjackPage = () => {
           <div className="card-group player-side">
             {playerHands.length > 0 && cardsMap}
           </div>
-          <BlackjackCardStack />
+          <BlackjackCardStack theRef={staticCardsRef} />
         </div>
       </section>
     </main>
