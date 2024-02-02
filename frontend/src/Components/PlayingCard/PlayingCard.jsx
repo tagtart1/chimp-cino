@@ -22,8 +22,6 @@ export const PlayingCard = ({
 
   // The first card's container is usually off on the start so we account for it with the offset
   // nthcard of 0 receives a greater buffer
-  const startOffsetX = nthCard === 0 ? -25 : nthCard * -33;
-  const startOffsetY = nthCard === 0 ? 100 : 0;
 
   const initialState = splitCard
     ? {

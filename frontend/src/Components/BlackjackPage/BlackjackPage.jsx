@@ -22,6 +22,7 @@ const BlackjackPage = () => {
     "http://localhost:5000/api/v1/blackjack/games/in-progress";
   const gameScreenRef = useRef(null);
   const playerStackRef = useRef(null);
+  const otherPlayerStackRef = useRef(null);
   const dealerStackRef = useRef(null);
   const staticCardsRef = useRef(null);
 
@@ -202,7 +203,7 @@ const BlackjackPage = () => {
 
   // The delay matches the animation speed it takes to get in position
   const dealInitialCards = async (gameData) => {
-    const actionDelay = 510;
+    const actionDelay = 350;
     const dealerCards = gameData.data.dealer.cards;
     const playerCards = gameData.data.player.hands[0];
 
@@ -378,8 +379,7 @@ const BlackjackPage = () => {
       1
     );
 
-    await delay(520);
-    // Deal left hand new card
+    await delay(300);
 
     await dealNewCard(
       playerResult.hands[1].slice(0, playerResult.hands[1].length - 1),
@@ -480,7 +480,11 @@ const BlackjackPage = () => {
   };
 
   const calculateShift = (stackRef) => {
-    if (!staticCardsRef.current || !stackRef.current) return;
+    if (!staticCardsRef.current || !stackRef.current)
+      return {
+        x: 0,
+        y: 0,
+      };
     const staticCardsRect = staticCardsRef.current.getBoundingClientRect();
     const cardStackRect = stackRef.current.getBoundingClientRect();
 
@@ -589,80 +593,81 @@ const BlackjackPage = () => {
     // Grab furst card. apply the initial margin style then return that and apple that to the shift ??
 
     return hands.map((hand, index) => {
-      const shifts = calculateShift(playerStackRef);
+      const shifts = calculateShift(
+        index === 0 ? playerStackRef : otherPlayerStackRef
+      );
+
       return (
-        <div>
-          <motion.div
-            className={`card-stack ${index}`}
-            layout={loaded && index === 0 ? false : "position"}
-            key={index}
-            ref={playerStackRef}
-            transition={{ duration: 0.3 }}
-          >
-            {playerValues.length !== 0 &&
-            !startCardExit &&
-            playerValues[index] !== 0 ? (
-              <motion.div
-                className={`cards-value`}
-                layout="position"
-                initial={
-                  gameLoaded
-                    ? {
-                        backgroundColor: determineStyles(index).backgroundColor,
-                        color: determineStyles(index).color,
-                      }
-                    : null
-                }
-                animate={{
-                  backgroundColor: determineStyles(index).backgroundColor,
-
-                  color: determineStyles(index).color,
-                  transition: { duration: 0.15 },
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                {playerValues[index]}
-              </motion.div>
-            ) : null}
-
-            {hand.map((card, cardIndex) => {
-              const style =
-                cardIndex === 0
+        <motion.div
+          className={`card-stack ${index}`}
+          layout={loaded && index === 0 ? false : "position"}
+          key={index}
+          ref={index === 0 ? playerStackRef : otherPlayerStackRef}
+          transition={{ duration: 0.3 }}
+        >
+          {playerValues.length !== 0 &&
+          !startCardExit &&
+          playerValues[index] !== 0 ? (
+            <motion.div
+              className={`cards-value`}
+              layout="position"
+              initial={
+                gameLoaded
                   ? {
-                      transform: `${card.isStatic ? "rotateY(180deg)" : ""}`,
+                      backgroundColor: determineStyles(index).backgroundColor,
+                      color: determineStyles(index).color,
                     }
-                  : {
-                      marginTop: `${cardIndex}em`,
-                      marginLeft: "-2.2em",
-                      transform: `${
-                        card.isStatic && card.value ? "rotateY(180deg)" : ""
-                      }`,
-                    };
+                  : null
+              }
+              animate={{
+                backgroundColor: determineStyles(index).backgroundColor,
 
-              const isSelected =
-                selectedHandIndex === index && showSelectedOutline;
+                color: determineStyles(index).color,
+                transition: { duration: 0.15 },
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              {playerValues[index]}
+            </motion.div>
+          ) : null}
 
-              return (
-                <PlayingCard
-                  key={cardIndex}
-                  style={style}
-                  nthCard={cardIndex}
-                  suit={card.suit}
-                  rank={card.rank}
-                  dealerCard={false}
-                  staticCard={card.isStatic}
-                  gameResults={gameWinners[index]}
-                  startExit={startCardExit}
-                  splitCard={card.isSplit}
-                  selected={isSelected}
-                  shiftX={shifts.x}
-                  shiftY={shifts.y}
-                  // Pass in the handIndex and if the hands are split
-                />
-              );
-            })}
-          </motion.div>
-        </div>
+          {hand.map((card, cardIndex) => {
+            const style =
+              cardIndex === 0
+                ? {
+                    transform: `${card.isStatic ? "rotateY(180deg)" : ""}`,
+                  }
+                : {
+                    marginTop: `${cardIndex}em`,
+                    marginLeft: "-2.2em",
+                    transform: `${
+                      card.isStatic && card.value ? "rotateY(180deg)" : ""
+                    }`,
+                  };
+
+            const isSelected =
+              selectedHandIndex === index && showSelectedOutline;
+
+            return (
+              <PlayingCard
+                key={cardIndex}
+                style={style}
+                nthCard={cardIndex}
+                suit={card.suit}
+                rank={card.rank}
+                dealerCard={false}
+                staticCard={card.isStatic}
+                gameResults={gameWinners[index]}
+                startExit={startCardExit}
+                splitCard={card.isSplit}
+                selected={isSelected}
+                shiftX={shifts.x}
+                shiftY={shifts.y}
+                // Pass in the handIndex and if the hands are split
+              />
+            );
+          })}
+        </motion.div>
       );
     });
   };
