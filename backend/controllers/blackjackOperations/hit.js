@@ -35,7 +35,6 @@ const hit = async (client, gameId, handData, rig) => {
     validateAceValue(handData.cards);
 
     formattedData.data.is_hand_bust = checkForBust(handData.cards);
-    // TODO: remove the checkfor21 outsite of this.
     formattedData.data.is_21 = checkFor21(handData.cards);
 
     formattedData.data.player.cards = handData.cards;
