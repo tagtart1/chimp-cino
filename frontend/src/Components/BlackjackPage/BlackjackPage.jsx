@@ -3,15 +3,11 @@ import "./BlackjackPage.scss";
 import { useRef, useEffect } from "react";
 import BlackjackActions from "./BlackjackActions/BlackjackActions";
 import { PlayingCard } from "../PlayingCard/PlayingCard";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import BlackjackCardStack from "./BlackjackCardStack/BlackjackCardStack";
 import { useUser } from "../../Contexts/UserProvider";
-import { v4 as uuid } from "uuid";
-import {
-  delay,
-  isHandSoft,
-  getCardValueFromArray,
-} from "../../Helpers/blackjackHelpers";
+
+import { delay, getCardValueFromArray } from "../../Helpers/blackjackHelpers";
 import { BlackjackBetInput } from "./BlackjackBetInput/BlackjackBetInput";
 
 // TODO: MODULARIZE THIS COMPONENT TOO MUCH STUFF HERE
@@ -86,6 +82,10 @@ const BlackjackPage = () => {
 
       await delay(200);
     }
+
+    console.log("INSURANCE OFFERING:", gameData.data.offerInsurance);
+    console.log("PAYUOT:", gameData.data);
+    // TODO: PROMPT USER TO accept or decline insurance when needed, and block further actions till answered, setup a new route to respond to insurance
 
     // TRICKLE THE STATE
     // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
@@ -497,14 +497,14 @@ const BlackjackPage = () => {
     const marginLeft = computed.getPropertyValue("margin-left");
 
     let trueMargin = parseFloat(marginLeft);
-    console.log(trueMargin);
+    // console.log(trueMargin);
     if (playerHands[0].length === 1) {
       trueMargin = 0;
     }
     // Calculate pixel shift for card
     const initX = staticCardsRect.right - cardStackRect.right;
     let initY = staticCardsRect.bottom - cardStackRect.bottom;
-    console.log("Shift: ", trueMargin);
+    // console.log("Shift: ", trueMargin);
     // the -6 proves that we need to use the magin left of the new cards being added NOT the truemargin from the static stack
     return {
       x: initX + trueMargin - 6,

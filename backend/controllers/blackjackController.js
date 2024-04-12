@@ -9,10 +9,9 @@ const buildDeckQuery = require("../utils/buildDeckQuery");
 const pullCardFromDeck = require("../utils/pullCardFromDeck");
 const {
   validateAceValue,
-  checkFor21,
-  checkForBust,
+
   isBlackjack,
-  isHandSoft,
+  isCardAce,
 } = require("../utils/deckChecks");
 
 const split = require("./blackjackOperations/split");
@@ -29,11 +28,12 @@ exports.newGame = async (req, res, next) => {
   const userID = req.user.id;
   let dealerCards;
   let playerCards;
+  let offerInsurance = false;
+  let payout = 0;
   let formattedData = {
     data: {
       player: {},
       dealer: {},
-      game_winner: "",
       is_game_over: false,
     },
   };
@@ -85,64 +85,62 @@ exports.newGame = async (req, res, next) => {
       player_hand_id,
       1,
       client,
-      game_id,
-      1
+      game_id
     );
-    // Hit once for dealer
+    // Hit for dealer
     const dealerCard = await pullCardFromDeck(
       dealer_hand_id,
       1,
       client,
-      game_id
+      game_id,
+      13
     );
 
     const secondPlayerCard = await pullCardFromDeck(
       player_hand_id,
       2,
       client,
-      game_id,
-      14
+      game_id
     );
 
+    // Hit for dealer
     const secondDealerCard = await pullCardFromDeck(
       dealer_hand_id,
       2,
       client,
       game_id
     );
-
+    const dealerHasAce = isCardAce(dealerCard);
     dealerCards = [dealerCard, secondDealerCard];
     playerCards = [playerCard, secondPlayerCard];
 
     const isDealerBlackjack = isBlackjack(dealerCards);
     const isPlayerBlackjack = isBlackjack(playerCards);
 
-    let gameWinner;
-
-    if (isDealerBlackjack && !isPlayerBlackjack) {
-      gameWinner = "dealer";
-    } else if (!isDealerBlackjack && isPlayerBlackjack) {
-      gameWinner = "player";
-      // Payout player 3:2
-
-      const payout = bet + bet * 1.5;
-
-      formattedData.data.payout = payout;
-      await client.query(casinoQueries.depositBalance, [payout, userID]);
-    } else if (isDealerBlackjack && isPlayerBlackjack) {
-      gameWinner = "push";
-      // Return bet to player
-      formattedData.data.payout = bet;
-      await client.query(casinoQueries.depositBalance, [bet, userID]);
+    // Dealer has ace without player blackjack, offer insurance
+    if (dealerHasAce && !isPlayerBlackjack) {
+      offerInsurance = true;
+      // Set value to true in game state in DB
+      await client.query(blackjackQueries.setOfferInsurance, [game_id]);
     }
 
+    const { gameWinner, payoutResult } = await findEarlyGameWinner(
+      isDealerBlackjack,
+      isPlayerBlackjack,
+
+      offerInsurance,
+      bet,
+      userID,
+      client
+    );
+    payout = payoutResult;
     if (gameWinner) {
       await client.query(blackjackQueries.setGameOver, [game_id]);
       formattedData.data.is_game_over = true;
       formattedData.data.game_winners = [gameWinner];
     }
 
-    await client.query("COMMIT");
+    // await client.query("COMMIT");
   } catch (err) {
     console.log("FAIL");
     console.log(err);
@@ -164,7 +162,45 @@ exports.newGame = async (req, res, next) => {
 
   formattedData.data.player.hands = [playerCards];
   formattedData.data.dealer.cards = dealerCards;
+  formattedData.data.offerInsurance = offerInsurance;
+  formattedData.data.payout = payout;
   res.status(200).json(formattedData);
+};
+
+const findEarlyGameWinner = async (
+  isDealerBlackjack,
+  isPlayerBlackjack,
+  offerInsurance,
+  bet,
+  userID,
+  client
+) => {
+  let results = {};
+
+  if (isDealerBlackjack && isPlayerBlackjack) {
+    results.gameWinner = "push";
+    // Return bet to player
+    results.payoutResult = bet;
+    await client.query(casinoQueries.depositBalance, [bet, userID]);
+    return results;
+  }
+
+  if (offerInsurance) return results;
+
+  if (isDealerBlackjack && !isPlayerBlackjack) {
+    results.gameWinner = "dealer";
+    return results;
+  }
+  if (!isDealerBlackjack && isPlayerBlackjack) {
+    results.gameWinner = "player";
+    // Payout player 3:2
+
+    const payout = bet + bet * 1.5;
+
+    results.payoutResult = payout;
+    await client.query(casinoQueries.depositBalance, [payout, userID]);
+    return results;
+  }
 };
 
 exports.getGame = async (req, res, next) => {

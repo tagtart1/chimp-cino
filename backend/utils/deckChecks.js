@@ -68,10 +68,19 @@ const isHandSoft = (cards) => {
   }
 };
 
+const isCardAce = (card) => {
+  if (card.rank === "A") {
+    return true;
+  }
+
+  return false;
+};
+
 module.exports = {
   validateAceValue,
   checkFor21,
   checkForBust,
   isBlackjack,
   isHandSoft,
+  isCardAce,
 };
