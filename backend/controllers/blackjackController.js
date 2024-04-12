@@ -223,6 +223,7 @@ exports.getGame = async (req, res, next) => {
       dealer: {},
       is_game_over: req.game.is_game_over,
       bet: req.game.start_bet,
+      offerInsurance: req.game.offer_insurance,
     },
   };
 
