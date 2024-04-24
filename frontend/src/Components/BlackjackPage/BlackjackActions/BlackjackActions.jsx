@@ -1,7 +1,7 @@
 import React from "react";
 import "./BlackjackActions.scss";
 
-const BlackjackActions = ({ handleAction, handleSplit }) => {
+const BlackjackActions = ({ handleAction, handleSplit, offerInsurance }) => {
   const hitEndpoint = "http://localhost:5000/api/v1/blackjack/games/hit";
   const standEndpoint = "http://localhost:5000/api/v1/blackjack/games/stand";
   const doubleEndpoint = "http://localhost:5000/api/v1/blackjack/games/double";
@@ -114,12 +114,19 @@ const BlackjackActions = ({ handleAction, handleSplit }) => {
     console.log("SPLIT results", actionResults);
   };
 
-  return (
+  return !offerInsurance ? (
     <div className="blackjack-actions">
       <button onClick={hitNewCard}>Hit</button>
       <button onClick={standHand}>Stand</button>
       <button onClick={splitHand}>Split</button>
       <button onClick={doubleDown}>Double</button>
+    </div>
+  ) : (
+    <div className="blackjack-insurance-offer">
+      <h2>Insurance?</h2>
+
+      <button>Accept insurance</button>
+      <button>No insurance</button>
     </div>
   );
 };

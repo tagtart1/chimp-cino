@@ -89,7 +89,6 @@ export const PlayingCard = ({
     if (dealerCard || rank === undefined || staticCard) return;
     const computed = window.getComputedStyle(card.current);
     const marginLeft = computed.getPropertyValue("margin-left");
-    console.log("Left Margin", marginLeft);
   }, [rank, dealerCard, nthCard, staticCard]);
 
   const gameResultsStyle =
@@ -102,9 +101,6 @@ export const PlayingCard = ({
       : "";
 
   const isSplitAndSelected = selected ? "selected-hand" : "";
-  if (rank !== undefined && !dealerCard) {
-    console.log("I am the:", nthCard, "And have the X shift of", shiftX);
-  }
 
   const playerCardVariants = !staticCard
     ? // If the card is from a split hand then do different initials based on the handIndex

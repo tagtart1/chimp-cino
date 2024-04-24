@@ -140,7 +140,7 @@ exports.newGame = async (req, res, next) => {
       formattedData.data.game_winners = [gameWinner];
     }
 
-    // await client.query("COMMIT");
+    await client.query("COMMIT");
   } catch (err) {
     console.log("FAIL");
     console.log(err);

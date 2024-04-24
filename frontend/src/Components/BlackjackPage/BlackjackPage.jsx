@@ -37,6 +37,7 @@ const BlackjackPage = () => {
   const [gameWinners, setGameWinners] = useState([]);
   const [betAmount, setBetAmount] = useState(0);
   const [loadedBet, setLoadedBet] = useState(0);
+  const [offerInsurance, setOfferInsurance] = useState(false);
 
   const thresholdWidth = 875;
 
@@ -83,14 +84,15 @@ const BlackjackPage = () => {
       await delay(200);
     }
 
-    console.log("INSURANCE OFFERING:", gameData.data.offerInsurance);
     console.log("PAYUOT:", gameData.data);
     // TODO: PROMPT USER TO accept or decline insurance when needed, and block further actions till answered, setup a new route to respond to insurance
 
     // TRICKLE THE STATE
     // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
     setStartCardExit(false);
-    dealInitialCards(gameData);
+    await dealInitialCards(gameData);
+
+    setOfferInsurance(gameData.data.offerInsurance);
   };
 
   useEffect(() => {
@@ -168,7 +170,7 @@ const BlackjackPage = () => {
         if (playerHands.length > 1) {
           console.log("MULTIUPLE HANDS");
         }
-
+        setOfferInsurance(results.data.offerInsurance);
         setSelectedHandIndex(results.data.player.selectedHandIndex);
         setPlayerHands(playerHands);
         setDealerCards(dealerCards);
@@ -690,6 +692,7 @@ const BlackjackPage = () => {
             <BlackjackActions
               handleAction={handleActionResults}
               handleSplit={handleSplit}
+              offerInsurance={offerInsurance}
             />
             <button className="blackjack-play-button" onClick={playGame}>
               Play

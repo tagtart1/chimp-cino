@@ -4,6 +4,7 @@ const blackjackController = require("../controllers/blackjackController");
 const validateToken = require("../middleware/validateToken");
 const fetchActiveGame = require("../middleware/fetchActiveGame");
 const fetchHandData = require("../middleware/fetchHandData");
+const validateInsurance = require("../middleware/validateInsurance");
 
 router.post("/games", validateToken, blackjackController.newGame);
 
@@ -25,6 +26,7 @@ router.patch(
   validateToken,
   fetchActiveGame,
   fetchHandData,
+  validateInsurance,
   blackjackController.hit
 );
 
@@ -33,6 +35,7 @@ router.patch(
   validateToken,
   fetchActiveGame,
   fetchHandData,
+  validateInsurance,
   blackjackController.stand
 );
 
@@ -41,6 +44,7 @@ router.patch(
   validateToken,
   fetchActiveGame,
   fetchHandData,
+  validateInsurance,
   blackjackController.double
 );
 
@@ -49,6 +53,7 @@ router.patch(
   validateToken,
   fetchActiveGame,
   fetchHandData,
+  validateInsurance,
   blackjackController.split
 );
 
