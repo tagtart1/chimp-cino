@@ -423,6 +423,57 @@ const BlackjackPage = () => {
     }
   };
 
+  const manageInsurance = async (resultData, acceptedInsurance) => {
+    console.log(resultData);
+    if (acceptedInsurance) {
+      setOfferInsurance(false);
+      // Deduct half the bet from UI balance
+
+      setUser((prev) => {
+        const user = { ...prev };
+
+        parseFloat(user.balance);
+        user.balance -= betAmount / 2;
+
+        return user;
+      });
+      if (resultData.is_game_over) {
+        await dealNewCard(
+          resultData.dealer.cards.slice(0, 1),
+          false,
+          resultData.dealer.cards[1],
+          0
+        );
+        await delay(300);
+        setUser((prev) => {
+          const user = { ...prev };
+          let bet = parseFloat(betAmount);
+          parseFloat(user.balance);
+          user.balance += bet / 2 + bet;
+
+          return user;
+        });
+
+        setGameOver(true);
+
+        setGameWinners(resultData.game_winners);
+      }
+    } else {
+      if (resultData.is_game_over) {
+        await dealNewCard(
+          resultData.dealer.cards.slice(0, 1),
+          false,
+          resultData.dealer.cards[1],
+          0
+        );
+        await delay(300);
+        setGameWinners(resultData.game_winners);
+        setGameOver(true);
+      }
+      setOfferInsurance(false);
+    }
+  };
+
   const dealNewCard = async (hand, isPlayer, card, handIndex) => {
     setGameLoaded(false);
 
@@ -692,6 +743,7 @@ const BlackjackPage = () => {
             <BlackjackActions
               handleAction={handleActionResults}
               handleSplit={handleSplit}
+              manageInsurance={manageInsurance}
               offerInsurance={offerInsurance}
             />
             <button className="blackjack-play-button" onClick={playGame}>

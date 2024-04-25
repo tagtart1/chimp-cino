@@ -38,10 +38,10 @@ exports.newGame = async (req, res, next) => {
     },
   };
   // ACID Transaction begins to deduct balance and create a new game
-
+  const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    console.log(bet);
+
     if (!bet) {
       throw new AppError("Could not place bet", 401, "INVALID_BET");
     }
@@ -635,7 +635,7 @@ exports.insurance = async (req, res, next) => {
   const userID = req.user.id;
   const acceptInsurance = req.body.acceptInsurance;
   const dealerCards = req.game.dealerHand.cards;
-  const bet = req.game.bet;
+  const bet = parseFloat(req.game.start_bet);
   const dealerBlackjack = isBlackjack(dealerCards);
   const insuranceCost = bet / 2;
 
@@ -655,6 +655,7 @@ exports.insurance = async (req, res, next) => {
     if (typeof acceptInsurance !== "boolean")
       throw new AppError("It's either yes or no!", 401, "INVALID_ACTION");
 
+    await client.query("BEGIN");
     if (acceptInsurance && dealerBlackjack) {
       // Player breaks even, payout the bet as insurance pays 2 to 1
       await client.query(blackjackQueries.setGameOver, [req.game.id]);
@@ -668,11 +669,14 @@ exports.insurance = async (req, res, next) => {
         insuranceCost,
         userID,
       ]);
+      formattedData.data.dealer.cards.pop();
     } else if (!acceptInsurance && dealerBlackjack) {
       // Player instantly lose, end game
       await client.query(blackjackQueries.setGameOver, [req.game.id]);
       formattedData.data.is_game_over = true;
       formattedData.data.game_winners = ["dealer"];
+    } else if (!acceptInsurance && !dealerBlackjack) {
+      formattedData.data.dealer.cards.pop();
     }
 
     // No longer offer insurance
@@ -680,7 +684,7 @@ exports.insurance = async (req, res, next) => {
       false,
       req.game.id,
     ]);
-    // await client.query("COMMIT");
+    await client.query("COMMIT");
     res.status(200).json(formattedData);
   } catch (error) {
     await client.query("ROLLBACK");
