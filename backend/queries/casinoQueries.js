@@ -1,5 +1,5 @@
 const withdrawBalance =
-  "UPDATE users SET balance = balance - $1 WHERE id = $2 AND balance >= $1";
+  "UPDATE users SET balance = balance - $1 WHERE id = $2 AND balance >= $1 RETURNING balance";
 
 const depositBalance = "UPDATE users SET balance = balance + $1 WHERE id = $2";
 

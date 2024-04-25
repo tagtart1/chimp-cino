@@ -459,6 +459,7 @@ const BlackjackPage = () => {
         setGameWinners(resultData.game_winners);
       }
     } else {
+      setOfferInsurance(false);
       if (resultData.is_game_over) {
         await dealNewCard(
           resultData.dealer.cards.slice(0, 1),
@@ -470,7 +471,6 @@ const BlackjackPage = () => {
         setGameWinners(resultData.game_winners);
         setGameOver(true);
       }
-      setOfferInsurance(false);
     }
   };
 

@@ -20,6 +20,7 @@ const validateToken = (req, res, next) => {
         401,
         "SESSION_INVALID"
       );
+
     req.user = data.user;
     next();
   });

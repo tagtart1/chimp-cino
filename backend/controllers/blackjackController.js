@@ -26,6 +26,7 @@ exports.newGame = async (req, res, next) => {
   const NUMBER_OF_DECKS = 2;
   const bet = parseFloat(req.body.betAmount);
   const userID = req.user.id;
+
   let dealerCards;
   let playerCards;
   let offerInsurance = false;
@@ -45,19 +46,22 @@ exports.newGame = async (req, res, next) => {
     if (!bet) {
       throw new AppError("Could not place bet", 401, "INVALID_BET");
     }
+
     // Withdraw bet from user's balance
-    const withdrawBet = await client.query(casinoQueries.withdrawBalance, [
+    const withdrawed = await client.query(casinoQueries.withdrawBalance, [
       bet,
       userID,
     ]);
 
-    if (withdrawBet.rowCount === 0) {
+    if (withdrawed.rowCount === 0) {
       throw new AppError(
         "Could not place bet: Insufficient funds",
         401,
         "INVALID_BET"
       );
     }
+    const balanceAfterWithdraw = parseFloat(withdrawed.rows[0].balance);
+
     // Check for in-progress game
     const game = (
       await client.query(blackjackQueries.findInProgressGame, [userID])
@@ -118,7 +122,7 @@ exports.newGame = async (req, res, next) => {
     const isPlayerBlackjack = isBlackjack(playerCards);
 
     // Dealer has ace without player blackjack, offer insurance
-    if (dealerHasAce && !isPlayerBlackjack) {
+    if (dealerHasAce && !isPlayerBlackjack && balanceAfterWithdraw >= bet / 2) {
       offerInsurance = true;
       // Set value to true in game state in DB
       await client.query(blackjackQueries.setOfferInsurance, [true, game_id]);
