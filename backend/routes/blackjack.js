@@ -5,6 +5,7 @@ const validateToken = require("../middleware/validateToken");
 const fetchActiveGame = require("../middleware/fetchActiveGame");
 const fetchHandData = require("../middleware/fetchHandData");
 const validateInsurance = require("../middleware/validateInsurance");
+const fetchDealerHandData = require("../middleware/fetchDealerHandData");
 
 router.post("/games", validateToken, blackjackController.newGame);
 
@@ -55,6 +56,15 @@ router.patch(
   fetchHandData,
   validateInsurance,
   blackjackController.split
+);
+
+router.patch(
+  "/games/insurance",
+  validateToken,
+  fetchActiveGame,
+
+  fetchDealerHandData,
+  blackjackController.insurance
 );
 
 module.exports = router;

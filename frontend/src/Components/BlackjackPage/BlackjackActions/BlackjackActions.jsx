@@ -6,6 +6,8 @@ const BlackjackActions = ({ handleAction, handleSplit, offerInsurance }) => {
   const standEndpoint = "http://localhost:5000/api/v1/blackjack/games/stand";
   const doubleEndpoint = "http://localhost:5000/api/v1/blackjack/games/double";
   const splitEndpoint = "http://localhost:5000/api/v1/blackjack/games/split";
+  const insuranceEndpoint =
+    "http://localhost:5000/api/v1/blackjack/games/insurance";
 
   const hitNewCard = async () => {
     const response = await fetch(hitEndpoint, {
@@ -114,6 +116,22 @@ const BlackjackActions = ({ handleAction, handleSplit, offerInsurance }) => {
     console.log("SPLIT results", actionResults);
   };
 
+  const handleInsurance = async (acceptInsurance) => {
+    const response = await fetch(insuranceEndpoint, {
+      credentials: "include",
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        acceptInsurance,
+      }),
+    });
+
+    const actionResults = await response.json();
+    console.log(actionResults);
+  };
+
   return !offerInsurance ? (
     <div className="blackjack-actions">
       <button onClick={hitNewCard}>Hit</button>
@@ -125,8 +143,8 @@ const BlackjackActions = ({ handleAction, handleSplit, offerInsurance }) => {
     <div className="blackjack-insurance-offer">
       <h2>Insurance?</h2>
 
-      <button>Accept insurance</button>
-      <button>No insurance</button>
+      <button onClick={() => handleInsurance(true)}>Accept insurance</button>
+      <button onClick={() => handleInsurance(false)}>No insurance</button>
     </div>
   );
 };

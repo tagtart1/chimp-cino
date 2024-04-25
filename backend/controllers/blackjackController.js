@@ -38,7 +38,7 @@ exports.newGame = async (req, res, next) => {
     },
   };
   // ACID Transaction begins to deduct balance and create a new game
-  const client = await pool.connect();
+
   try {
     await client.query("BEGIN");
     console.log(bet);
@@ -121,7 +121,7 @@ exports.newGame = async (req, res, next) => {
     if (dealerHasAce && !isPlayerBlackjack) {
       offerInsurance = true;
       // Set value to true in game state in DB
-      await client.query(blackjackQueries.setOfferInsurance, [game_id]);
+      await client.query(blackjackQueries.setOfferInsurance, [true, game_id]);
     }
 
     const { gameWinner, payoutResult } = await findEarlyGameWinner(
@@ -621,6 +621,66 @@ exports.split = async (req, res, next) => {
 
     await client.query("COMMIT");
 
+    res.status(200).json(formattedData);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    return next(error);
+  } finally {
+    client.release();
+  }
+};
+
+exports.insurance = async (req, res, next) => {
+  // TODO: check if player balance can cover insurance bet
+  const userID = req.user.id;
+  const acceptInsurance = req.body.acceptInsurance;
+  const dealerCards = req.game.dealerHand.cards;
+  const bet = req.game.bet;
+  const dealerBlackjack = isBlackjack(dealerCards);
+  const insuranceCost = bet / 2;
+
+  let formattedData = {
+    data: {
+      dealer: {
+        cards: dealerCards,
+      },
+      is_game_over: false,
+      payout: 0,
+    },
+  };
+
+  const client = await pool.connect();
+
+  try {
+    if (typeof acceptInsurance !== "boolean")
+      throw new AppError("It's either yes or no!", 401, "INVALID_ACTION");
+
+    if (acceptInsurance && dealerBlackjack) {
+      // Player breaks even, payout the bet as insurance pays 2 to 1
+      await client.query(blackjackQueries.setGameOver, [req.game.id]);
+      await client.query(casinoQueries.depositBalance, [bet, userID]);
+      formattedData.data.is_game_over = true;
+      formattedData.data.game_winners = ["push"];
+      formattedData.data.payout = bet;
+    } else if (acceptInsurance && !dealerBlackjack) {
+      // Player lost side bet, subtract the insurance cost
+      await client.query(casinoQueries.withdrawBalance, [
+        insuranceCost,
+        userID,
+      ]);
+    } else if (!acceptInsurance && dealerBlackjack) {
+      // Player instantly lose, end game
+      await client.query(blackjackQueries.setGameOver, [req.game.id]);
+      formattedData.data.is_game_over = true;
+      formattedData.data.game_winners = ["dealer"];
+    }
+
+    // No longer offer insurance
+    await client.query(blackjackQueries.setOfferInsurance, [
+      false,
+      req.game.id,
+    ]);
+    // await client.query("COMMIT");
     res.status(200).json(formattedData);
   } catch (error) {
     await client.query("ROLLBACK");

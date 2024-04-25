@@ -91,7 +91,7 @@ const completeHand = "UPDATE active_hands SET is_completed = true WHERE id =$1";
 const doubleHandBet = "UPDATE active_hands SET bet = bet * 2 WHERE id = $1 ";
 
 const setOfferInsurance =
-  "UPDATE active_blackjack_games SET offer_insurance = true WHERE id = $1";
+  "UPDATE active_blackjack_games SET offer_insurance = $1 WHERE id = $2";
 
 module.exports = {
   getHandData,
