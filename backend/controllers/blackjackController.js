@@ -635,7 +635,6 @@ exports.split = async (req, res, next) => {
 };
 
 exports.insurance = async (req, res, next) => {
-  // TODO: check if player balance can cover insurance bet
   const userID = req.user.id;
   const acceptInsurance = req.body.acceptInsurance;
   const dealerCards = req.game.dealerHand.cards;

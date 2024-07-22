@@ -22,7 +22,7 @@ app.use(
     optionsSuccessStatus: 200,
   })
 );
-// Serve favicon - avoids log
+// Serve favicon - avoids warning log
 app.use(
   "/favicon.ico",
   express.static(path.join(__dirname, "utils/chimcino-logo.png"))
