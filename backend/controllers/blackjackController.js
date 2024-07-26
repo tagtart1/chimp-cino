@@ -96,8 +96,7 @@ exports.newGame = async (req, res, next) => {
       dealer_hand_id,
       1,
       client,
-      game_id,
-      13
+      game_id
     );
 
     const secondPlayerCard = await pullCardFromDeck(
@@ -205,6 +204,8 @@ const findEarlyGameWinner = async (
     await client.query(casinoQueries.depositBalance, [payout, userID]);
     return results;
   }
+
+  return results;
 };
 
 exports.getGame = async (req, res, next) => {
@@ -265,7 +266,7 @@ exports.getGame = async (req, res, next) => {
 };
 
 // HIT HIT HIT HIT
-// TODO: if the hand is split, we need to check when to conclude the game
+
 exports.hit = async (req, res, next) => {
   const userID = req.user.id;
   const { id: gameId, activeHand, nextHand } = req.game;
@@ -423,7 +424,6 @@ exports.double = async (req, res, next) => {
     const { is_hand_bust } = formattedData.data;
 
     activeHand.is_bust = is_hand_bust;
-    // TODO: is_doubled is obselete after the new bet column in DB, so remove later
 
     if (!nextHand) {
       formattedData.data.is_game_over = true;

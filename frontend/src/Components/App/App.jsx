@@ -7,6 +7,7 @@ import { Routes, Route, useNavigate, BrowserRouter } from "react-router-dom";
 import { useUser } from "../../Contexts/UserProvider";
 import BlackjackPage from "../BlackjackPage/BlackjackPage";
 import Navigation from "../Navigation/Navigation";
+import MinesPage from "../MinesPage/MinesPage";
 
 function App() {
   const { user, setUser } = useUser();
@@ -58,6 +59,7 @@ function App() {
               <Route path="/home" element={<Dashboard />} />
               <Route path="/roulette" element={<RoulettePage />} />
               <Route path="/blackjack" element={<BlackjackPage />} />
+              <Route path="/mines" element={<MinesPage />} />
             </Routes>
           </div>
         </div>

@@ -78,6 +78,14 @@ const Navigation = () => {
                   </svg>
                   Roulette
                 </li>
+
+                <li
+                  onClick={() => {
+                    navigate("/mines");
+                  }}
+                >
+                  Mines
+                </li>
               </ul>
             </div>
           </motion.div>

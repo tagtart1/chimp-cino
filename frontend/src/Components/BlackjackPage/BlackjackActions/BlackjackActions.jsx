@@ -14,6 +14,7 @@ const BlackjackActions = ({
   const insuranceEndpoint =
     "http://localhost:5000/api/v1/blackjack/games/insurance";
 
+  // TODO: Conditionally block the ability to select the play and certain actions depending on the state of the game
   const hitNewCard = async () => {
     const response = await fetch(hitEndpoint, {
       credentials: "include",
