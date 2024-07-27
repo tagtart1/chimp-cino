@@ -1,39 +1,15 @@
 import React from "react";
 import "./MinesPage.scss";
+import MinesGrid from "./MinesGrid/MinesGrid";
+import MinesBetControls from "./MinesBetControls/MinesBetControls";
 
 const MinesPage = () => {
   return (
     <main className="mines-main">
       <section className="mines-section">
-        <div className="bet-controls">hi</div>
+        <MinesBetControls />
         <div className="game-screen-mines">
-          <div className="mines-grid">
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-            <div className="mine-cell"></div>
-          </div>
+          <MinesGrid />
         </div>
       </section>
     </main>

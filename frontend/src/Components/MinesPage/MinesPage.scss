@@ -19,18 +19,6 @@
     border-radius: 8px;
     overflow: none;
 
-    .bet-controls {
-      background-color: #213743;
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-
-      min-width: 300px;
-      border-bottom-left-radius: 8px;
-      border-top-left-radius: 8px;
-    }
-
     .game-screen-mines {
       // Board background and shape
       box-sizing: border-box;
@@ -42,46 +30,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      .mines-grid {
-        // Mine cells format
-        aspect-ratio: 1 / 1;
-        display: grid;
-        grid-template-rows: repeat(5, minmax(0px, 110px));
-        grid-template-columns: repeat(5, minmax(0px, 110px));
-        column-gap: 12px;
-        row-gap: 17px;
-        padding: 12px;
-      }
-      .mine-cell {
-        border-radius: 8px;
-        background-color: #2f4553;
-        box-shadow: 0px 7px #213743;
-        cursor: pointer;
-        transition-property: transform, background-color;
-        transition-duration: 0.2s;
-        &:hover {
-          background-color: #8e96ab92;
-          transform: translateY(-3px);
-        }
-      }
-    }
-  }
-}
-
-@media (max-width: 1050px) {
-  .mines-main {
-    .mines-section {
-      .game-screen-mines {
-        .mines-grid {
-          column-gap: 6px;
-          row-gap: 12px;
-          padding: 8px;
-
-          .mine-cell {
-            box-shadow: 0px 4px #213743;
-          }
-        }
-      }
     }
   }
 }
