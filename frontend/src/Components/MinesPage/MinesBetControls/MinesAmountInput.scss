@@ -12,7 +12,7 @@
     display: flex;
     box-shadow: 0rem 0.0625rem 0.1875rem #00000033,
       0rem 0.0625rem 0.125rem #0000001f;
-
+    position: relative;
     .bet-buttons {
       display: flex;
     }
@@ -21,10 +21,10 @@
       border: 2px solid #2f4553;
       width: 100%;
       color: white;
-      font-size: 16px;
-      padding: 8px 24px;
-
-      padding-left: 8px;
+      font-size: 15px;
+      padding: 8px 8px;
+      font-family: "Segoe UI", sans-serif;
+      padding-right: 28px;
       font-weight: bold;
       outline: none;
       transition: all 0.2s;
@@ -37,6 +37,13 @@
       &:focus {
         border-color: #537a92;
       }
+    }
+
+    .coin-input-img {
+      width: 16px;
+      position: absolute;
+      right: 105px;
+      top: 12px;
     }
 
     button {

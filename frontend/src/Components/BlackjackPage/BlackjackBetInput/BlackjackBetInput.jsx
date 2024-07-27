@@ -9,6 +9,7 @@ export const BlackjackBetInput = ({ setBetAmount, loadedBet }) => {
   const doubleBet = () => {
     if (betAmountInput.current.value === "0.00") {
       betAmountInput.current.value = 0.01;
+      setBetAmount(betAmountInput.current.value);
       return;
     }
     betAmountInput.current.value = (betAmountInput.current.value * 2).toFixed(
