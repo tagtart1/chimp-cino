@@ -4,8 +4,19 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   width: 300px;
   border-bottom-left-radius: 8px;
   border-top-left-radius: 8px;
+
+  .play-mines-button {
+    background-color: #00e701;
+    border: none;
+    font-family: inherit;
+    padding: 16px 0px;
+    font-weight: 500;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
 }
