@@ -1,0 +1,92 @@
+.amount-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-weight: bold;
+    color: #b1bad3;
+    font-size: 14px;
+  }
+  .input-wrapper {
+    display: flex;
+    box-shadow: 0rem 0.0625rem 0.1875rem #00000033,
+      0rem 0.0625rem 0.125rem #0000001f;
+    position: relative;
+    &.disabled {
+      filter: opacity(50%);
+
+      .coin-input-img {
+        cursor: not-allowed;
+      }
+    }
+
+    .bet-buttons {
+      display: flex;
+    }
+    #bet-amount {
+      background-color: #0f212e;
+      border: 2px solid #2f4553;
+      width: 100%;
+      color: white;
+      font-size: 15px;
+      padding: 8px 8px;
+      font-family: "Segoe UI", sans-serif;
+      padding-right: 28px;
+      font-weight: bold;
+      outline: none;
+      transition: all 0.2s;
+      box-sizing: border-box;
+      position: relative;
+
+      border-top-left-radius: 4px;
+      border-bottom-left-radius: 4px;
+
+      &:focus {
+        border-color: #537a92;
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+      }
+    }
+
+    .coin-input-img {
+      width: 16px;
+      position: absolute;
+      right: 105px;
+      top: 12px;
+    }
+
+    button {
+      border: none;
+      background-color: #2f4553;
+      color: white;
+      font-weight: bold;
+      padding: 0.6125rem 1rem;
+      font-size: 15px;
+    }
+    .half-bet-button {
+      position: relative;
+    }
+
+    .double-bet-button {
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .half-bet-button::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      background-color: #0f212e;
+      width: 2px;
+      top: 25%;
+      bottom: 25%;
+    }
+  }
+
+  &:hover #bet-amount {
+    border-color: #537a92;
+  }
+}
