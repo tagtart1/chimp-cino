@@ -46,6 +46,14 @@
   background-position: center;
 }
 
+.reveal-mines {
+  background-image: url("../../../images/gem.svg");
+  animation: reveal 0.15s forwards ease-out;
+  background-size: 0%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 @keyframes expand {
   from {
     transfrom: scale(1);
