@@ -8,11 +8,15 @@ const MinesBetControls = () => {
   const [minesAmount, setMinesAmount] = useState(3);
   // TODO: change to only save a loadedMines state, if we load in mines, that means we either have a game already started or just started so display the other UI
   const [started, setStarted] = useState(false);
+  const [loadedMines, setLoadedMines] = useState(0);
 
   const playGame = () => {
     // Call to api to start a game
-
+    if (parseFloat(betAmount) <= 0) {
+      return;
+    }
     setStarted(true);
+    // Example test
   };
 
   return (
@@ -26,7 +30,11 @@ const MinesBetControls = () => {
           </button>
         </>
       ) : (
-        <div></div>
+        <>
+          <MinesBetInput loadedBet={betAmount} />
+          <MinesAmountInput loadedMines={minesAmount} />
+          <button className="play-mines-button">Cashout</button>
+        </>
       )}
     </section>
   );

@@ -3,36 +3,50 @@ import "./MinesAmountInput.scss";
 
 const MinesAmountInput = ({ setMinesAmount, loadedMines }) => {
   const defaultMines = 3;
+  // TODO: if there are loaded mines, we need to make the width not stretch, only 50% to make room for the gems
   return (
     <div className="mines-amount-wrapper">
-      <label htmlFor="mines-amount-label">Mines</label>
       {!loadedMines ? (
-        <>
+        <div>
+          <label htmlFor="mines-amount-label">Mines</label>
           <select
             name="minesAmount"
             type="select"
             id="mines-amount-input"
             onChange={(e) => setMinesAmount(e.target.value)}
+            defaultValue={defaultMines}
           >
             {[...Array(24)].map((_, index) => (
-              <option
-                key={index}
-                value={index + 1}
-                selected={index + 1 === defaultMines}
-              >
+              <option key={index} value={index + 1}>
                 {index + 1}
               </option>
             ))}
           </select>
           <DropdownIcon />
-        </>
+        </div>
       ) : (
-        <input
-          type="text"
-          id="mines-amount-input"
-          readOnly
-          value={loadedMines}
-        />
+        <>
+          <div>
+            <label htmlFor="mines-amount-label">Mines</label>
+            <input
+              type="text"
+              id="mines-amount-input"
+              className="in-progress"
+              readOnly
+              value={loadedMines}
+            />
+          </div>
+          <div>
+            <label htmlFor="gems-amount-label">Gems</label>
+            <input
+              type="text"
+              id="gems-amount-input"
+              className="in-progress"
+              readOnly
+              value={25 - loadedMines}
+            />
+          </div>
+        </>
       )}
     </div>
   );

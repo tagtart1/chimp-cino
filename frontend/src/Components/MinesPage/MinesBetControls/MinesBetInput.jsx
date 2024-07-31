@@ -6,6 +6,9 @@ const MinesBetInput = ({ setBetAmount, loadedBet }) => {
   const betAmountInput = useRef(null);
 
   const doubleBet = () => {
+    if (loadedBet) {
+      return;
+    }
     // Can't double 0 so just set it 1 cent
     if (betAmountInput.current.value === "0.00") {
       betAmountInput.current.value = 0.01;
@@ -21,6 +24,9 @@ const MinesBetInput = ({ setBetAmount, loadedBet }) => {
   };
 
   const halfBet = () => {
+    if (loadedBet) {
+      return;
+    }
     if (betAmountInput.current.value === "0.00") {
       return;
     }
