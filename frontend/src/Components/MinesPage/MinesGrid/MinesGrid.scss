@@ -8,16 +8,68 @@
   row-gap: 17px;
   padding: 12px;
 }
-.mine-cell {
+.cell-wrapper {
+  border: none;
   border-radius: 8px;
-  background-color: #2f4553;
-  box-shadow: 0px 7px #213743;
-  cursor: pointer;
-  transition-property: transform, background-color;
-  transition-duration: 0.2s;
-  &:hover {
-    background-color: #8e96ab92;
-    transform: translateY(-3px);
+  background-color: #071824;
+  .cell {
+    border: none;
+    border-radius: 8px;
+    z-index: 1;
+    background-color: #2f4553;
+    box-shadow: 0px 7px #213743;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    transition-property: transform, background-color;
+    transition-duration: 0.2s;
+    &:hover {
+      background-color: #8e96ab92;
+      transform: translateY(-3px);
+    }
+  }
+}
+
+.expand-cell {
+  animation: expand 0.3s forwards;
+}
+
+.shrink-cell {
+  animation: shrink 0.15s forwards;
+}
+
+.reveal-gem {
+  background-image: url("../../../images/gem.svg");
+  animation: reveal 0.15s forwards ease-out;
+  background-size: 0%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+@keyframes expand {
+  from {
+    transfrom: scale(1);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes shrink {
+  from {
+    transform: scale(1.1);
+  }
+  to {
+    transform: scale(0);
+  }
+}
+
+@keyframes reveal {
+  from {
+    background-size: 0%;
+  }
+  to {
+    background-size: 70%;
   }
 }
 
