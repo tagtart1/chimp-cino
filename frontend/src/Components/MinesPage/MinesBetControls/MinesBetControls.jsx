@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import "./MinesBetControls.scss";
 import MinesBetInput from "./MinesBetInput";
 import MinesAmountInput from "./MinesAmountInput";
+import TotalGainOutput from "./TotalGainOutput";
 
-const MinesBetControls = () => {
+const MinesBetControls = ({ gameInProgress, setGameInProgress }) => {
   const [betAmount, setBetAmount] = useState();
   const [minesAmount, setMinesAmount] = useState(3);
   // TODO: change to only save a loadedMines state, if we load in mines, that means we either have a game already started or just started so display the other UI
-  const [started, setStarted] = useState(false);
+
   const [loadedMines, setLoadedMines] = useState(0);
 
   const playGame = () => {
@@ -15,13 +16,17 @@ const MinesBetControls = () => {
     if (parseFloat(betAmount) <= 0) {
       return;
     }
-    setStarted(true);
+    setGameInProgress(true);
     // Example test
+  };
+
+  const resetGrid = () => {
+    // Should probably have the end game results here to render out each grid cell, mainly used to reset the state of grid to all closed cells
   };
 
   return (
     <section className="mines-bet-controls">
-      {!started ? (
+      {!gameInProgress ? (
         <>
           <MinesBetInput setBetAmount={setBetAmount} loadedBet={0} />
           <MinesAmountInput setMinesAmount={setMinesAmount} loadedMines={0} />
@@ -33,7 +38,11 @@ const MinesBetControls = () => {
         <>
           <MinesBetInput loadedBet={betAmount} />
           <MinesAmountInput loadedMines={minesAmount} />
-          <button className="play-mines-button">Cashout</button>
+          <TotalGainOutput totalGain={0} multiplier={1.1} />
+          <button className="random-tile-button">Pick random tile</button>
+          <button className="play-mines-button" onClick={resetGrid}>
+            Cashout
+          </button>
         </>
       )}
     </section>

@@ -1,12 +1,15 @@
 import React from "react";
 import "./MinesGrid.scss";
 
-const MinesGrid = () => {
+const MinesGrid = ({ gameInProgress }) => {
+  // TODO: Each cell should be its own component, build it in this file
+  // TODO: build a coordinate system 5x5 2d array variable to map out the cells.
   const revealCell = (e) => {
+    if (!gameInProgress) return;
     const cell = e.target;
     cell.classList.add("expand-cell");
     let resultRetrived = true;
-    let isGem = true;
+    let isGem = false;
 
     // Fetch cell result
 
@@ -24,6 +27,7 @@ const MinesGrid = () => {
                 cell.parentElement.classList.add("reveal-gem");
               } else {
                 // Reveal a mine
+                cell.parentElement.classList.add("reveal-mine");
               }
             },
             { once: true }
