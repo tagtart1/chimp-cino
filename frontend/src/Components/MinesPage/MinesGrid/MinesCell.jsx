@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 const MinesCell = ({ gameInProgress, row, col, value }) => {
   // Updates when the user reveals this cell
-  const [currentValue, setCurrentValue] = useState(null);
+  const cellRef = useRef();
 
   // Reveals if the cell is a mine or a gem
   const revealCell = (e) => {
     // Ensures we dont reveal the cell if it has already been revealed
-    if (!gameInProgress || value || currentValue) return;
+    if (!gameInProgress || value) return;
     console.log(`My coordinate is: ${row},${col} with value ${value}`);
 
     const cell = e.target;
@@ -41,13 +41,30 @@ const MinesCell = ({ gameInProgress, row, col, value }) => {
     );
   };
 
+  useEffect(() => {
+    const cellElement = cellRef.current;
+
+    if (value === 0) return;
+
+    cellElement.classList.add("shrink-cell");
+
+    cellElement.addEventListener(
+      "animationend",
+      () => {
+        if (value === 1) {
+          cellElement.parentElement.classList.add("reveal-gem");
+        } else if (value === 2) {
+          // Reveal a mine
+          cellElement.parentElement.classList.add("reveal-mine");
+        }
+      },
+      { once: true }
+    );
+  }, [value]);
+
   return (
     <button className="cell-wrapper">
-      {!value ? (
-        <div className="cell" onClick={revealCell}></div>
-      ) : (
-        <div className="cell reveal-gem"></div>
-      )}
+      <div ref={cellRef} className="cell" onClick={revealCell}></div>
     </button>
   );
 };

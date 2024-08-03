@@ -22,31 +22,20 @@ const MinesPage = () => {
     // Call to api to start a game
 
     setGameInProgress(true);
-    // Example test
+    setLoadedGrid(grid);
   };
 
-  // Retrive the completed grid, reveals the grid
-  const cashout = () => {
-    // Should probably have the end game results here to render out each grid cell, mainly used to reset the state of grid to all closed cells
-
-    // Payout
-    // Show multiplier popup on grid
-    endGame();
+  const endGame = (revealedGrid) => {
+    setLoadedGrid(revealedGrid);
+    setGameInProgress(false);
   };
-
-  const endGame = (isWin) => {
-    // End the game
-    // Reveal all non revealed cells in grid
-  };
-
-  const resetGrid = () => {};
 
   useEffect(() => {
     // Test grid - simulates a loadedGrid
     const lgrid = [
       [0, 0, 0, 0, 0],
       [0, 1, 0, 0, 0],
-      [0, 0, 0, 1, 0],
+      [0, 0, 1, 1, 0],
       [0, 0, 0, 1, 0],
       [0, 0, 0, 0, 0],
     ];
@@ -65,9 +54,8 @@ const MinesPage = () => {
         <MinesBetControls
           loadedBet={betAmount}
           gameInProgress={gameInProgress}
-          setGameInProgress={setGameInProgress}
           playGame={playGame}
-          resetGrid={cashout}
+          endGame={endGame}
         />
         <div className="game-screen-mines">
           <MinesGrid
