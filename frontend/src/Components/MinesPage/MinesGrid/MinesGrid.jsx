@@ -1,50 +1,23 @@
 import React from "react";
 import "./MinesGrid.scss";
+import MinesCell from "./MinesCell";
 
-const MinesGrid = ({ gameInProgress }) => {
-  // TODO: Each cell should be its own component, build it in this file
-  // TODO: build a coordinate system 5x5 2d array variable to map out the cells.
-  const revealCell = (e) => {
-    if (!gameInProgress) return;
-    const cell = e.target;
-    cell.classList.add("expand-cell");
-    let resultRetrived = true;
-    let isGem = false;
-
-    // Fetch cell result
-
-    // Once the cell is fully expanded and the result has been fetched, reveal the gem or mine
-    cell.addEventListener(
-      "animationend",
-      () => {
-        if (resultRetrived) {
-          cell.classList.add("shrink-cell");
-
-          cell.addEventListener(
-            "animationend",
-            () => {
-              if (isGem) {
-                cell.parentElement.classList.add("reveal-gem");
-              } else {
-                // Reveal a mine
-                cell.parentElement.classList.add("reveal-mine");
-              }
-            },
-            { once: true }
-          );
-        }
-      },
-      { once: true }
-    );
-  };
+const MinesGrid = ({ gameInProgress, loadedGrid }) => {
+  // API THOUGHT: each cell reveal simply fetch that cells result while saving the game, on page reload during an inprogress game then we fetch the entire saved game state and populate the cells with that saved info but there is no need to fetch that during each cell click. Also should return info if the game is lost
 
   return (
     <div className="mines-grid">
-      {[...Array(25)].map((_, index) => (
-        <button className="cell-wrapper">
-          <div className="cell" onClick={revealCell}></div>
-        </button>
-      ))}
+      {loadedGrid.map((arr, row) => {
+        return arr.map((value, col) => (
+          <MinesCell
+            key={row + col}
+            gameInProgress={gameInProgress}
+            row={row}
+            col={col}
+            value={value}
+          />
+        ));
+      })}
     </div>
   );
 };
