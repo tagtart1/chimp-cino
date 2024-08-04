@@ -12,6 +12,7 @@
   border: none;
   border-radius: 8px;
   background-color: #071824;
+
   .cell {
     border: none;
     border-radius: 8px;
@@ -38,29 +39,56 @@
   animation: shrink 0.15s forwards ease-in;
 }
 
+.shrink-gem-mine {
+  &::before {
+    animation: shrink-value 5s forwards !important;
+  }
+}
+
+@mixin reveal-animation($image) {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    content: "";
+    background-image: url("#{$image}");
+
+    background-repeat: no-repeat;
+    background-position: center;
+    animation: reveal 0.15s forwards ease-out;
+  }
+
+  &.small::before {
+    animation: reveal-dim 0.15s forwards ease-out;
+    opacity: 0.5;
+  }
+}
+
 .reveal-gem {
-  background-image: url("../../../images/gem.svg");
-  animation: reveal 0.15s forwards ease-out;
-  background-size: 0%;
-  background-repeat: no-repeat;
-  background-position: center;
+  @include reveal-animation("../../../images/gem.svg");
 }
 
 .reveal-mine {
-  background-image: url("../../../images/mine.svg");
-  animation: reveal 0.15s forwards ease-out;
-  background-size: 0%;
-  background-repeat: no-repeat;
-  background-position: center;
+  @include reveal-animation("../../../images/mine.svg");
 }
 
-.cell-reveal-instant {
-  width: 100%;
-  height: 100%;
-  background-size: 70%;
-  background-image: url("../../../images/gem.svg");
-  background-repeat: no-repeat;
-  background-position: center;
+.dim {
+  opacity: 0.5;
+}
+
+@keyframes shrink-value {
+  from {
+    background-size: inherit;
+  }
+  to {
+    background-size: 0%;
+  }
 }
 
 @keyframes expand {
@@ -90,6 +118,23 @@
   }
   100% {
     background-size: 70%;
+  }
+}
+
+@keyframes shrink-background {
+  from {
+  }
+}
+
+@keyframes reveal-dim {
+  0% {
+    background-size: 0%;
+  }
+  50% {
+    background-size: 55%;
+  }
+  100% {
+    background-size: 50%;
   }
 }
 

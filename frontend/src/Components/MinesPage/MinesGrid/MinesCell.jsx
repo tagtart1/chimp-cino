@@ -1,19 +1,22 @@
 import React, { useEffect, useState, useRef } from "react";
 
-const MinesCell = ({ gameInProgress, row, col, value }) => {
+const MinesCell = ({ gameInProgress, row, col, value, resetCells }) => {
   // Updates when the user reveals this cell
   const cellRef = useRef();
 
+  const [currentValue, setCurrentValue] = useState(0);
   // Reveals if the cell is a mine or a gem
   const revealCell = (e) => {
-    // Ensures we dont reveal the cell if it has already been revealed
-    if (!gameInProgress || value) return;
-    console.log(`My coordinate is: ${row},${col} with value ${value}`);
-
     const cell = e.target;
     cell.classList.add("expand-cell");
     let resultRetrived = true;
     let isGem = false;
+
+    // Ensures we dont reveal the cell if it has already been revealed
+    if (!gameInProgress || value) {
+      cell.parentElement.classList.remove("reveal-mine");
+      return;
+    }
 
     // Fetch cell result
 
@@ -45,7 +48,7 @@ const MinesCell = ({ gameInProgress, row, col, value }) => {
     const cellElement = cellRef.current;
 
     if (value === 0) return;
-
+    setCurrentValue(value);
     cellElement.classList.add("shrink-cell");
 
     cellElement.addEventListener(
@@ -57,13 +60,31 @@ const MinesCell = ({ gameInProgress, row, col, value }) => {
           // Reveal a mine
           cellElement.parentElement.classList.add("reveal-mine");
         }
+
+        if (!gameInProgress) {
+          cellElement.parentElement.classList.add("small");
+        }
       },
       { once: true }
     );
-  }, [value]);
+  }, [value, gameInProgress]);
+
+  useEffect(() => {
+    if (resetCells) {
+      console.log("resetting the cells!");
+      const cellElement = cellRef.current;
+      cellElement.parentElement.classList.remove("reveal-mine");
+      cellElement.parentElement.classList.add("shrink-gem-mine");
+    }
+  }, [resetCells]);
 
   return (
-    <button className="cell-wrapper">
+    <button
+      className="cell-wrapper"
+      onClick={(e) => {
+        e.target.classList.remove("reveal-mine");
+      }}
+    >
       <div ref={cellRef} className="cell" onClick={revealCell}></div>
     </button>
   );
