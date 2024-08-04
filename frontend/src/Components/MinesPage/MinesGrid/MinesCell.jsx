@@ -1,91 +1,77 @@
 import React, { useEffect, useState, useRef } from "react";
-
-const MinesCell = ({ gameInProgress, row, col, value, resetCells }) => {
-  // Updates when the user reveals this cell
+// TODO: add cleanup functions
+const MinesCell = ({
+  gameInProgress,
+  row,
+  col,
+  value,
+  resetCells,
+  updateGrid,
+}) => {
+  // Grabs the cell ref to manipulate the cover and the hidden value's classses
+  // Alternative approach was to use state for the classnames
   const cellRef = useRef();
 
-  const [currentValue, setCurrentValue] = useState(0);
   // Reveals if the cell is a mine or a gem
   const revealCell = (e) => {
-    const cell = e.target;
-    cell.classList.add("expand-cell");
-    let resultRetrived = true;
-    let isGem = false;
+    if (!gameInProgress) return;
+    const cover = e.currentTarget.children[1];
 
-    // Ensures we dont reveal the cell if it has already been revealed
-    if (!gameInProgress || value) {
-      cell.parentElement.classList.remove("reveal-mine");
-      return;
-    }
-
-    // Fetch cell result
-
-    cell.addEventListener(
+    cover.classList.add("expand-cover");
+    cover.addEventListener(
       "animationend",
       () => {
-        if (resultRetrived) {
-          cell.classList.add("shrink-cell");
-
-          cell.addEventListener(
-            "animationend",
-            () => {
-              if (isGem) {
-                cell.parentElement.classList.add("reveal-gem");
-              } else {
-                // Reveal a mine
-                cell.parentElement.classList.add("reveal-mine");
-              }
-            },
-            { once: true }
-          );
-        }
+        // Fetch if gem or mine then pass it
+        updateGrid(row, col, 1);
       },
       { once: true }
     );
   };
 
   useEffect(() => {
-    const cellElement = cellRef.current;
+    const cell = cellRef.current;
+    const cover = cell.children[1];
+    const hidden = cell.children[0];
 
-    if (value === 0) return;
-    setCurrentValue(value);
-    cellElement.classList.add("shrink-cell");
-
-    cellElement.addEventListener(
-      "animationend",
-      () => {
-        if (value === 1) {
-          cellElement.parentElement.classList.add("reveal-gem");
-        } else if (value === 2) {
-          // Reveal a mine
-          cellElement.parentElement.classList.add("reveal-mine");
-        }
-
-        if (!gameInProgress) {
-          cellElement.parentElement.classList.add("small");
-        }
-      },
-      { once: true }
-    );
+    if (value !== 0) {
+      cover.classList.add("shrink-cover");
+      cover.addEventListener(
+        "animationend",
+        () => {
+          hidden.classList.add(value === 1 ? "gem" : "mine");
+          hidden.classList.add(gameInProgress ? "expand" : "expand-dim");
+        },
+        { once: true }
+      );
+    }
   }, [value, gameInProgress]);
 
   useEffect(() => {
-    if (resetCells) {
-      console.log("resetting the cells!");
-      const cellElement = cellRef.current;
-      cellElement.parentElement.classList.remove("reveal-mine");
-      cellElement.parentElement.classList.add("shrink-gem-mine");
-    }
+    if (!resetCells) return;
+    const cell = cellRef.current;
+    const cover = cell.children[1];
+    const hidden = cell.children[0];
+
+    cover.classList.add("expand");
+    cover.addEventListener(
+      "animationend",
+      () => {
+        hidden.classList.remove("mine");
+        hidden.classList.remove("gem");
+        hidden.classList.remove("expand-dim");
+        hidden.classList.remove("expand");
+        cover.classList.remove("shrink-cover");
+        cover.classList.remove("expand");
+        cover.classList.remove("expand-cover");
+      },
+      { once: true }
+    );
   }, [resetCells]);
 
   return (
-    <button
-      className="cell-wrapper"
-      onClick={(e) => {
-        e.target.classList.remove("reveal-mine");
-      }}
-    >
-      <div ref={cellRef} className="cell" onClick={revealCell}></div>
+    <button className="cell-wrapper" onClick={revealCell} ref={cellRef}>
+      <div className="cell-value"></div>
+      <div className="cell-cover"></div>
     </button>
   );
 };

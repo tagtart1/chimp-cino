@@ -12,15 +12,16 @@
   border: none;
   border-radius: 8px;
   background-color: #071824;
-
-  .cell {
+  position: relative;
+  .cell-cover {
     border: none;
     border-radius: 8px;
-    z-index: 1;
+
     background-color: #2f4553;
     box-shadow: 0px 7px #213743;
     width: 100%;
     height: 100%;
+    pointer-events: all;
     cursor: pointer;
     transition-property: transform, background-color;
     transition-duration: 0.2s;
@@ -29,112 +30,89 @@
       transform: translateY(-3px);
     }
   }
-}
 
-.expand-cell {
-  animation: expand 0.3s forwards;
-}
-
-.shrink-cell {
-  animation: shrink 0.15s forwards ease-in;
-}
-
-.shrink-gem-mine {
-  &::before {
-    animation: shrink-value 5s forwards !important;
-  }
-}
-
-@mixin reveal-animation($image) {
-  position: relative;
-  width: 100%;
-  height: 100%;
-
-  &::before {
+  .cell-value {
     position: absolute;
     top: 0;
     left: 0;
+    background-size: 70%;
     width: 100%;
     height: 100%;
-    content: "";
-    background-image: url("#{$image}");
-
     background-repeat: no-repeat;
     background-position: center;
-    animation: reveal 0.15s forwards ease-out;
+    transform: scale(0);
+    &.mine {
+      background-image: url("../../../images/mine.svg");
+    }
+
+    &.gem {
+      background-image: url("../../../images/gem.svg");
+    }
   }
-
-  &.small::before {
-    animation: reveal-dim 0.15s forwards ease-out;
-    opacity: 0.5;
-  }
 }
 
-.reveal-gem {
-  @include reveal-animation("../../../images/gem.svg");
+// TODO: make this infinite while we fetch the cell result
+.expand-cover {
+  animation: expand-cover 0.35s forwards;
 }
 
-.reveal-mine {
-  @include reveal-animation("../../../images/mine.svg");
+.shrink-cover {
+  animation: shrink 0.15s forwards;
 }
 
-.dim {
+.shrink-value {
+  animation: shrink 0.15s forwards !important;
+}
+
+.expand {
+  animation: expand-background 0.15s forwards;
+}
+
+.expand-dim {
   opacity: 0.5;
+  animation: expand-dim 0.15s forwards;
 }
 
-@keyframes shrink-value {
-  from {
-    background-size: inherit;
+@keyframes expand-background {
+  0% {
+    transform: scale(0);
   }
-  to {
-    background-size: 0%;
-  }
-}
-
-@keyframes expand {
-  from {
-    transfrom: scale(1);
-  }
-  to {
+  80% {
     transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
 @keyframes shrink {
   from {
-    transform: scale(1.1);
+    transform: inherit;
   }
   to {
     transform: scale(0);
   }
 }
 
-@keyframes reveal {
+@keyframes expand-dim {
   0% {
-    background-size: 0%;
+    transform: scale(0);
   }
-  50% {
-    background-size: 80%;
+  80% {
+    transform: scale(0.7);
   }
   100% {
-    background-size: 70%;
+    transform: scale(0.6);
   }
 }
 
-@keyframes shrink-background {
+// TODO: make this infinite while we fetch the cell result
+@keyframes expand-cover {
   from {
+    transform: scale(1);
   }
-}
-
-@keyframes reveal-dim {
-  0% {
-    background-size: 0%;
-  }
-  50% {
-    background-size: 55%;
-  }
-  100% {
-    background-size: 50%;
+  to {
+    transform: scale(1.1);
   }
 }
 

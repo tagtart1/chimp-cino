@@ -34,6 +34,14 @@ const MinesPage = () => {
     setGameInProgress(false);
   };
 
+  const updateGrid = (row, col, value) => {
+    const updatedGrid = loadedGrid.map((row) => [...row]);
+
+    updatedGrid[row][col] = value;
+
+    setLoadedGrid(updatedGrid);
+  };
+
   useEffect(() => {
     // Test grid - simulates a loadedGrid
     const lgrid = [
@@ -67,6 +75,7 @@ const MinesPage = () => {
             gameInProgress={gameInProgress}
             loadedGrid={loadedGrid}
             resetCells={resetCells}
+            updateGrid={updateGrid}
           />
         </div>
       </section>
