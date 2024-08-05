@@ -35,10 +35,11 @@ const MinesCell = ({
         cover.addEventListener(
           "animationend",
           () => {
+            const delayEndGame = 250;
             // Reveal all other cells delay. This delay lets the mine anim play out fully
             setTimeout(() => {
               endGame(revealedGrid);
-            }, 250);
+            }, delayEndGame);
           },
           { once: true }
         );
