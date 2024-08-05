@@ -13,6 +13,7 @@
     box-shadow: 0rem 0.0625rem 0.1875rem #00000033,
       0rem 0.0625rem 0.125rem #0000001f;
     position: relative;
+    transition: filter 0.2s;
     &.disabled {
       filter: opacity(50%);
 

@@ -21,7 +21,7 @@ const MinesCell = ({
     const cover = e.currentTarget.children[1];
 
     // TODO: expand-cover needs to run infinitely till fetch complete
-    // OPtional TODO: Queue the fetches so that the fetching 2 cells really quickly create an effect that resembles them chaining. look at stake for reference
+    // OPtional TODO: Queue the fetches so that the fetching 2 cells really quickly create an effect that resembles them chaining. look at stake for reference - Debouncing, OPTIONAL, wait till API fetching is implemented
     cover.classList.add("expand-cover");
     cover.addEventListener(
       "animationend",

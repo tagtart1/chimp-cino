@@ -2,11 +2,11 @@ import React, { useEffect } from "react";
 import "./MinesBetInput.scss";
 import { useRef } from "react";
 
-const MinesBetInput = ({ setBetAmount, loadedBet }) => {
+const MinesBetInput = ({ setBetAmount, loadedBet, gameInProgress }) => {
   const betAmountInput = useRef(null);
 
   const doubleBet = () => {
-    if (loadedBet) {
+    if (gameInProgress) {
       return;
     }
     // Can't double 0 so just set it 1 cent
@@ -24,7 +24,7 @@ const MinesBetInput = ({ setBetAmount, loadedBet }) => {
   };
 
   const halfBet = () => {
-    if (loadedBet) {
+    if (gameInProgress) {
       return;
     }
     if (betAmountInput.current.value === "0.00") {
@@ -64,7 +64,7 @@ const MinesBetInput = ({ setBetAmount, loadedBet }) => {
   return (
     <div className={`amount-input-group`}>
       <label htmlFor="bet-amount ">Amount</label>
-      <div className={`input-wrapper ${loadedBet ? "disabled" : ""}`}>
+      <div className={`input-wrapper ${gameInProgress ? "disabled" : ""}`}>
         <input
           ref={betAmountInput}
           type="number"
@@ -73,7 +73,7 @@ const MinesBetInput = ({ setBetAmount, loadedBet }) => {
           onInput={(e) => {
             setBetAmount(e.target.value);
           }}
-          disabled={loadedBet}
+          disabled={gameInProgress}
         />
         <CoinSVG />
         <div className="bet-buttons">

@@ -48,7 +48,11 @@ const MinesBetControls = ({
     <section className="mines-bet-controls">
       {!gameInProgress ? (
         <>
-          <MinesBetInput setBetAmount={setBetAmount} loadedBet={loadedBet} />
+          <MinesBetInput
+            setBetAmount={setBetAmount}
+            loadedBet={loadedBet}
+            gameInProgress={gameInProgress}
+          />
           <MinesAmountInput setMinesAmount={setMinesAmount} loadedMines={0} />
           <button className="play-mines-button" onClick={validateBet}>
             Play
@@ -56,7 +60,10 @@ const MinesBetControls = ({
         </>
       ) : (
         <>
-          <MinesBetInput loadedBet={loadedBet} />
+          <MinesBetInput
+            loadedBet={loadedBet}
+            gameInProgress={gameInProgress}
+          />
           <MinesAmountInput loadedMines={minesAmount} />
           <TotalGainOutput totalGain={0} multiplier={1.1} />
           <button className="random-tile-button">Pick random tile</button>
