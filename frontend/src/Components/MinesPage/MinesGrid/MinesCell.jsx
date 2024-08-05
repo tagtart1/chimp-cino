@@ -7,6 +7,7 @@ const MinesCell = ({
   value,
   resetCells,
   updateGrid,
+  endGame,
 }) => {
   // Grabs the cell ref to manipulate the cover and the hidden value's classses
   // Alternative approach was to use state for the classnames
@@ -21,8 +22,26 @@ const MinesCell = ({
     cover.addEventListener(
       "animationend",
       () => {
+        const revealedGrid = [
+          [2, 1, 1, 1, 1],
+          [1, 1, 1, 1, 1],
+          [1, 2, 1, 1, 1],
+          [1, 2, 1, 1, 1],
+          [1, 1, 1, 1, 1],
+        ];
         // Fetch if gem or mine then pass it
-        updateGrid(row, col, 1);
+        updateGrid(row, col, 2);
+
+        cover.addEventListener(
+          "animationend",
+          () => {
+            // Reveal all other cells delay. This delay lets the mine anim play out fully
+            setTimeout(() => {
+              endGame(revealedGrid);
+            }, 250);
+          },
+          { once: true }
+        );
       },
       { once: true }
     );

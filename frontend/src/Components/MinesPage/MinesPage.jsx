@@ -15,7 +15,6 @@ const MinesPage = () => {
 
   const [gameInProgress, setGameInProgress] = useState(false);
   const [loadedGrid, setLoadedGrid] = useState(grid);
-  const [currentGrid, setCurrentGrid] = useState(grid);
   const [betAmount, setBetAmount] = useState(0.0);
 
   // Toggle to trigger the children cells to reset
@@ -29,16 +28,17 @@ const MinesPage = () => {
   };
 
   const endGame = (revealedGrid) => {
+    // TODO: Ponder if we should fetch the revealed grid here or in child funcs
+    // Since every time an action results in the game ending, the API returns the revealed grid
     setResetCells(false);
     setLoadedGrid(revealedGrid);
     setGameInProgress(false);
   };
 
   const updateGrid = (row, col, value) => {
+    // Update the grid
     const updatedGrid = loadedGrid.map((row) => [...row]);
-
     updatedGrid[row][col] = value;
-
     setLoadedGrid(updatedGrid);
   };
 
@@ -56,7 +56,6 @@ const MinesPage = () => {
     // Simulating a loaded game
     // if there is a valid grid, do all this
     setLoadedGrid(lgrid);
-    setCurrentGrid(lgrid);
     setBetAmount(10);
     setGameInProgress(true);
   }, []);
@@ -76,6 +75,7 @@ const MinesPage = () => {
             loadedGrid={loadedGrid}
             resetCells={resetCells}
             updateGrid={updateGrid}
+            endGame={endGame}
           />
         </div>
       </section>
