@@ -6,11 +6,7 @@ import MinesBetControls from "./MinesBetControls/MinesBetControls";
 const MinesPage = () => {
   // Test grid - simulates a loadedGrid
   const grid = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ];
 
   const [gameInProgress, setGameInProgress] = useState(false);
@@ -35,21 +31,23 @@ const MinesPage = () => {
     setGameInProgress(false);
   };
 
-  const updateGrid = (row, col, value) => {
+  const updateGrid = (field, value) => {
     // Update the grid
-    const updatedGrid = loadedGrid.map((row) => [...row]);
-    updatedGrid[row][col] = value;
+    const updatedGrid = loadedGrid.map((value) => {
+      return value;
+    });
+    updatedGrid[field] = value;
     setLoadedGrid(updatedGrid);
+  };
+
+  const revealRandomCell = () => {
+    const unrevealedCoordinates = [];
   };
 
   useEffect(() => {
     // Test grid - simulates a loadedGrid
     const lgrid = [
-      [0, 0, 0, 0, 0],
-      [0, 1, 0, 0, 0],
-      [0, 0, 1, 1, 0],
-      [0, 0, 0, 1, 0],
-      [0, 0, 0, 0, 0],
+      0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
 
     // Retrieve and load game from API
@@ -68,6 +66,7 @@ const MinesPage = () => {
           gameInProgress={gameInProgress}
           playGame={playGame}
           endGame={endGame}
+          revealRandomCell={revealRandomCell}
         />
         <div className="game-screen-mines">
           <MinesGrid

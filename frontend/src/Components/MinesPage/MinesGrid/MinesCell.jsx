@@ -2,8 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 // TODO: add cleanup functions
 const MinesCell = ({
   gameInProgress,
-  row,
-  col,
+  field,
   value,
   resetCells,
   updateGrid,
@@ -29,16 +28,13 @@ const MinesCell = ({
         // Game is ending, dont fetch anything more
         if (gameIsEnding) return;
         const revealedGrid = [
-          [2, 1, 1, 1, 1],
-          [1, 1, 1, 1, 1],
-          [1, 2, 1, 1, 1],
-          [1, 2, 1, 1, 1],
-          [1, 1, 1, 1, 1],
+          2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1,
+          1, 1,
         ];
         // Fetch if gem or mine then pass it
         // TODO: Remove this temporary random for the actual fetch
         const value = Math.floor(Math.random() * (2 - 1 + 1)) + 1;
-        updateGrid(row, col, value);
+        updateGrid(field, value);
         if (value === 2) {
           setGameIsEnding(true);
           cover.addEventListener(

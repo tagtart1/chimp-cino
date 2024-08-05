@@ -10,12 +10,10 @@ const MinesBetControls = ({
 
   playGame,
   endGame,
+  revealRandomCell,
 }) => {
   const [betAmount, setBetAmount] = useState(0.0);
   const [minesAmount, setMinesAmount] = useState(3);
-  // TODO: change to only save a loadedMines state, if we load in mines, that means we either have a game already started or just started so display the other UI
-
-  const [loadedMines, setLoadedMines] = useState(0);
 
   const validateBet = () => {
     if (parseFloat(betAmount) <= 0 && gameInProgress) {
@@ -34,11 +32,7 @@ const MinesBetControls = ({
     // Show multiplier popup on grid
     console.log("ending game, you cashed out");
     const revealedGrid = [
-      [2, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1],
-      [1, 2, 1, 1, 1],
-      [1, 2, 1, 1, 1],
-      [1, 1, 1, 1, 1],
+      2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
     ];
 
     endGame(revealedGrid);
@@ -66,7 +60,9 @@ const MinesBetControls = ({
           />
           <MinesAmountInput loadedMines={minesAmount} />
           <TotalGainOutput totalGain={0} multiplier={1.1} />
-          <button className="random-tile-button">Pick random tile</button>
+          <button className="random-tile-button" onClick={revealRandomCell}>
+            Pick random tile
+          </button>
           <button className="play-mines-button" onClick={cashout}>
             Cashout
           </button>

@@ -14,22 +14,19 @@ const MinesGrid = ({
 
   return (
     <div className="mines-grid">
-      {loadedGrid.map((arr, row) => {
-        return arr.map((value, col) => (
-          <MinesCell
-            key={row + col}
-            gameInProgress={gameInProgress}
-            row={row}
-            col={col}
-            value={value}
-            resetCells={resetCells}
-            updateGrid={updateGrid}
-            endGame={endGame}
-            setGameIsEnding={setGameIsEnding}
-            gameIsEnding={gameIsEnding}
-          />
-        ));
-      })}
+      {loadedGrid.map((value, index) => (
+        <MinesCell
+          key={index}
+          gameInProgress={gameInProgress}
+          field={index}
+          value={value}
+          resetCells={resetCells}
+          updateGrid={updateGrid}
+          endGame={endGame}
+          setGameIsEnding={setGameIsEnding}
+          gameIsEnding={gameIsEnding}
+        />
+      ))}
     </div>
   );
 };
