@@ -8,6 +8,8 @@ const MinesCell = ({
   resetCells,
   updateGrid,
   endGame,
+  setGameIsEnding,
+  gameIsEnding,
 }) => {
   // Grabs the cell ref to manipulate the cover and the hidden value's classses
   // Alternative approach was to use state for the classnames
@@ -18,10 +20,13 @@ const MinesCell = ({
     if (!gameInProgress) return;
     const cover = e.currentTarget.children[1];
 
+    // TODO: expand-cover needs to run infinitely till fetch complete
     cover.classList.add("expand-cover");
     cover.addEventListener(
       "animationend",
       () => {
+        // Game is ending, dont fetch anything more
+        if (gameIsEnding) return;
         const revealedGrid = [
           [2, 1, 1, 1, 1],
           [1, 1, 1, 1, 1],
@@ -30,19 +35,25 @@ const MinesCell = ({
           [1, 1, 1, 1, 1],
         ];
         // Fetch if gem or mine then pass it
-        updateGrid(row, col, 2);
+        // TODO: Remove this temporary random for the actual fetch
+        const value = Math.floor(Math.random() * (2 - 1 + 1)) + 1;
+        updateGrid(row, col, value);
+        if (value === 2) {
+          setGameIsEnding(true);
+          cover.addEventListener(
+            "animationend",
+            () => {
+              // Reveal all other cells delay. This delay lets the mine anim play out fully
+              const delayEndGame = 250;
 
-        cover.addEventListener(
-          "animationend",
-          () => {
-            const delayEndGame = 250;
-            // Reveal all other cells delay. This delay lets the mine anim play out fully
-            setTimeout(() => {
-              endGame(revealedGrid);
-            }, delayEndGame);
-          },
-          { once: true }
-        );
+              setTimeout(() => {
+                endGame(revealedGrid);
+                setGameIsEnding(false);
+              }, delayEndGame);
+            },
+            { once: true }
+          );
+        }
       },
       { once: true }
     );
