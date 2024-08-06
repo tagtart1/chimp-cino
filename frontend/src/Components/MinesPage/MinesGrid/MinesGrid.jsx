@@ -13,7 +13,7 @@ const MinesGrid = ({
   const [gameIsEnding, setGameIsEnding] = useState(false);
 
   return (
-    <div className="mines-grid">
+    <div id="mines-grid">
       {loadedGrid.map((value, index) => (
         <MinesCell
           key={index}

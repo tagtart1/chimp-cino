@@ -13,6 +13,9 @@ const MinesPage = () => {
   const [loadedGrid, setLoadedGrid] = useState(grid);
   const [betAmount, setBetAmount] = useState(0.0);
 
+  // When an action anim is happeing like revealing, we need to disable the cashout and pick random tile buttons
+  const [disableActions, setDisableActions] = useState(false);
+
   // Toggle to trigger the children cells to reset
   const [resetCells, setResetCells] = useState(false);
 
@@ -41,7 +44,26 @@ const MinesPage = () => {
   };
 
   const revealRandomCell = () => {
-    const unrevealedCoordinates = [];
+    // TODO: Ensure that this function can't spammed
+    // Get all unrevealed cells
+    const unrevealedCells = loadedGrid
+      .map((value, index) => ({ value, index }))
+      .filter((item) => item.value === 0)
+      .map((item) => item.index);
+
+    // Pick a random index
+    const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
+    const randomCellField = unrevealedCells[randomIndex];
+
+    // Grab the grid element
+    const parent = document.getElementById("mines-grid");
+    // Grab the cells
+    const children = Array.from(parent.getElementsByClassName("cell-wrapper"));
+
+    // Get the cells
+    const chosenCell = children[randomCellField];
+
+    chosenCell.click();
   };
 
   useEffect(() => {
