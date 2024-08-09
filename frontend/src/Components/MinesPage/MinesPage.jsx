@@ -58,7 +58,7 @@ const MinesPage = () => {
     // Grab the cells
     const children = Array.from(parent.getElementsByClassName("cell-wrapper"));
 
-    // Get the cells
+    // Get the cell
     const chosenCell = children[randomCellField];
 
     chosenCell.click();
