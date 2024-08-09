@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 const blackjackController = require("../controllers/blackjackController");
 const validateToken = require("../middleware/validateToken");
-const fetchActiveGame = require("../middleware/fetchActiveGame");
+const fetchActiveGame = require("../middleware/blackjack/fetchActiveGame");
 const fetchHandData = require("../middleware/fetchHandData");
 const validateInsurance = require("../middleware/validateInsurance");
 const fetchDealerHandData = require("../middleware/fetchDealerHandData");
@@ -16,11 +16,6 @@ router.get(
   fetchHandData,
   blackjackController.getGame
 );
-
-// Make serpate actions for changing game state
-// like hit, stand, double down, and split
-
-// TODO: Make a new middleware that concludes a game for split hand games
 
 router.patch(
   "/games/hit",
