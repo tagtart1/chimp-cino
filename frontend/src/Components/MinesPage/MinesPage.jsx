@@ -27,8 +27,6 @@ const MinesPage = () => {
   };
 
   const endGame = (revealedGrid) => {
-    // TODO: Ponder if we should fetch the revealed grid here or in child funcs
-    // Since every time an action results in the game ending, the API returns the revealed grid
     setResetCells(false);
     setLoadedGrid(revealedGrid);
     setGameInProgress(false);
@@ -44,7 +42,7 @@ const MinesPage = () => {
   };
 
   const revealRandomCell = () => {
-    // TODO: Ensure that this function can't spammed
+    // TODO: Ensure that this function can't spammed by waiting for the last one to finish
     // Get all unrevealed cells
     const unrevealedCells = loadedGrid
       .map((value, index) => ({ value, index }))
