@@ -8,11 +8,10 @@ const MinesPage = () => {
   const baseGrid = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ];
-  const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
 
   const [gameInProgress, setGameInProgress] = useState(false);
   const [loadedGrid, setLoadedGrid] = useState(baseGrid);
-  const [betAmount, setBetAmount] = useState(0.0);
+  const [loadedBetAmount, setLoadedBetAmount] = useState(0.0);
 
   // When an action anim is happeing like revealing, we need to disable the cashout and pick random tile buttons
   const [disableActions, setDisableActions] = useState(false);
@@ -20,23 +19,7 @@ const MinesPage = () => {
   // Toggle to trigger the children cells to reset
   const [resetCells, setResetCells] = useState(false);
 
-  const playGame = async () => {
-    // Call to api to start a game
-    const resolution = await fetch(startGameEndpoint, {
-      credentials: "include",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-
-    if (!resolution.ok) {
-      const errors = await resolution.json();
-      console.log("Error:", errors);
-      return;
-    }
-
-    const gameData = await resolution.json();
-    console.log(gameData);
+  const startGame = async () => {
     // Checks if the grid is all hidden, implying that there is no game in progress so dont do the resetCells animation
     if (!loadedGrid.every((value) => value === 0)) setResetCells(true);
     setGameInProgress(true);
@@ -92,9 +75,9 @@ const MinesPage = () => {
     <main className="mines-main">
       <section className="mines-section">
         <MinesBetControls
-          loadedBet={betAmount}
+          loadedBet={loadedBetAmount}
           gameInProgress={gameInProgress}
-          playGame={playGame}
+          startGame={startGame}
           endGame={endGame}
           revealRandomCell={revealRandomCell}
         />

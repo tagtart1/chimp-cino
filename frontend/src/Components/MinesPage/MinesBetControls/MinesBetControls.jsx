@@ -8,20 +8,36 @@ const MinesBetControls = ({
   loadedBet,
   gameInProgress,
 
-  playGame,
+  startGame,
   endGame,
   revealRandomCell,
 }) => {
+  const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
   const [betAmount, setBetAmount] = useState(0.0);
   const [minesAmount, setMinesAmount] = useState(3);
 
-  const validateBet = () => {
+  const playGame = async () => {
     if (parseFloat(betAmount) <= 0 && gameInProgress) {
       // Make a popup
       return;
     }
-    console.log("play the game");
-    playGame();
+    // Call to api to start a game
+    const resolution = await fetch(startGameEndpoint, {
+      credentials: "include",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    if (!resolution.ok) {
+      const errors = await resolution.json();
+      console.log("Error:", errors);
+      return;
+    }
+
+    const gameData = await resolution.json();
+    console.log(gameData);
+    startGame();
   };
 
   // Retrive the completed grid, reveals the grid
@@ -48,7 +64,7 @@ const MinesBetControls = ({
             gameInProgress={gameInProgress}
           />
           <MinesAmountInput setMinesAmount={setMinesAmount} loadedMines={0} />
-          <button className="play-mines-button" onClick={validateBet}>
+          <button className="play-mines-button" onClick={playGame}>
             Play
           </button>
         </>
