@@ -5,12 +5,12 @@ import MinesBetControls from "./MinesBetControls/MinesBetControls";
 
 const MinesPage = () => {
   // Test grid - simulates a loadedGrid
-  const grid = [
+  const baseGrid = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ];
 
   const [gameInProgress, setGameInProgress] = useState(false);
-  const [loadedGrid, setLoadedGrid] = useState(grid);
+  const [loadedGrid, setLoadedGrid] = useState(baseGrid);
   const [betAmount, setBetAmount] = useState(0.0);
 
   // When an action anim is happeing like revealing, we need to disable the cashout and pick random tile buttons
@@ -21,9 +21,11 @@ const MinesPage = () => {
 
   const playGame = () => {
     // Call to api to start a game
-    setResetCells(true);
+
+    // Checks if the grid is all hidden, implying that there is no game in progress so dont do the resetCells animation
+    if (!loadedGrid.every((value) => value === 0)) setResetCells(true);
     setGameInProgress(true);
-    setLoadedGrid(grid);
+    setLoadedGrid(baseGrid);
   };
 
   const endGame = (revealedGrid) => {
@@ -66,16 +68,9 @@ const MinesPage = () => {
 
   useEffect(() => {
     // Test grid - simulates a loadedGrid
-    const lgrid = [
-      0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ];
-
     // Retrieve and load game from API
     // Simulating a loaded game
     // if there is a valid grid, do all this
-    setLoadedGrid(lgrid);
-    setBetAmount(10);
-    setGameInProgress(true);
   }, []);
 
   return (
