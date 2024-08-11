@@ -21,22 +21,29 @@ const MinesBetControls = ({
       // Make a popup
       return;
     }
-    // Call to api to start a game
-    const resolution = await fetch(startGameEndpoint, {
-      credentials: "include",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
+    try {
+      // Call to api to start a game
+      const resolution = await fetch(startGameEndpoint, {
+        credentials: "include",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mines: minesAmount,
+          bet: parseFloat(betAmount),
+        }),
+      });
 
-    if (!resolution.ok) {
-      const errors = await resolution.json();
-      console.log("Error:", errors);
-      return;
+      if (!resolution.ok) {
+        const errors = await resolution.json();
+        console.log("Error:", errors);
+        return;
+      }
+      const gameData = await resolution.json();
+      console.log(gameData);
+    } catch (error) {
+      console.log(error);
     }
 
-    const gameData = await resolution.json();
-    console.log(gameData);
     startGame();
   };
 
