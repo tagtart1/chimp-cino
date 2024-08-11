@@ -4,7 +4,7 @@ const minesController = require("../controllers/minesController");
 const validateToken = require("../middleware/validateToken");
 
 // Create a new mines game
-router.post("/games");
+router.post("/games", validateToken, minesController.newGame);
 
 // Fetch an active mines game
 router.get("/games");
