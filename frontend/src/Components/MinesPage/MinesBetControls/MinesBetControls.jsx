@@ -28,7 +28,7 @@ const MinesBetControls = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mines: minesAmount,
+          mines: parseInt(minesAmount),
           bet: parseFloat(betAmount),
         }),
       });

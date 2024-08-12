@@ -56,7 +56,7 @@ exports.newGame = async (req, res, next) => {
     if (withdrawed.rowCount === 0) {
       throw new AppError(
         "Could not place bet: Insufficient funds",
-        401,
+        400,
         "INVALID_BET"
       );
     }

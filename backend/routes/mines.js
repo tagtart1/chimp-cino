@@ -4,6 +4,7 @@ const minesController = require("../controllers/minesController");
 const validateToken = require("../middleware/validateToken");
 const beginTransaction = require("../middleware/mines/beginTransaction");
 const sanitizeInput = require("../middleware/mines/sanitizeInputs");
+const withdrawBalance = require("../middleware/mines/withdrawBalance");
 
 // Create a new mines game
 router.post(
@@ -11,6 +12,7 @@ router.post(
   validateToken,
   sanitizeInput,
   beginTransaction,
+  withdrawBalance,
   minesController.newGame
 );
 
