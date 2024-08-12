@@ -1,6 +1,7 @@
-const getGame = "";
+const getGame = "SELECT * FROM active_mines_games WHERE user_id = $1 ";
 
-const createGame = "";
+const createGame =
+  "INSERT INTO active_mines_games (user_id, bet) VALUES ($1, $2)";
 
 module.exports = {
   createGame,
