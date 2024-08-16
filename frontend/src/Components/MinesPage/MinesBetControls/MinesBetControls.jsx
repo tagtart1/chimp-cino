@@ -3,6 +3,7 @@ import "./MinesBetControls.scss";
 import MinesBetInput from "./MinesBetInput";
 import MinesAmountInput from "./MinesAmountInput";
 import TotalGainOutput from "./TotalGainOutput";
+import { useUser } from "../../../Contexts/UserProvider";
 
 const MinesBetControls = ({
   loadedBet,
@@ -15,10 +16,16 @@ const MinesBetControls = ({
   const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
   const [betAmount, setBetAmount] = useState(0.0);
   const [minesAmount, setMinesAmount] = useState(3);
+  const { user } = useUser();
 
   const playGame = async () => {
     if (parseFloat(betAmount) <= 0 && gameInProgress) {
       // Make a popup
+      return;
+    }
+
+    if (!user) {
+      // Make the sign in popup or a notif
       return;
     }
     try {

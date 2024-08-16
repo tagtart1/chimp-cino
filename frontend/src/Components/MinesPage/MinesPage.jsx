@@ -20,6 +20,8 @@ const MinesPage = () => {
   const [resetCells, setResetCells] = useState(false);
 
   const startGame = async () => {
+    // Show an error to sign in or show the popup
+
     // Checks if the grid is all hidden, implying that there is no game in progress so dont do the resetCells animation
     if (!loadedGrid.every((value) => value === 0)) setResetCells(true);
     setGameInProgress(true);
