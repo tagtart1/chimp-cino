@@ -4,13 +4,13 @@ const withdrawBalance = async (req, res, next) => {
   const transaction = req.transaction;
   const bet = req.body.bet;
   const user = req.user;
-  console.log(user);
   try {
     const withdrew = await transaction.query(casinoQueries.withdrawBalance, [
       bet,
       user.id,
     ]);
     if (withdrew.rowCount === 0) {
+      await transaction.query("ROLLBACK");
       next(
         new AppError("You are too broke to place this bet.", 400, "INVALID_BET")
       );
