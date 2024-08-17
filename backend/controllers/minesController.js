@@ -47,9 +47,7 @@ exports.newGame = async (req, res, next) => {
     await transaction.query(insertCellsIntoDbQuery);
 
     await transaction.query("COMMIT");
-    res.status(200).json({
-      data: "Hello world",
-    });
+    res.status(200);
   } catch (error) {
     await transaction.query("ROLLBACK");
     if (error instanceof AppError) {
@@ -63,4 +61,14 @@ exports.newGame = async (req, res, next) => {
   }
 };
 
-exports.getGame = async (req, res, next) => {};
+exports.getGame = async (req, res, next) => {
+  try {
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      console.log(error);
+      next(new AppError("Could not fetch game", 400, "SERVER_ERROR"));
+    }
+  }
+};
