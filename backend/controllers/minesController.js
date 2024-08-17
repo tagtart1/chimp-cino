@@ -43,6 +43,9 @@ exports.newGame = async (req, res, next) => {
     // Remove the , at the end
     insertCellsIntoDbQuery = insertCellsIntoDbQuery.slice(0, -1);
 
+    // Run query to create cells
+    await transaction.query(insertCellsIntoDbQuery);
+
     await transaction.query("COMMIT");
     res.status(200).json({
       data: "Hello world",
