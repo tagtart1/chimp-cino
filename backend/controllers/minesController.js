@@ -7,6 +7,7 @@ exports.newGame = async (req, res, next) => {
   const mines = req.body.mines;
   const bet = req.body.bet;
   const userId = req.user.id;
+  const gameSize = 25;
   try {
     // Check if an in progress game exists
     const activeGame = (await transaction.query(minesQueries.getGame, [userId]))
@@ -18,12 +19,29 @@ exports.newGame = async (req, res, next) => {
     // Create the game row in db and return the grid ID
     const gameId = (
       await transaction.query(minesQueries.createGame, [userId, bet])
-    ).rows[0];
+    ).rows[0].id;
     console.log(gameId);
 
-    // Create the game array
-
-    // Randomly select X amount of unique indexes to be mines
+    // Create the game array, all elements are true to resemble that they are a gem
+    const gameArray = new Array(25).fill(true);
+    const minesIndices = [];
+    // Select locations for mines
+    while (minesIndices.length < mines) {
+      const randomIndex = Math.floor(Math.random() * 25);
+      if (!minesIndices.includes(randomIndex)) {
+        minesIndices.push(randomIndex);
+        //Set that field to be a mine
+        gameArray[randomIndex] = false;
+      }
+    }
+    // Build cells query
+    let insertCellsIntoDbQuery =
+      "INSERT INTO active_cells (game_id, field, is_gem, is_revealed) VALUES";
+    for (let index = 0; index < gameArray.length; index++) {
+      insertCellsIntoDbQuery += ` (${gameId}, ${index}, ${gameArray[index]}, false),`;
+    }
+    // Remove the , at the end
+    insertCellsIntoDbQuery = insertCellsIntoDbQuery.slice(0, -1);
 
     await transaction.query("COMMIT");
     res.status(200).json({
