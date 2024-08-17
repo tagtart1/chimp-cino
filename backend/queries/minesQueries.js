@@ -9,4 +9,5 @@ const createGame =
 module.exports = {
   createGame,
   getGame,
+  fetchGameCells,
 };

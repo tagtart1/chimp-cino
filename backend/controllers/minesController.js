@@ -20,7 +20,6 @@ exports.newGame = async (req, res, next) => {
     const gameId = (
       await transaction.query(minesQueries.createGame, [userId, bet])
     ).rows[0].id;
-    console.log(gameId);
 
     // Create the game array, all elements are true to resemble that they are a gem
     const gameArray = new Array(25).fill(true);
@@ -62,13 +61,22 @@ exports.newGame = async (req, res, next) => {
 };
 
 exports.getGame = async (req, res, next) => {
+  const userId = req.user.id;
   try {
+    const game = (await transaction.query(minesQueries.getGame, [userId]))
+      .rows[0];
+    if (!game) {
+      throw new AppError("Game not found.", 404, "NOT_FOUND");
+    }
+
+    console.log(game);
+    res.status(200);
   } catch (error) {
     if (error instanceof AppError) {
       next(error);
     } else {
       console.log(error);
-      next(new AppError("Could not fetch game", 400, "SERVER_ERROR"));
+      next(new AppError("Could not fetch game", 500, "SERVER_ERROR"));
     }
   }
 };
