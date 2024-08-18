@@ -108,14 +108,53 @@ exports.getGame = async (req, res, next) => {
 
 exports.revealCell = async (req, res, next) => {
   const transaction = req.transaction;
+  const field = req.field;
   const { id: gameId } = req.game;
-  // Lose due to mine revealed
+  try {
+    // Fetch all the cell
+    const allCells = (
+      await transaction.query(minesQueries.fetchGameCells, [gameId])
+    ).rows;
 
-  // Continue game due to gem revealed
+    const selectedCell = allCells[field];
+
+    // Cell already revealed, throw exception
+    if (selectedCell.is_revealed) {
+      throw new AppError(
+        "You have already uncovered this cell",
+        401,
+        "INVALID_INPUT"
+      );
+    }
+    // Fetch and reveal the cell
+    const cell = await transaction.query(minesQueries.revealCell, [
+      gameId,
+      field,
+    ]);
+    if (selectedCell.is_gem) {
+      // Continue the game, no loss
+      // Check if it was the last gem.
+    } else {
+      // Game over.
+    }
+
+    transaction.query("ROLLBACK");
+  } catch (error) {
+    transaction.query("ROLLBACK");
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      console.log(error);
+      next(new AppError("Server error", 500, "SERVER_ERROR"));
+    }
+  } finally {
+    transaction.release();
+  }
+
+  // Lose due to mine revealed
 
   // Win
 
-  transaction.query("ROLLBACK");
   transaction.release();
 
   res.status(200).json({});
