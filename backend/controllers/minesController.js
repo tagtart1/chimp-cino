@@ -73,8 +73,8 @@ exports.getGame = async (req, res, next) => {
       .rows;
 
     const gameCells = [];
-    const mineCount = 0;
-    const gemCount = 0;
+    let mineCount = 0;
+    let gemCount = 0;
     for (let i = 0; i < cellRows.length; i++) {
       const currentCell = cellRows[i];
       if (currentCell.is_gem) {
@@ -90,7 +90,7 @@ exports.getGame = async (req, res, next) => {
       }
     }
     // TODO: calculate potential profit and multiplier
-    res.send(200).json({
+    res.status(200).json({
       data: {
         cells: gameCells,
         bet: bet,

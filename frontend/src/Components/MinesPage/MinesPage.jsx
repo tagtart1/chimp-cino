@@ -76,11 +76,20 @@ const MinesPage = () => {
       });
       if (!res.ok) {
         const errors = await res.json();
-        console.log("Error: ", errors);
+        if (errors.code !== "NOT_FOUND") {
+          console.log("Errors: ", errors);
+        }
         return;
       }
+
+      const gameData = await res.json();
+      const { cells: grid, bet, mines, gems } = gameData.data;
+      setGameInProgress(true);
+      setLoadedBetAmount(bet);
+      setLoadedGrid(grid);
     };
     fetchGame();
+
     // Simulating a loaded game
     // if there is a valid grid, do all this
   }, []);
