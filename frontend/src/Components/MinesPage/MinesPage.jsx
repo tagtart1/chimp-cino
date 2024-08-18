@@ -8,6 +8,7 @@ const MinesPage = () => {
   const baseGrid = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ];
+  const getGameEndpoint = "http://localhost:5000/api/v1/mines/games";
 
   const [gameInProgress, setGameInProgress] = useState(false);
   const [loadedGrid, setLoadedGrid] = useState(baseGrid);
@@ -69,6 +70,15 @@ const MinesPage = () => {
   useEffect(() => {
     // Test grid - simulates a loadedGrid
     // Retrieve and load game from API
+    const fetchGame = async () => {
+      const res = await fetch(getGameEndpoint);
+      if (!res.ok) {
+        const errors = await res.json();
+        console.log("Error: ", errors);
+        return;
+      }
+    };
+    fetchGame();
     // Simulating a loaded game
     // if there is a valid grid, do all this
   }, []);

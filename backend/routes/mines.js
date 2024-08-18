@@ -17,6 +17,6 @@ router.post(
 );
 
 // Fetch an active mines game
-router.get("/games", validateToken);
+router.get("/games", validateToken, minesController.getGame);
 
 module.exports = router;
