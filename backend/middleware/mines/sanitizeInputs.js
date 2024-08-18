@@ -23,18 +23,13 @@ const sanitizeInput = (req, res, next) => {
     isNaN(mines) ||
     !isFinite(mines)
   ) {
-    console.log(typeof mines !== "number");
-    console.log(isNaN(mines));
-    console.log(!isFinite(mines));
-    console.log(!Number.isInteger(mines));
-
     throw new AppError("Mines must be a valid integer", 400, "INVALID_INPUT");
   }
 
   if (!mines || mines < minMines || mines > maxMines) {
     throw new AppError(
       "Mines cannot exceed 24 or less than 1",
-      401,
+      400,
       "INVALID_INPUT"
     );
   }

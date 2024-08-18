@@ -89,7 +89,6 @@ exports.getGame = async (req, res, next) => {
         gameCells.push(1);
       }
     }
-    // TODO: calculate potential profit and multiplier
 
     res.status(200).json({
       data: {
