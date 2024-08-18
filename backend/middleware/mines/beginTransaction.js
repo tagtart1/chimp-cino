@@ -8,7 +8,7 @@ const beginTransaction = async (req, res, next) => {
     req.transaction = transaction;
     next();
   } catch (error) {
-    next(new AppError("Failed to start game", 400, "SERVER_ERROR"));
+    next(new AppError("Failed to complete action.", 400, "SERVER_ERROR"));
   }
 };
 

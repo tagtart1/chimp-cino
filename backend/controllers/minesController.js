@@ -109,4 +109,12 @@ exports.getGame = async (req, res, next) => {
   }
 };
 
-exports.revealCell = async (req, res, next) => {};
+exports.revealCell = async (req, res, next) => {
+  const transaction = req.transaction;
+  console.log("we here");
+
+  transaction.query("ROLLBACK");
+  transaction.release();
+
+  res.sendStatus(200);
+};
