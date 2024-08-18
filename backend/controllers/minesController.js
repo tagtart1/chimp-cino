@@ -67,7 +67,7 @@ exports.getGame = async (req, res, next) => {
     if (!game) {
       throw new AppError("Game not found.", 404, "NOT_FOUND");
     }
-    const { id: gameId, bet } = game;
+    const { id: gameId, bet, multiplier } = game;
 
     const cellRows = (await pool.query(minesQueries.fetchGameCells, [gameId]))
       .rows;
@@ -90,12 +90,14 @@ exports.getGame = async (req, res, next) => {
       }
     }
     // TODO: calculate potential profit and multiplier
+
     res.status(200).json({
       data: {
         cells: gameCells,
         bet: bet,
         gems: gemCount,
         mines: mineCount,
+        multiplier: multiplier,
       },
     });
   } catch (error) {
