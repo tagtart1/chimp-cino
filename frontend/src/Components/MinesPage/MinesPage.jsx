@@ -71,7 +71,9 @@ const MinesPage = () => {
     // Test grid - simulates a loadedGrid
     // Retrieve and load game from API
     const fetchGame = async () => {
-      const res = await fetch(getGameEndpoint);
+      const res = await fetch(getGameEndpoint, {
+        credentials: "include",
+      });
       if (!res.ok) {
         const errors = await res.json();
         console.log("Error: ", errors);

@@ -46,7 +46,7 @@ exports.newGame = async (req, res, next) => {
     await transaction.query(insertCellsIntoDbQuery);
 
     await transaction.query("COMMIT");
-    res.status(200);
+    res.sendStatus(200);
   } catch (error) {
     await transaction.query("ROLLBACK");
     if (error instanceof AppError) {
@@ -63,14 +63,41 @@ exports.newGame = async (req, res, next) => {
 exports.getGame = async (req, res, next) => {
   const userId = req.user.id;
   try {
-    const game = (await transaction.query(minesQueries.getGame, [userId]))
-      .rows[0];
+    const game = (await pool.query(minesQueries.getGame, [userId])).rows[0];
     if (!game) {
       throw new AppError("Game not found.", 404, "NOT_FOUND");
     }
+    const { id: gameId, bet } = game;
 
-    console.log(game);
-    res.status(200);
+    const cellRows = (await pool.query(minesQueries.fetchGameCells, [gameId]))
+      .rows;
+
+    const gameCells = [];
+    const mineCount = 0;
+    const gemCount = 0;
+    for (let i = 0; i < cellRows.length; i++) {
+      const currentCell = cellRows[i];
+      if (currentCell.is_gem) {
+        gemCount++;
+      } else {
+        mineCount++;
+      }
+      if (!currentCell.is_revealed) {
+        gameCells.push(0);
+      } else {
+        // 1 resembles a gem, we assume this because the game would have been ended
+        gameCells.push(1);
+      }
+    }
+    // TODO: calculate potential profit and multiplier
+    res.send(200).json({
+      data: {
+        cells: gameCells,
+        bet: bet,
+        gems: gemCount,
+        mines: mineCount,
+      },
+    });
   } catch (error) {
     if (error instanceof AppError) {
       next(error);
