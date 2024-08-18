@@ -13,14 +13,33 @@ const MinesCell = ({
   // Grabs the cell ref to manipulate the cover and the hidden value's classses
   // Alternative approach was to use state for the classnames
   const cellRef = useRef();
+  const revealCellEndpoint = "http://localhost:5000/api/v1/mines/reveal";
 
   // Reveals if the cell is a mine or a gem
-  const revealCell = (e) => {
+  const revealCell = async (e) => {
     if (!gameInProgress) return;
     const cover = e.currentTarget.children[1];
 
     // TODO: expand-cover needs to run infinitely till fetch complete
     // OPtional TODO: Queue the fetches so that the fetching 2 cells really quickly create an effect that resembles them chaining. look at stake for reference - Debouncing, OPTIONAL, wait till API fetching is implemented
+    try {
+      const res = await fetch(revealCellEndpoint, {
+        credentials: "include",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          field: field,
+        }),
+      });
+      if (!res.ok) {
+        const errors = await res.json();
+        console.log("Errors: ", errors);
+        return;
+      }
+      const cellData = await res.json();
+    } catch (error) {
+      console.log("Errors: ", error);
+    }
     cover.classList.add("expand-cover");
     cover.addEventListener(
       "animationend",

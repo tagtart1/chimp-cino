@@ -6,7 +6,7 @@ const beginTransaction = require("../middleware/mines/beginTransaction");
 const sanitizeInput = require("../middleware/mines/sanitizeInputs");
 const withdrawBalance = require("../middleware/mines/withdrawBalance");
 const santizeTargetInput = require("../middleware/mines/sanitizeTargetInput");
-
+const fetchActiveGame = require("../middleware/mines/fetchActiveGame");
 // Create a new mines game
 router.post(
   "/games",
@@ -18,12 +18,13 @@ router.post(
 );
 
 // Fetch an active mines game
-router.get("/games", validateToken, minesController.getGame);
+router.get("/games", validateToken, fetchActiveGame, minesController.getGame);
 
 // Reveal a cell
 router.post(
-  "/games/reveal",
+  "/reveal",
   validateToken,
+  fetchActiveGame,
   santizeTargetInput,
   beginTransaction,
   minesController.revealCell

@@ -63,10 +63,7 @@ exports.newGame = async (req, res, next) => {
 exports.getGame = async (req, res, next) => {
   const userId = req.user.id;
   try {
-    const game = (await pool.query(minesQueries.getGame, [userId])).rows[0];
-    if (!game) {
-      throw new AppError("Game not found.", 404, "NOT_FOUND");
-    }
+    const game = req.game;
     const { id: gameId, bet, multiplier } = game;
 
     const cellRows = (await pool.query(minesQueries.fetchGameCells, [gameId]))
@@ -111,10 +108,15 @@ exports.getGame = async (req, res, next) => {
 
 exports.revealCell = async (req, res, next) => {
   const transaction = req.transaction;
-  console.log("we here");
+  const { id: gameId } = req.game;
+  // Lose due to mine revealed
+
+  // Continue game due to gem revealed
+
+  // Win
 
   transaction.query("ROLLBACK");
   transaction.release();
 
-  res.sendStatus(200);
+  res.status(200).json({});
 };

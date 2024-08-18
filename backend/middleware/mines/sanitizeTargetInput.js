@@ -7,13 +7,14 @@ const santizeTargetInput = (req, res, next) => {
   const field = req.body.field;
   if (
     typeof field !== "number" ||
-    !Number.isInteger(mines) ||
+    !Number.isInteger(field) ||
     isNaN(field) ||
-    !isFinite(bet)
+    !isFinite(field)
   ) {
     throw new AppError("Field must be a valid integer", 400, "INVALID_INPUT");
   }
-  if (!field || field < minField || field > maxField) {
+  if (field < minField || field > maxField) {
+    console.log(field);
     throw new AppError(
       "Target field exceeds the bounds of the allowed selections",
       400,
