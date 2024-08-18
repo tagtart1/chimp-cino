@@ -109,6 +109,8 @@ exports.getGame = async (req, res, next) => {
 exports.revealCell = async (req, res, next) => {
   const transaction = req.transaction;
   const field = req.field;
+  let isGameOver = false;
+  let multiplier = parseFloat(req.game.multiplier);
   const { id: gameId } = req.game;
   try {
     // Fetch all the cell
@@ -126,19 +128,61 @@ exports.revealCell = async (req, res, next) => {
         "INVALID_INPUT"
       );
     }
-    // Fetch and reveal the cell
-    const cell = await transaction.query(minesQueries.revealCell, [
-      gameId,
-      field,
-    ]);
+    // Reveal the cell
+    await transaction.query(minesQueries.revealCell, [gameId, field]);
+    selectedCell.is_revealed = true;
+    const gameCells = [];
+
     if (selectedCell.is_gem) {
-      // Continue the game, no loss
+      let hiddenCells = 0;
+      let mineCount = 0;
+      // Build the game array
+      for (let i = 0; i < allCells.length; i++) {
+        const cell = allCells[i];
+        if (!cell.is_revealed) {
+          gameCells.push(0);
+          hiddenCells++;
+          if (!cell.is_gem) mineCount++;
+        } else {
+          gameCells.push(1);
+        }
+      }
       // Check if it was the last gem.
+      if (mineCount / hiddenCells === 1) {
+        // Last gem was revealed, auto cashout the user
+        isGameOver = true;
+      }
+      // Calculate the new multiplier, +1 because we want the multipler before action was taken
+      multiplier = calculateMultiplier(multiplier, mineCount, hiddenCells + 1);
+
+      // Update the DB
+      await transaction.query(minesQueries.updateMultiplier, [
+        multiplier,
+        gameId,
+      ]);
+      // Continue the game, no loss
     } else {
-      // Game over.
+      isGameOver = true;
+      // Build the game array
+      for (let i = 0; i < allCells.length; i++) {
+        const cell = allCells[i];
+        if (cell.is_gem) {
+          gameCells.push(1);
+        } else {
+          gameCells.push(2);
+        }
+      }
     }
 
-    transaction.query("ROLLBACK");
+    transaction.query("COMMIT");
+
+    res.status(200).json({
+      data: {
+        isGameOver: isGameOver,
+        cells: gameCells,
+        multiplier: multiplier,
+      },
+    });
   } catch (error) {
     transaction.query("ROLLBACK");
     if (error instanceof AppError) {
@@ -158,4 +202,8 @@ exports.revealCell = async (req, res, next) => {
   transaction.release();
 
   res.status(200).json({});
+};
+
+const calculateMultiplier = (previousMulti, mines, unrevealed) => {
+  return previousMulti * (1 / (1 - mines / unrevealed));
 };

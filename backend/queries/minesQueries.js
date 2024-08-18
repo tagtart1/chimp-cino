@@ -9,9 +9,13 @@ const revealCell =
 const createGame =
   "INSERT INTO active_mines_games (user_id, bet, multiplier) VALUES ($1, $2, 1) RETURNING id";
 
+const updateMultiplier =
+  "UPDATE active_mines_games SET multiplier = $1 WHERE game_id =$2";
+
 module.exports = {
   createGame,
   getGame,
   fetchGameCells,
   revealCell,
+  updateMultiplier,
 };
