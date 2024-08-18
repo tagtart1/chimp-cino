@@ -19,4 +19,7 @@ router.post(
 // Fetch an active mines game
 router.get("/games", validateToken, minesController.getGame);
 
+// Reveal a cell
+router.post("/games/reveal", validateToken, minesController.revealCell);
+
 module.exports = router;

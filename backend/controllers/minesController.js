@@ -107,3 +107,5 @@ exports.getGame = async (req, res, next) => {
     }
   }
 };
+
+exports.revealCell = async (req, res, next) => {};
