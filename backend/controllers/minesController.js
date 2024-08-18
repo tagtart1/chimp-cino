@@ -172,6 +172,8 @@ exports.revealCell = async (req, res, next) => {
           gameCells.push(2);
         }
       }
+      // Delete the game since it is now over
+      await transaction.query(minesQueries.deleteGame, [gameId]);
     }
 
     transaction.query("COMMIT");
