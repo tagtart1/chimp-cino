@@ -14,21 +14,23 @@ const MinesCell = ({
   // Alternative approach was to use state for the classnames
   const cellRef = useRef();
   const revealCellEndpoint = "http://localhost:5000/api/v1/mines/reveal";
-
+  const [fetched, setFetched] = useState(false);
   // Reveals if the cell is a mine or a gem
   const revealCell = async (e) => {
-    if (!gameInProgress) return;
+    if (!gameInProgress || fetched) return;
     const cover = e.currentTarget.children[1];
 
     // TODO: expand-cover needs to run infinitely till fetch complete
     // OPtional TODO: Queue the fetches so that the fetching 2 cells really quickly create an effect that resembles them chaining. look at stake for reference - Debouncing, OPTIONAL, wait till API fetching is implemented
 
     cover.classList.add("expand-cover");
+    setFetched(true);
     cover.addEventListener(
       "animationend",
       async () => {
         // Game is ending, dont fetch anything more
-        if (gameIsEnding) return;
+        if (gameIsEnding || fetched) return;
+
         let cellData = {};
         try {
           const res = await fetch(revealCellEndpoint, {
@@ -45,7 +47,6 @@ const MinesCell = ({
             return;
           }
           cellData = (await res.json()).data;
-          console.log(cellData);
         } catch (error) {
           console.log("Errors: ", error);
         }
@@ -109,6 +110,7 @@ const MinesCell = ({
         cover.classList.remove("shrink-cover");
         cover.classList.remove("expand");
         cover.classList.remove("expand-cover");
+        setFetched(false);
       },
       { once: true }
     );
