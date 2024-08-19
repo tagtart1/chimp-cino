@@ -14,8 +14,9 @@ const fetchActiveGame = async (req, res, next) => {
     req.game = game;
     next();
   } catch (error) {
-    console.log(error);
-    next(new AppError("Error fetching game", 500, "SERVER_ERROR"));
+    if (error instanceof AppError) {
+      next(error);
+    } else next(new AppError("Error fetching game", 500, "SERVER_ERROR"));
   }
 };
 

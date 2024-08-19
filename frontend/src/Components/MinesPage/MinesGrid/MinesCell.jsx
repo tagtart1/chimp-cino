@@ -37,6 +37,7 @@ const MinesCell = ({
         return;
       }
       const cellData = await res.json();
+      console.log(cellData);
     } catch (error) {
       console.log("Errors: ", error);
     }
