@@ -200,5 +200,12 @@ exports.revealCell = async (req, res, next) => {
 };
 
 const calculateMultiplier = (previousMulti, mines, unrevealed) => {
-  return previousMulti * (1 / (1 - mines / unrevealed)) * 0.99;
+  const multi = previousMulti * (1 / (1 - mines / unrevealed));
+  let tax = 1;
+
+  if (unrevealed === 25) {
+    tax = 0.99;
+  }
+  console.log(multi * tax);
+  return multi * tax;
 };

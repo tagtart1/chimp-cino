@@ -84,7 +84,6 @@ const MinesCell = ({
       cover.addEventListener(
         "animationend",
         () => {
-          console.log(value);
           hidden.classList.add(value === 1 ? "gem" : "mine");
           hidden.classList.add(gameInProgress ? "expand" : "expand-dim");
         },
