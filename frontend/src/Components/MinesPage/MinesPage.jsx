@@ -12,7 +12,8 @@ const MinesPage = () => {
 
   const [gameInProgress, setGameInProgress] = useState(false);
   const [loadedGrid, setLoadedGrid] = useState(baseGrid);
-  const [loadedBetAmount, setLoadedBetAmount] = useState(0.0);
+  const [betAmount, setBetAmount] = useState(0.0);
+  const [betMultiplier, setBetMultiplier] = useState(1);
 
   // When an action anim is happeing like revealing, we need to disable the cashout and pick random tile buttons
   const [disableActions, setDisableActions] = useState(false);
@@ -35,13 +36,11 @@ const MinesPage = () => {
     setGameInProgress(false);
   };
 
-  const updateGrid = (field, value) => {
-    // Update the grid
-    const updatedGrid = loadedGrid.map((value) => {
-      return value;
-    });
+  const updateGame = (field, value, multiplier) => {
+    const updatedGrid = [...loadedGrid];
     updatedGrid[field] = value;
     setLoadedGrid(updatedGrid);
+    setBetMultiplier(multiplier.toFixed(2));
   };
 
   const revealRandomCell = () => {
@@ -83,33 +82,34 @@ const MinesPage = () => {
       }
 
       const gameData = await res.json();
-      const { cells: grid, bet, mines, gems } = gameData.data;
+      const { cells: grid, bet, mines, gems, multiplier } = gameData.data;
+      console.log(gameData.data);
       setGameInProgress(true);
-      setLoadedBetAmount(bet);
+      setBetAmount(parseFloat(bet));
       setLoadedGrid(grid);
+      setBetMultiplier(parseFloat(multiplier).toFixed(2));
     };
     fetchGame();
-
-    // Simulating a loaded game
-    // if there is a valid grid, do all this
   }, []);
 
   return (
     <main className="mines-main">
       <section className="mines-section">
         <MinesBetControls
-          loadedBet={loadedBetAmount}
+          setBetAmount={setBetAmount}
+          betAmount={betAmount}
           gameInProgress={gameInProgress}
           startGame={startGame}
           endGame={endGame}
           revealRandomCell={revealRandomCell}
+          betMultiplier={betMultiplier}
         />
         <div className="game-screen-mines">
           <MinesGrid
             gameInProgress={gameInProgress}
             loadedGrid={loadedGrid}
             resetCells={resetCells}
-            updateGrid={updateGrid}
+            updateGame={updateGame}
             endGame={endGame}
           />
         </div>

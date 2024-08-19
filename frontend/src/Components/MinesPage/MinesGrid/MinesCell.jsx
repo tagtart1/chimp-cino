@@ -5,7 +5,7 @@ const MinesCell = ({
   field,
   value,
   resetCells,
-  updateGrid,
+  updateGame,
   endGame,
   setGameIsEnding,
   gameIsEnding,
@@ -22,40 +22,37 @@ const MinesCell = ({
 
     // TODO: expand-cover needs to run infinitely till fetch complete
     // OPtional TODO: Queue the fetches so that the fetching 2 cells really quickly create an effect that resembles them chaining. look at stake for reference - Debouncing, OPTIONAL, wait till API fetching is implemented
-    try {
-      const res = await fetch(revealCellEndpoint, {
-        credentials: "include",
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          field: field,
-        }),
-      });
-      if (!res.ok) {
-        const errors = await res.json();
-        console.log("Errors: ", errors);
-        return;
-      }
-      const cellData = await res.json();
-      console.log(cellData);
-    } catch (error) {
-      console.log("Errors: ", error);
-    }
+
     cover.classList.add("expand-cover");
     cover.addEventListener(
       "animationend",
-      () => {
+      async () => {
         // Game is ending, dont fetch anything more
         if (gameIsEnding) return;
-        const revealedGrid = [
-          2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1,
-          1, 1,
-        ];
-        // Fetch if gem or mine then pass it
-        // TODO: Remove this temporary random for the actual fetch
-        const value = Math.floor(Math.random() * (2 - 1 + 1)) + 1;
-        updateGrid(field, value);
-        if (value === 2) {
+        let cellData = {};
+        try {
+          const res = await fetch(revealCellEndpoint, {
+            credentials: "include",
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              field: field,
+            }),
+          });
+          if (!res.ok) {
+            const errors = await res.json();
+            console.log("Errors: ", errors);
+            return;
+          }
+          cellData = (await res.json()).data;
+          console.log(cellData);
+        } catch (error) {
+          console.log("Errors: ", error);
+        }
+        const updatedGrid = cellData.cells;
+
+        updateGame(field, updatedGrid[field], cellData.multiplier);
+        if (cellData.isGameOver) {
           setGameIsEnding(true);
           cover.addEventListener(
             "animationend",
@@ -64,7 +61,7 @@ const MinesCell = ({
               const delayEndGame = 250;
 
               setTimeout(() => {
-                endGame(revealedGrid);
+                endGame(updatedGrid);
                 setGameIsEnding(false);
               }, delayEndGame);
             },
@@ -86,6 +83,7 @@ const MinesCell = ({
       cover.addEventListener(
         "animationend",
         () => {
+          console.log(value);
           hidden.classList.add(value === 1 ? "gem" : "mine");
           hidden.classList.add(gameInProgress ? "expand" : "expand-dim");
         },

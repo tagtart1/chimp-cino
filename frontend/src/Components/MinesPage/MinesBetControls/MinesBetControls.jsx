@@ -6,15 +6,16 @@ import TotalGainOutput from "./TotalGainOutput";
 import { useUser } from "../../../Contexts/UserProvider";
 
 const MinesBetControls = ({
-  loadedBet,
+  betAmount,
+  setBetAmount,
   gameInProgress,
-
   startGame,
   endGame,
   revealRandomCell,
+  betMultiplier,
 }) => {
   const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
-  const [betAmount, setBetAmount] = useState(0.0);
+
   const [minesAmount, setMinesAmount] = useState(3);
   const { user } = useUser();
 
@@ -45,8 +46,6 @@ const MinesBetControls = ({
         console.log("Error:", errors);
         return;
       }
-      const gameData = await resolution.json();
-      console.log(gameData);
     } catch (error) {
       console.log(error);
     }
@@ -74,7 +73,7 @@ const MinesBetControls = ({
         <>
           <MinesBetInput
             setBetAmount={setBetAmount}
-            loadedBet={loadedBet}
+            betAmount={betAmount}
             gameInProgress={gameInProgress}
           />
           <MinesAmountInput setMinesAmount={setMinesAmount} loadedMines={0} />
@@ -85,11 +84,11 @@ const MinesBetControls = ({
       ) : (
         <>
           <MinesBetInput
-            loadedBet={loadedBet}
+            betAmount={betAmount}
             gameInProgress={gameInProgress}
           />
           <MinesAmountInput loadedMines={minesAmount} />
-          <TotalGainOutput totalGain={0} multiplier={1.1} />
+          <TotalGainOutput totalGain={betAmount} multiplier={betMultiplier} />
           <button className="random-tile-button" onClick={revealRandomCell}>
             Pick random tile
           </button>

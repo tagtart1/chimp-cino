@@ -6,7 +6,7 @@ const MinesGrid = ({
   gameInProgress,
   loadedGrid,
   resetCells,
-  updateGrid,
+  updateGame,
   endGame,
 }) => {
   const [gameIsEnding, setGameIsEnding] = useState(false);
@@ -20,7 +20,7 @@ const MinesGrid = ({
           field={index}
           value={value}
           resetCells={resetCells}
-          updateGrid={updateGrid}
+          updateGame={updateGame}
           endGame={endGame}
           setGameIsEnding={setGameIsEnding}
           gameIsEnding={gameIsEnding}

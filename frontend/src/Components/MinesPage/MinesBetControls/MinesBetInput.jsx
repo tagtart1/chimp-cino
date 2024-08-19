@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import "./MinesBetInput.scss";
 import { useRef } from "react";
 
-const MinesBetInput = ({ setBetAmount, loadedBet, gameInProgress }) => {
+const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
   const betAmountInput = useRef(null);
 
   const doubleBet = () => {
@@ -41,10 +41,10 @@ const MinesBetInput = ({ setBetAmount, loadedBet, gameInProgress }) => {
     const betInputCopy = betAmountInput.current;
 
     const zeroInput = () => {
-      if (!loadedBet && betInputCopy.value === "") {
+      if (!betAmount && betInputCopy.value === "") {
         betInputCopy.value = (0).toFixed(2);
-      } else if (loadedBet) {
-        betInputCopy.value = parseFloat(loadedBet).toFixed(2);
+      } else if (betAmount) {
+        betInputCopy.value = parseFloat(betAmount).toFixed(2);
       } else {
         betInputCopy.value = parseFloat(betInputCopy.value).toFixed(2);
       }
@@ -59,7 +59,7 @@ const MinesBetInput = ({ setBetAmount, loadedBet, gameInProgress }) => {
     return () => {
       betInputCopy.removeEventListener("focusout", zeroInput);
     };
-  }, [loadedBet]);
+  }, [betAmount]);
 
   return (
     <div className={`amount-input-group`}>
