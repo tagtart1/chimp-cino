@@ -88,7 +88,13 @@ const MinesBetControls = ({
             gameInProgress={gameInProgress}
           />
           <MinesAmountInput loadedMines={minesAmount} />
-          <TotalGainOutput totalGain={betAmount} multiplier={betMultiplier} />
+          <TotalGainOutput
+            totalGain={Math.max(
+              betAmount * betMultiplier - betAmount,
+              0
+            ).toFixed(2)}
+            multiplier={betMultiplier}
+          />
           <button className="random-tile-button" onClick={revealRandomCell}>
             Pick random tile
           </button>

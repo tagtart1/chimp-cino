@@ -28,6 +28,7 @@ const MinesPage = () => {
     if (!loadedGrid.every((value) => value === 0)) setResetCells(true);
     setGameInProgress(true);
     setLoadedGrid(baseGrid);
+    setBetMultiplier(1);
   };
 
   const endGame = (revealedGrid) => {
@@ -40,7 +41,7 @@ const MinesPage = () => {
     const updatedGrid = [...loadedGrid];
     updatedGrid[field] = value;
     setLoadedGrid(updatedGrid);
-    setBetMultiplier(multiplier.toFixed(2));
+    setBetMultiplier(parseFloat(multiplier));
   };
 
   const revealRandomCell = () => {
@@ -87,7 +88,7 @@ const MinesPage = () => {
       setGameInProgress(true);
       setBetAmount(parseFloat(bet));
       setLoadedGrid(grid);
-      setBetMultiplier(parseFloat(multiplier).toFixed(2));
+      setBetMultiplier(parseFloat(multiplier));
     };
     fetchGame();
   }, []);

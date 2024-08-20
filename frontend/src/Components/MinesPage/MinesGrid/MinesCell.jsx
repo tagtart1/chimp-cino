@@ -51,15 +51,16 @@ const MinesCell = ({
           console.log("Errors: ", error);
         }
         const updatedGrid = cellData.cells;
+        const newMultiplier = cellData.isGameOver ? 0 : cellData.multiplier;
 
-        updateGame(field, updatedGrid[field], cellData.multiplier);
+        updateGame(field, updatedGrid[field], newMultiplier);
         if (cellData.isGameOver) {
           setGameIsEnding(true);
           cover.addEventListener(
             "animationend",
             () => {
               // Reveal all other cells delay. This delay lets the mine anim play out fully
-              const delayEndGame = 250;
+              const delayEndGame = 650;
 
               setTimeout(() => {
                 endGame(updatedGrid);
