@@ -20,7 +20,7 @@ const MinesBetControls = ({
   const { user } = useUser();
 
   const playGame = async () => {
-    if (parseFloat(betAmount) <= 0 && gameInProgress) {
+    if (parseFloat(betAmount) <= 0 || gameInProgress) {
       // Make a popup
       return;
     }

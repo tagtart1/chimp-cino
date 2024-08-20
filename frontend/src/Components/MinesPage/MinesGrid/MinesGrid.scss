@@ -126,19 +126,13 @@
 }
 
 @media (max-width: 1050px) {
-  .mines-main {
-    .mines-section {
-      .game-screen-mines {
-        .mines-grid {
-          column-gap: 6px;
-          row-gap: 12px;
-          padding: 8px;
+  #mines-grid {
+    column-gap: 6px;
+    row-gap: 12px;
+    padding: 8px;
 
-          .mine-cell {
-            box-shadow: 0px 4px #213743;
-          }
-        }
-      }
+    .cell-cover {
+      box-shadow: 0px 4px #213743;
     }
   }
 }

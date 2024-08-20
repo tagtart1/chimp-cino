@@ -124,6 +124,7 @@ const MinesCell = ({
     <button className="cell-wrapper" onClick={revealCell} ref={cellRef}>
       {explode && (
         <img
+          key={Date.now()}
           alt="mine explosion effect"
           className="mine-effect"
           src={explosionEffect}
