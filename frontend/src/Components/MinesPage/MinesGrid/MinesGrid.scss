@@ -49,6 +49,15 @@
       background-image: url("../../../images/gem.svg");
     }
   }
+
+  .mine-effect {
+    left: 0;
+    top: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: scale(1.5);
+  }
 }
 
 // TODO: make this infinite while we fetch the cell result

@@ -1,12 +1,12 @@
 import React from "react";
 import "./MinesAmountInput.scss";
 
-const MinesAmountInput = ({ setMinesAmount, loadedMines }) => {
+const MinesAmountInput = ({ setMinesAmount, minesAmount, gameInProgress }) => {
   const defaultMines = 3;
   // TODO: if there are loaded mines, we need to make the width not stretch, only 50% to make room for the gems
   return (
     <div className="mines-amount-wrapper">
-      {!loadedMines ? (
+      {!gameInProgress ? (
         <div>
           <label htmlFor="mines-amount-label">Mines</label>
           <select
@@ -33,7 +33,7 @@ const MinesAmountInput = ({ setMinesAmount, loadedMines }) => {
               id="mines-amount-input"
               className="in-progress"
               readOnly
-              value={loadedMines}
+              value={minesAmount}
             />
           </div>
           <div>
@@ -43,7 +43,7 @@ const MinesAmountInput = ({ setMinesAmount, loadedMines }) => {
               id="gems-amount-input"
               className="in-progress"
               readOnly
-              value={25 - loadedMines}
+              value={25 - minesAmount}
             />
           </div>
         </>

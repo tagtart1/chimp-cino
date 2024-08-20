@@ -76,7 +76,10 @@ const MinesBetControls = ({
             betAmount={betAmount}
             gameInProgress={gameInProgress}
           />
-          <MinesAmountInput setMinesAmount={setMinesAmount} loadedMines={0} />
+          <MinesAmountInput
+            setMinesAmount={setMinesAmount}
+            minesAmount={minesAmount}
+          />
           <button className="play-mines-button" onClick={playGame}>
             Play
           </button>
@@ -87,7 +90,7 @@ const MinesBetControls = ({
             betAmount={betAmount}
             gameInProgress={gameInProgress}
           />
-          <MinesAmountInput loadedMines={minesAmount} />
+          <MinesAmountInput minesAmount={minesAmount} />
           <TotalGainOutput
             totalGain={Math.max(
               betAmount * betMultiplier - betAmount,

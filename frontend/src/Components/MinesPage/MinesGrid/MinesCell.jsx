@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import explosionEffect from "../../../images/mineExplosion.CTwuSNug.gif";
 // TODO: add cleanup functions
 const MinesCell = ({
   gameInProgress,
@@ -15,10 +16,11 @@ const MinesCell = ({
   const cellRef = useRef();
   const revealCellEndpoint = "http://localhost:5000/api/v1/mines/reveal";
   const [fetched, setFetched] = useState(false);
+  const [explode, setExplode] = useState(false);
   // Reveals if the cell is a mine or a gem
   const revealCell = async (e) => {
     if (!gameInProgress || fetched) return;
-    const cover = e.currentTarget.children[1];
+    const cover = e.currentTarget.querySelector(".cell-cover");
 
     // TODO: expand-cover needs to run infinitely till fetch complete
     // OPtional TODO: Queue the fetches so that the fetching 2 cells really quickly create an effect that resembles them chaining. look at stake for reference - Debouncing, OPTIONAL, wait till API fetching is implemented
@@ -56,6 +58,7 @@ const MinesCell = ({
         updateGame(field, updatedGrid[field], newMultiplier);
         if (cellData.isGameOver) {
           setGameIsEnding(true);
+          setExplode(true);
           cover.addEventListener(
             "animationend",
             () => {
@@ -77,8 +80,8 @@ const MinesCell = ({
 
   useEffect(() => {
     const cell = cellRef.current;
-    const cover = cell.children[1];
-    const hidden = cell.children[0];
+    const cover = cell.querySelector(".cell-cover");
+    const hidden = cell.querySelector(".cell-value");
 
     if (value !== 0) {
       cover.classList.add("shrink-cover");
@@ -96,8 +99,8 @@ const MinesCell = ({
   useEffect(() => {
     if (!resetCells) return;
     const cell = cellRef.current;
-    const cover = cell.children[1];
-    const hidden = cell.children[0];
+    const cover = cell.querySelector(".cell-cover");
+    const hidden = cell.querySelector(".cell-value");
 
     cover.classList.add("expand");
     cover.addEventListener(
@@ -110,6 +113,7 @@ const MinesCell = ({
         cover.classList.remove("shrink-cover");
         cover.classList.remove("expand");
         cover.classList.remove("expand-cover");
+        setExplode(false);
         setFetched(false);
       },
       { once: true }
@@ -118,6 +122,13 @@ const MinesCell = ({
 
   return (
     <button className="cell-wrapper" onClick={revealCell} ref={cellRef}>
+      {explode && (
+        <img
+          alt="mine explosion effect"
+          className="mine-effect"
+          src={explosionEffect}
+        />
+      )}
       <div className="cell-value"></div>
       <div className="cell-cover"></div>
     </button>
