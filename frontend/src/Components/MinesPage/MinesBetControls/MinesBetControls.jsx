@@ -13,10 +13,12 @@ const MinesBetControls = ({
   endGame,
   revealRandomCell,
   betMultiplier,
+  setMinesAmount,
+  minesAmount,
+  gemAmount,
 }) => {
   const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
 
-  const [minesAmount, setMinesAmount] = useState(3);
   const { user } = useUser();
 
   const playGame = async () => {
@@ -49,8 +51,8 @@ const MinesBetControls = ({
     } catch (error) {
       console.log(error);
     }
-
-    startGame();
+    const gems = 25 - minesAmount;
+    startGame(gems);
   };
 
   // Retrive the completed grid, reveals the grid
@@ -79,6 +81,8 @@ const MinesBetControls = ({
           <MinesAmountInput
             setMinesAmount={setMinesAmount}
             minesAmount={minesAmount}
+            gameInProgress={gameInProgress}
+            gemAmount={gemAmount}
           />
           <button className="play-mines-button" onClick={playGame}>
             Play
@@ -90,7 +94,11 @@ const MinesBetControls = ({
             betAmount={betAmount}
             gameInProgress={gameInProgress}
           />
-          <MinesAmountInput minesAmount={minesAmount} />
+          <MinesAmountInput
+            minesAmount={minesAmount}
+            gameInProgress={gameInProgress}
+            gemAmount={gemAmount}
+          />
           <TotalGainOutput
             totalGain={Math.max(
               betAmount * betMultiplier - betAmount,

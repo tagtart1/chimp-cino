@@ -74,13 +74,14 @@ exports.getGame = async (req, res, next) => {
     let gemCount = 0;
     for (let i = 0; i < cellRows.length; i++) {
       const currentCell = cellRows[i];
-      if (currentCell.is_gem) {
-        gemCount++;
-      } else {
+      if (!currentCell.is_gem) {
         mineCount++;
       }
       if (!currentCell.is_revealed) {
         gameCells.push(0);
+        if (currentCell.is_gem) {
+          gemCount++;
+        }
       } else {
         // 1 resembles a gem, we assume this because the game would have been ended
         gameCells.push(1);

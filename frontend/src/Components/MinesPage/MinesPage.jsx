@@ -13,6 +13,8 @@ const MinesPage = () => {
   const [gameInProgress, setGameInProgress] = useState(false);
   const [loadedGrid, setLoadedGrid] = useState(baseGrid);
   const [betAmount, setBetAmount] = useState(0.0);
+  const [minesAmount, setMinesAmount] = useState(3);
+  const [gemAmount, setGemAmount] = useState(0);
   const [betMultiplier, setBetMultiplier] = useState(1);
 
   // When an action anim is happeing like revealing, we need to disable the cashout and pick random tile buttons
@@ -21,13 +23,14 @@ const MinesPage = () => {
   // Toggle to trigger the children cells to reset
   const [resetCells, setResetCells] = useState(false);
 
-  const startGame = async () => {
+  const startGame = async (gems) => {
     // Show an error to sign in or show the popup
 
     // Checks if the grid is all hidden, implying that there is no game in progress so dont do the resetCells animation
     if (!loadedGrid.every((value) => value === 0)) setResetCells(true);
     setGameInProgress(true);
     setLoadedGrid(baseGrid);
+    setGemAmount(gems);
     setBetMultiplier(1);
   };
 
@@ -42,6 +45,7 @@ const MinesPage = () => {
     updatedGrid[field] = value;
     setLoadedGrid(updatedGrid);
     setBetMultiplier(parseFloat(multiplier));
+    if (value !== 2) setGemAmount((gems) => gems - 1);
   };
 
   const revealRandomCell = () => {
@@ -88,6 +92,8 @@ const MinesPage = () => {
       setGameInProgress(true);
       setBetAmount(parseFloat(bet));
       setLoadedGrid(grid);
+      setMinesAmount(mines);
+      setGemAmount(gems);
       setBetMultiplier(parseFloat(multiplier));
     };
     fetchGame();
@@ -104,6 +110,9 @@ const MinesPage = () => {
           endGame={endGame}
           revealRandomCell={revealRandomCell}
           betMultiplier={betMultiplier}
+          gemAmount={gemAmount}
+          setMinesAmount={setMinesAmount}
+          minesAmount={minesAmount}
         />
         <div className="game-screen-mines">
           <MinesGrid
