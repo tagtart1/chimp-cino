@@ -18,6 +18,7 @@ const MinesBetControls = ({
   gemAmount,
 }) => {
   const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
+  const cashoutEndpoint = "http://localhost:5000/api/v1/mines/cashout";
 
   const { user } = useUser();
 
@@ -56,17 +57,33 @@ const MinesBetControls = ({
   };
 
   // Retrive the completed grid, reveals the grid
-  const cashout = () => {
+  const cashout = async () => {
     // Should probably have the end game results here to render out each grid cell, mainly used to reset the state of grid to all closed cells
 
     // Payout
     // Show multiplier popup on grid
     console.log("ending game, you cashed out");
-    const revealedGrid = [
-      2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
-    ];
+    try {
+      const res = await fetch(cashoutEndpoint, {
+        credentials: "include",
+        method: "POST",
+      });
+      if (!res.ok) {
+        const errors = await res.json();
+        console.log("Error cashing out:", errors);
+        return;
+      }
+      const gameData = await res.json();
+      console.log(gameData);
+      const revealedGrid = [
+        2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1,
+        1,
+      ];
 
-    endGame(revealedGrid);
+      endGame(revealedGrid);
+    } catch (error) {
+      console.log("Cashout catch block", error);
+    }
   };
 
   return (
