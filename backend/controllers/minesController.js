@@ -151,8 +151,8 @@ exports.revealCell = async (req, res, next) => {
       // Check if it was the last gem.
       // TODO: Handle when all cells are revealed
       if (mineCount / hiddenCells === 1) {
-        // Last gem was revealed, auto cashout the user
-        isGameOver = true;
+        // Last gem was revealed, cashout the user
+        next();
       }
       // Calculate the new multiplier, +1 because we want the multipler before action was taken
       multiplier = calculateMultiplier(multiplier, mineCount, hiddenCells + 1);
@@ -162,7 +162,6 @@ exports.revealCell = async (req, res, next) => {
         multiplier,
         gameId,
       ]);
-      // Continue the game, no loss
     } else {
       isGameOver = true;
       // Build the game array
@@ -198,6 +197,13 @@ exports.revealCell = async (req, res, next) => {
   } finally {
     transaction.release();
   }
+};
+
+exports.cashout = async (req, res, next) => {
+  const transaction = req.transaction;
+  await transaction.query("COMMIT");
+  transaction.release();
+  console.log("hey");
 };
 
 const calculateMultiplier = (previousMulti, mines, unrevealed) => {

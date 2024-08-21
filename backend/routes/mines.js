@@ -27,7 +27,16 @@ router.post(
   fetchActiveGame,
   santizeTargetInput,
   beginTransaction,
-  minesController.revealCell
+  minesController.revealCell,
+  minesController.cashout
+);
+
+router.post(
+  "/cashout",
+  validateToken,
+  fetchActiveGame,
+  beginTransaction,
+  minesController.cashout
 );
 
 module.exports = router;
