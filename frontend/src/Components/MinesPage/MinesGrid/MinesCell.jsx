@@ -17,6 +17,7 @@ const MinesCell = ({
   const revealCellEndpoint = "http://localhost:5000/api/v1/mines/reveal";
   const [fetched, setFetched] = useState(false);
   const [explode, setExplode] = useState(false);
+
   // Reveals if the cell is a mine or a gem
   const revealCell = async (e) => {
     if (!gameInProgress || fetched) return;
@@ -68,6 +69,7 @@ const MinesCell = ({
               setTimeout(() => {
                 endGame(updatedGrid);
                 setGameIsEnding(false);
+                setExplode(false);
               }, delayEndGame);
             },
             { once: true }
@@ -124,10 +126,9 @@ const MinesCell = ({
     <button className="cell-wrapper" onClick={revealCell} ref={cellRef}>
       {explode && (
         <img
-          key={Date.now()}
           alt="mine explosion effect"
           className="mine-effect"
-          src={explosionEffect}
+          src={`${explosionEffect}?a=${Math.random()}`}
         />
       )}
       <div className="cell-value"></div>
