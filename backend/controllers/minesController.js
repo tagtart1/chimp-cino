@@ -1,9 +1,11 @@
 const AppError = require("../utils/appError");
 const pool = require("../db");
 const minesQueries = require("../queries/minesQueries");
+const casinoQueries = require("../queries/casinoQueries");
 
 exports.newGame = async (req, res, next) => {
   const transaction = req.transaction;
+
   const mines = req.body.mines;
   const bet = req.body.bet;
   const userId = req.user.id;
@@ -109,16 +111,18 @@ exports.getGame = async (req, res, next) => {
 
 exports.revealCell = async (req, res, next) => {
   const transaction = req.transaction;
+
   const field = req.body.field;
   let isGameOver = false;
   let multiplier = parseFloat(req.game.multiplier);
+  let shouldReleaseTransaction = true;
   const { id: gameId } = req.game;
   try {
     // Fetch all the cell
     const allCells = (
       await transaction.query(minesQueries.fetchGameCells, [gameId])
     ).rows;
-
+    req.game.allCells = allCells;
     const selectedCell = allCells[field];
 
     // Cell already revealed, throw exception
@@ -148,14 +152,17 @@ exports.revealCell = async (req, res, next) => {
           gameCells.push(1);
         }
       }
+
+      // Calculate the new multiplier, +1 because we want the multipler before action was taken
+      multiplier = calculateMultiplier(multiplier, mineCount, hiddenCells + 1);
+      req.game.multiplier = multiplier;
       // Check if it was the last gem.
       // TODO: Handle when all cells are revealed
       if (mineCount / hiddenCells === 1) {
         // Last gem was revealed, cashout the user
-        next();
+        shouldReleaseTransaction = false;
+        return next();
       }
-      // Calculate the new multiplier, +1 because we want the multipler before action was taken
-      multiplier = calculateMultiplier(multiplier, mineCount, hiddenCells + 1);
 
       // Update the DB
       await transaction.query(minesQueries.updateMultiplier, [
@@ -195,14 +202,61 @@ exports.revealCell = async (req, res, next) => {
       next(new AppError("Server error", 500, "SERVER_ERROR"));
     }
   } finally {
-    transaction.release();
+    if (shouldReleaseTransaction) transaction.release();
   }
 };
 
 exports.cashout = async (req, res, next) => {
   const transaction = req.transaction;
-  await transaction.query("COMMIT");
-  transaction.release();
+  const multiplier = req.game.multiplier;
+  const bet = req.game.bet;
+  const userId = req.user.id;
+  const revealedCells = [];
+  try {
+    // Payout the player
+    let allCells = req.game.allCells;
+    const winnings = bet * multiplier;
+    await transaction.query(casinoQueries.depositBalance, [winnings, userId]);
+
+    if (!allCells) {
+      console.log("hey fetching those cells now");
+      allCells = (
+        await transaction.query(minesQueries.fetchGameCells, [req.game.id])
+      ).rows;
+    }
+    // Build the revealed cells grid
+    for (let i = 0; i < allCells.length; i++) {
+      const cell = allCells[i];
+      if (cell.is_gem) {
+        revealedCells.push(1);
+      } else {
+        revealedCells.push(2);
+      }
+    }
+    // Delete the game since it is now over
+    await transaction.query(minesQueries.deleteGame, [req.game.id]);
+
+    await transaction.query("COMMIT");
+    res.status(200).json({
+      data: {
+        isGameOver: true,
+        cells: revealedCells,
+        multiplier: multiplier,
+        payout: winnings,
+      },
+    });
+  } catch (error) {
+    transaction.query("ROLLBACK");
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      console.log(error);
+      next(new AppError("Server error", 500, "SERVER_ERROR"));
+    }
+  } finally {
+    transaction.release();
+  }
+
   console.log("hey");
 };
 
@@ -213,6 +267,6 @@ const calculateMultiplier = (previousMulti, mines, unrevealed) => {
   if (unrevealed === 25) {
     tax = 0.99;
   }
-  console.log(multi * tax);
-  return multi * tax;
+  console.log(parseFloat((multi * tax).toFixed(6)));
+  return parseFloat((multi * tax).toFixed(6));
 };

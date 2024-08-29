@@ -55,11 +55,12 @@ const MinesCell = ({
         }
         const updatedGrid = cellData.cells;
         const newMultiplier = cellData.isGameOver ? 0 : cellData.multiplier;
-
+        const payout = cellData.payout;
         updateGame(field, updatedGrid[field], newMultiplier);
         if (cellData.isGameOver) {
+          console.log("PAYOUT: ", payout);
           setGameIsEnding(true);
-          setExplode(true);
+          setExplode(payout ? false : true);
           cover.addEventListener(
             "animationend",
             () => {

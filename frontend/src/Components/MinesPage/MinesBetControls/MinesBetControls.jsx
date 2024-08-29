@@ -73,14 +73,9 @@ const MinesBetControls = ({
         console.log("Error cashing out:", errors);
         return;
       }
-      const gameData = await res.json();
-      console.log(gameData);
-      const revealedGrid = [
-        2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1,
-        1,
-      ];
+      const gameData = (await res.json()).data;
 
-      endGame(revealedGrid);
+      endGame(gameData.cells);
     } catch (error) {
       console.log("Cashout catch block", error);
     }

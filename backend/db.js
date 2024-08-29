@@ -10,4 +10,6 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
+console.log("Total client:", pool.totalCount);
+
 module.exports = pool;
