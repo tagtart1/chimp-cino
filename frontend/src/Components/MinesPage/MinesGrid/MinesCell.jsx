@@ -56,6 +56,7 @@ const MinesCell = ({
         const updatedGrid = cellData.cells;
         const newMultiplier = cellData.isGameOver ? 0 : cellData.multiplier;
         const payout = cellData.payout;
+        console.log(cellData);
         updateGame(field, updatedGrid[field], newMultiplier);
         if (cellData.isGameOver) {
           console.log("PAYOUT: ", payout);
@@ -68,7 +69,7 @@ const MinesCell = ({
               const delayEndGame = 650;
 
               setTimeout(() => {
-                endGame(updatedGrid);
+                endGame(updatedGrid, payout);
                 setGameIsEnding(false);
                 setExplode(false);
               }, delayEndGame);

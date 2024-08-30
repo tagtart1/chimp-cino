@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./MinesPage.scss";
 import MinesGrid from "./MinesGrid/MinesGrid";
 import MinesBetControls from "./MinesBetControls/MinesBetControls";
+import { useUser } from "../../Contexts/UserProvider";
 
 const MinesPage = () => {
   // Test grid - simulates a loadedGrid
@@ -16,6 +17,7 @@ const MinesPage = () => {
   const [minesAmount, setMinesAmount] = useState(3);
   const [gemAmount, setGemAmount] = useState(0);
   const [betMultiplier, setBetMultiplier] = useState(1);
+  const { setUser } = useUser();
 
   // When an action anim is happeing like revealing, we need to disable the cashout and pick random tile buttons
   const [disableActions, setDisableActions] = useState(false);
@@ -32,12 +34,29 @@ const MinesPage = () => {
     setLoadedGrid(baseGrid);
     setGemAmount(gems);
     setBetMultiplier(1);
+
+    // Deduct user UI balance
+    setUser((prev) => {
+      const newCosmeticBal = { ...prev };
+      newCosmeticBal.balance -= betAmount;
+      return newCosmeticBal;
+    });
   };
 
-  const endGame = (revealedGrid) => {
+  const endGame = (revealedGrid, payout) => {
     setResetCells(false);
     setLoadedGrid(revealedGrid);
     setGameInProgress(false);
+
+    // Payout player if applicable
+    if (payout) {
+      setUser((prev) => {
+        const newCosmeticBal = { ...prev };
+
+        newCosmeticBal.balance += payout;
+        return newCosmeticBal;
+      });
+    }
   };
 
   const updateGame = (field, value, multiplier) => {

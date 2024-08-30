@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./MinesBetInput.scss";
 import { useRef } from "react";
 
 const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
   const betAmountInput = useRef(null);
+  const [insideInput, setInsideInput] = useState(false);
 
   const doubleBet = () => {
     if (gameInProgress) {
@@ -39,27 +40,26 @@ const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
 
   useEffect(() => {
     const betInputCopy = betAmountInput.current;
-
+    betInputCopy.value = betAmount;
     const zeroInput = () => {
-      if (!betAmount && betInputCopy.value === "") {
+      if (!betInputCopy.value) {
         betInputCopy.value = (0).toFixed(2);
-      } else if (betAmount) {
-        betInputCopy.value = parseFloat(betAmount).toFixed(2);
       } else {
         betInputCopy.value = parseFloat(betInputCopy.value).toFixed(2);
       }
+      setInsideInput(false);
     };
-
-    // When loadedBet changes, zero the input if needed
-    zeroInput();
 
     // Ensures a 0 input gets trailing zeros
     if (betInputCopy) betInputCopy.addEventListener("focusout", zeroInput);
+
+    // When betAmount changes, zero the input if needed
+    if (!insideInput) zeroInput();
     // Cleanup
     return () => {
       betInputCopy.removeEventListener("focusout", zeroInput);
     };
-  }, [betAmount]);
+  }, [betAmount, insideInput]);
 
   return (
     <div className={`amount-input-group`}>
@@ -71,6 +71,7 @@ const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
           id="bet-amount"
           step={0.01}
           onInput={(e) => {
+            setInsideInput(true);
             setBetAmount(e.target.value);
           }}
           disabled={gameInProgress}

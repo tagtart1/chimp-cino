@@ -75,7 +75,7 @@ const MinesBetControls = ({
       }
       const gameData = (await res.json()).data;
 
-      endGame(gameData.cells);
+      endGame(gameData.cells, gameData.payout);
     } catch (error) {
       console.log("Cashout catch block", error);
     }
