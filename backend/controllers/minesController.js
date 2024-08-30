@@ -213,6 +213,14 @@ exports.cashout = async (req, res, next) => {
   const userId = req.user.id;
   const revealedCells = [];
   try {
+    // Ensure player is not cashing out with no multiplier
+    if (multiplier <= 1) {
+      throw new AppError(
+        "You must first play before cashing out!",
+        400,
+        "INVALID_INPUT"
+      );
+    }
     // Payout the player
     let allCells = req.game.allCells;
     const winnings = bet * multiplier;
@@ -256,8 +264,6 @@ exports.cashout = async (req, res, next) => {
   } finally {
     transaction.release();
   }
-
-  console.log("hey");
 };
 
 const calculateMultiplier = (previousMulti, mines, unrevealed) => {

@@ -17,7 +17,18 @@
     font-weight: 500;
     font-size: 16px;
     border-radius: 4px;
+    transition: background-color 0.2s, opacity 0.1s;
     cursor: pointer;
+
+    .mini-bomb {
+      width: 100%;
+      height: 100%;
+      max-width: 18px;
+    }
+
+    .jiggle {
+      animation: jiggle 1s linear infinite;
+    }
   }
 
   .random-tile-button {
@@ -30,10 +41,38 @@
     background-color: #2f4553;
     border-radius: 4px;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.12);
-    transition: 0.2s background-color;
+    transition: background-color 0.2s, opacity 0.1s;
     cursor: pointer;
     &:hover {
       background-color: #8e96ab92;
     }
+  }
+
+  .disabled-action {
+    user-select: none;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+}
+
+@keyframes jiggle {
+  0%,
+  20% {
+    transform: scale(1) rotate(0deg); /* Initial state */
+  }
+  30%,
+  45% {
+    transform: scale(1.15) rotate(0deg); /* Expand to 1.2x */
+  }
+  55%,
+  70% {
+    transform: scale(1.15) rotate(-20deg); /* Rotate to the left (-20deg) */
+  }
+  80%,
+  95% {
+    transform: scale(1.15) rotate(0deg); /* Rotate to the right (20deg) */
+  }
+  100% {
+    transform: scale(1) rotate(0deg); /* Shrink back to original size */
   }
 }

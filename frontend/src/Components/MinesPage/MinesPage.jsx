@@ -34,7 +34,9 @@ const MinesPage = () => {
     setLoadedGrid(baseGrid);
     setGemAmount(gems);
     setBetMultiplier(1);
-
+    setDisableActions(false);
+    console.log(gems);
+    console.log(minesAmount);
     // Deduct user UI balance
     setUser((prev) => {
       const newCosmeticBal = { ...prev };
@@ -114,6 +116,7 @@ const MinesPage = () => {
       setMinesAmount(mines);
       setGemAmount(gems);
       setBetMultiplier(parseFloat(multiplier));
+      setDisableActions(false);
     };
     fetchGame();
   }, []);
@@ -132,6 +135,7 @@ const MinesPage = () => {
           gemAmount={gemAmount}
           setMinesAmount={setMinesAmount}
           minesAmount={minesAmount}
+          disableActions={disableActions}
         />
         <div className="game-screen-mines">
           <MinesGrid
@@ -140,6 +144,7 @@ const MinesPage = () => {
             resetCells={resetCells}
             updateGame={updateGame}
             endGame={endGame}
+            setDisableActions={setDisableActions}
           />
         </div>
       </section>

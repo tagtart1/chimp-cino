@@ -15,7 +15,7 @@
 
   #net-gain-output-input {
     background-color: #2f4553;
-
+    position: relative;
     width: 100%;
     color: white;
     font-size: 15px;
@@ -34,5 +34,13 @@
     &:hover {
       border: #537a92 2px solid;
     }
+  }
+
+  .coin-input-img {
+    width: 16px;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    pointer-events: none;
   }
 }

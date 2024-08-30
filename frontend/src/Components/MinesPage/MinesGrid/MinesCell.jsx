@@ -10,6 +10,7 @@ const MinesCell = ({
   endGame,
   setGameIsEnding,
   gameIsEnding,
+  setActionsCount,
 }) => {
   // Grabs the cell ref to manipulate the cover and the hidden value's classses
   // Alternative approach was to use state for the classnames
@@ -21,6 +22,7 @@ const MinesCell = ({
   // Reveals if the cell is a mine or a gem
   const revealCell = async (e) => {
     if (!gameInProgress || fetched) return;
+    setActionsCount((prev) => prev + 1);
     const cover = e.currentTarget.querySelector(".cell-cover");
 
     // TODO: expand-cover needs to run infinitely till fetch complete
@@ -56,7 +58,7 @@ const MinesCell = ({
         const updatedGrid = cellData.cells;
         const newMultiplier = cellData.isGameOver ? 0 : cellData.multiplier;
         const payout = cellData.payout;
-        console.log(cellData);
+
         updateGame(field, updatedGrid[field], newMultiplier);
         if (cellData.isGameOver) {
           console.log("PAYOUT: ", payout);
@@ -76,6 +78,8 @@ const MinesCell = ({
             },
             { once: true }
           );
+        } else {
+          setActionsCount((prev) => prev - 1);
         }
       },
       { once: true }
