@@ -1,0 +1,43 @@
+.payout-popup-wrapper {
+  position: absolute;
+
+  font-family: "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  background-color: #1a2c38;
+  border: 3px solid #00e701;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 150px;
+  align-items: center;
+  padding: 16px;
+  .multiplier {
+    color: #00e701;
+    font-weight: bold;
+    font-size: 1.85rem;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .divider {
+    background-color: #2f4553;
+    width: 30%;
+    height: 2px;
+    margin: 10px 0px;
+  }
+
+  .payout {
+    pointer-events: none;
+    color: #00e701;
+    font-weight: 700;
+    font-size: 1rem;
+    position: relative;
+    display: flex;
+    gap: 4px;
+    .coin-input-img {
+      width: 13px;
+      margin-top: 1px;
+    }
+  }
+}
