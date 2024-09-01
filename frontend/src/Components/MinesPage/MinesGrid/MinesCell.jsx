@@ -56,9 +56,9 @@ const MinesCell = ({
           console.log("Errors: ", error);
         }
         const updatedGrid = cellData.cells;
-        const newMultiplier = cellData.isGameOver ? 0 : cellData.multiplier;
+        const newMultiplier = !cellData.payout ? 0 : cellData.multiplier;
         const payout = cellData.payout;
-
+        console.log(newMultiplier);
         updateGame(field, updatedGrid[field], newMultiplier);
         if (cellData.isGameOver) {
           console.log("PAYOUT: ", payout);
