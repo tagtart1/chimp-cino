@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import explosionEffect from "../../../images/mineExplosion.CTwuSNug.gif";
+import soundManager from "../../../Helpers/sfxPlayer";
+
 // TODO: add cleanup functions
 const MinesCell = ({
   gameInProgress,
@@ -56,13 +58,19 @@ const MinesCell = ({
           console.log("Errors: ", error);
         }
         const updatedGrid = cellData.cells;
-        const newMultiplier = !cellData.payout ? 0 : cellData.multiplier;
+        const newMultiplier =
+          cellData.isGameOver && !cellData.payout ? 0 : cellData.multiplier;
         const payout = cellData.payout;
         console.log(newMultiplier);
         updateGame(field, updatedGrid[field], newMultiplier);
+        if (cellData.isGameOver && !payout) {
+          soundManager.playAudio("bomb");
+        } else {
+          soundManager.playAudio("gem");
+        }
         if (cellData.isGameOver) {
-          console.log("PAYOUT: ", payout);
           setGameIsEnding(true);
+
           setExplode(payout ? false : true);
           cover.addEventListener(
             "animationend",
@@ -93,6 +101,7 @@ const MinesCell = ({
 
     if (value !== 0) {
       cover.classList.add("shrink-cover");
+
       cover.addEventListener(
         "animationend",
         () => {

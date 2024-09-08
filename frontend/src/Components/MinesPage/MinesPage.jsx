@@ -4,6 +4,7 @@ import MinesGrid from "./MinesGrid/MinesGrid";
 import MinesBetControls from "./MinesBetControls/MinesBetControls";
 import { useUser } from "../../Contexts/UserProvider";
 import PayoutPopup from "./PayoutPopup/PayoutPopup";
+import GameFooter from "../GameFooter/GameFooter";
 
 const MinesPage = () => {
   // Test grid - simulates a loadedGrid
@@ -151,6 +152,7 @@ const MinesPage = () => {
           <PayoutPopup payout={finalPayout} multiplier={betMultiplier} />
         </div>
       </section>
+      <GameFooter />
     </main>
   );
 };

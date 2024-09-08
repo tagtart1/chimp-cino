@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./PayoutPopup.scss";
 import { motion, AnimatePresence } from "framer-motion";
+import soundManager from "../../../Helpers/sfxPlayer";
 
 const PayoutPopup = ({ payout, multiplier }) => {
+  useEffect(() => {
+    if (payout) soundManager.playAudio("cashout");
+  }, [payout]);
+
   return (
     <AnimatePresence>
       {payout && (

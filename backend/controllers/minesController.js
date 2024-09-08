@@ -156,8 +156,7 @@ exports.revealCell = async (req, res, next) => {
       // Calculate the new multiplier, +1 because we want the multipler before action was taken
       multiplier = calculateMultiplier(multiplier, mineCount, hiddenCells + 1);
       req.game.multiplier = multiplier;
-      // Check if it was the last gem.
-      // TODO: Handle when all cells are revealed
+
       if (mineCount / hiddenCells === 1) {
         // Last gem was revealed, cashout the user
         shouldReleaseTransaction = false;

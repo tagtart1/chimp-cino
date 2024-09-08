@@ -7,8 +7,8 @@
   background-color: #1a2c38;
   border: 3px solid #00e701;
   border-radius: 8px;
-  width: 100%;
-  max-width: 150px;
+  min-width: 150px;
+  width: auto;
   align-items: center;
   padding: 16px;
   .multiplier {
