@@ -13,6 +13,7 @@ const MinesGrid = ({
   const [gameIsEnding, setGameIsEnding] = useState(false);
 
   // Tracks how many cells are being fetches concurrently, needs to be fiddled with to handle batching the requests but this should help with UX disalbing button
+  const REVEAL_FIELD_ENDPOINT = "http://localhost:5000/api/v1/mines/reveal";
   const BATCH_DELAY = 200;
   const [actionsCount, setActionsCount] = useState(0);
   const [timerId, setTimerId] = useState(null);
@@ -36,6 +37,19 @@ const MinesGrid = ({
     console.log("Making the batch fetch with: ", fields);
 
     // Use promises.
+    fetch(REVEAL_FIELD_ENDPOINT, {
+      credentials: "include",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: fields,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const gridData = data;
+      })
+      .catch((error) => console.log("Error: ", error));
   };
 
   const scheduleFetch = (field) => {
