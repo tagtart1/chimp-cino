@@ -4,6 +4,7 @@ import logo from "../../images/chimps-logo-small.png";
 import AuthPopup from "../AuthPopup/AuthPopup";
 import { useUser } from "../../Contexts/UserProvider";
 import { Link } from "react-router-dom";
+import soundManager from "../../Helpers/sfxPlayer";
 
 const Header = () => {
   const { user, setUser } = useUser();
@@ -76,7 +77,14 @@ const Header = () => {
                 ></path>
               </svg>
             </div>
-            <div className="wallet-button">Wallet</div>
+            <div
+              className="wallet-button"
+              onClick={() => {
+                soundManager.playAudio("bomb");
+              }}
+            >
+              Wallet
+            </div>
           </div>
         ) : null}
         <div className="auth-actions-group">

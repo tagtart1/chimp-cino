@@ -13,6 +13,7 @@ const MinesCell = ({
   setGameIsEnding,
   gameIsEnding,
   setActionsCount,
+  scheduleFetch,
 }) => {
   // Grabs the cell ref to manipulate the cover and the hidden value's classses
   // Alternative approach was to use state for the classnames
@@ -37,7 +38,7 @@ const MinesCell = ({
       async () => {
         // Game is ending, dont fetch anything more
         if (gameIsEnding || fetched) return;
-
+        scheduleFetch(field);
         let cellData = {};
         try {
           const res = await fetch(revealCellEndpoint, {
@@ -61,13 +62,14 @@ const MinesCell = ({
         const newMultiplier =
           cellData.isGameOver && !cellData.payout ? 0 : cellData.multiplier;
         const payout = cellData.payout;
-        console.log(newMultiplier);
-        updateGame(field, updatedGrid[field], newMultiplier);
+
         if (cellData.isGameOver && !payout) {
           soundManager.playAudio("bomb");
         } else {
           soundManager.playAudio("gem");
         }
+        updateGame(field, updatedGrid[field], newMultiplier);
+
         if (cellData.isGameOver) {
           setGameIsEnding(true);
 

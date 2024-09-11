@@ -8,6 +8,7 @@ import { useUser } from "../../Contexts/UserProvider";
 import BlackjackPage from "../BlackjackPage/BlackjackPage";
 import Navigation from "../Navigation/Navigation";
 import MinesPage from "../MinesPage/MinesPage";
+import soundManager from "../../Helpers/sfxPlayer";
 
 function App() {
   const { user, setUser } = useUser();
@@ -40,6 +41,7 @@ function App() {
       }
     };
     fetchUser();
+    soundManager.initialize();
   }, [setUser, user]);
 
   // use skeleton later
