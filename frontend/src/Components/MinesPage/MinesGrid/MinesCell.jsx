@@ -38,26 +38,9 @@ const MinesCell = ({
       async () => {
         // Game is ending, dont fetch anything more
         if (gameIsEnding || fetched) return;
-        scheduleFetch(field);
-        let cellData = {};
-        try {
-          const res = await fetch(revealCellEndpoint, {
-            credentials: "include",
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              field: field,
-            }),
-          });
-          if (!res.ok) {
-            const errors = await res.json();
-            console.log("Errors: ", errors);
-            return;
-          }
-          cellData = (await res.json()).data;
-        } catch (error) {
-          console.log("Errors: ", error);
-        }
+        const cellData = scheduleFetch(field);
+
+        /** 
         const updatedGrid = cellData.cells;
         const newMultiplier =
           cellData.isGameOver && !cellData.payout ? 0 : cellData.multiplier;
@@ -91,6 +74,7 @@ const MinesCell = ({
         } else {
           setActionsCount((prev) => prev - 1);
         }
+           */
       },
       { once: true }
     );

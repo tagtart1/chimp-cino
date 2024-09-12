@@ -112,7 +112,7 @@ exports.getGame = async (req, res, next) => {
 exports.revealCell = async (req, res, next) => {
   const transaction = req.transaction;
 
-  const field = req.body.field;
+  const fields = req.body.fields;
   let isGameOver = false;
   let multiplier = parseFloat(req.game.multiplier);
   let shouldReleaseTransaction = true;
@@ -122,23 +122,35 @@ exports.revealCell = async (req, res, next) => {
     const allCells = (
       await transaction.query(minesQueries.fetchGameCells, [gameId])
     ).rows;
-    req.game.allCells = allCells;
-    const selectedCell = allCells[field];
 
-    // Cell already revealed, throw exception
-    if (selectedCell.is_revealed) {
-      throw new AppError(
-        "You have already uncovered this cell",
-        401,
-        "INVALID_INPUT"
-      );
+    for (const field of fields) {
+      const selected = allCells[field];
+      if (selected.is_revealed) {
+        throw new AppError(
+          "One or more of the cells you want to reveal have already been revealed",
+          400,
+          "INVALID_INPUT"
+        );
+      } else {
+        selected.is_revealed = true;
+
+        // One or more selected cells is a mine, end the game
+        if (!selected.is_gem) {
+          isGameOver = true;
+        }
+      }
     }
-    // Reveal the cell
-    await transaction.query(minesQueries.revealCell, [gameId, field]);
-    selectedCell.is_revealed = true;
+
+    req.game.allCells = allCells;
+
+    // Reveal the cells
+    // If the game is not over then update the db, if it is, then it will not matter, optimizing 101
+    if (!isGameOver)
+      await transaction.query(minesQueries.revealCells, [gameId, fields]);
+
     const gameCells = [];
 
-    if (selectedCell.is_gem) {
+    if (!isGameOver) {
       let hiddenCells = 0;
       let mineCount = 0;
       // Build the game array
@@ -154,7 +166,12 @@ exports.revealCell = async (req, res, next) => {
       }
 
       // Calculate the new multiplier, +1 because we want the multipler before action was taken
-      multiplier = calculateMultiplier(multiplier, mineCount, hiddenCells + 1);
+      multiplier = calculateMultiplier(
+        multiplier,
+        mineCount,
+        hiddenCells + fields.length,
+        fields.length
+      );
       req.game.multiplier = multiplier;
 
       if (mineCount / hiddenCells === 1) {
@@ -169,7 +186,6 @@ exports.revealCell = async (req, res, next) => {
         gameId,
       ]);
     } else {
-      isGameOver = true;
       // Build the game array
       for (let i = 0; i < allCells.length; i++) {
         const cell = allCells[i];
@@ -226,7 +242,6 @@ exports.cashout = async (req, res, next) => {
     await transaction.query(casinoQueries.depositBalance, [winnings, userId]);
 
     if (!allCells) {
-      console.log("hey fetching those cells now");
       allCells = (
         await transaction.query(minesQueries.fetchGameCells, [req.game.id])
       ).rows;
@@ -265,13 +280,16 @@ exports.cashout = async (req, res, next) => {
   }
 };
 
-const calculateMultiplier = (previousMulti, mines, unrevealed) => {
-  const multi = previousMulti * (1 / (1 - mines / unrevealed));
-  let tax = 1;
+const calculateMultiplier = (starterMulti, mines, unrevealed, newReveals) => {
+  let currentMulti = starterMulti;
 
-  if (unrevealed === 25) {
-    tax = 0.99;
+  for (let i = 0; i < newReveals; i++) {
+    // Determine the tax for the current reveal
+    const tax = unrevealed === 25 && i === 0 ? 0.99 : 1;
+
+    currentMulti = currentMulti * (1 / (1 - mines / unrevealed)) * tax;
+    unrevealed--;
   }
-  console.log(parseFloat((multi * tax).toFixed(6)));
-  return parseFloat((multi * tax).toFixed(6));
+
+  return parseFloat(currentMulti.toFixed(6));
 };
