@@ -9,12 +9,14 @@ const MinesGrid = ({
   updateGame,
   endGame,
   setDisableActions,
+  setGameIsEnding,
+  gameIsEnding,
 }) => {
-  const [gameIsEnding, setGameIsEnding] = useState(false);
-
-  // Tracks how many cells are being fetches concurrently, needs to be fiddled with to handle batching the requests but this should help with UX disalbing button
   const REVEAL_FIELD_ENDPOINT = "http://localhost:5000/api/v1/mines/reveal";
-  const BATCH_DELAY = 200;
+
+  // Can be adjusted but also matches the animation time to expand the cover
+  const BATCH_DELAY = 250;
+
   const [actionsCount, setActionsCount] = useState(0);
   const [timerId, setTimerId] = useState(null);
   const [fields, setFields] = useState([]);
@@ -31,25 +33,38 @@ const MinesGrid = ({
     }
   }, [actionsCount, setDisableActions, gameInProgress]);
 
-  const fetchCells = (fields) => {
+  const fetchCells = async (fields) => {
     // Add to batch
     // Reset batch timer
     console.log("Making the batch fetch with: ", fields);
 
     // Use promises.
-    fetch(REVEAL_FIELD_ENDPOINT, {
-      credentials: "include",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: fields,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const gridData = data;
-      })
-      .catch((error) => console.log("Error: ", error));
+    try {
+      const res = await fetch(REVEAL_FIELD_ENDPOINT, {
+        credentials: "include",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: fields,
+        }),
+      });
+      if (!res.ok) {
+        const errors = await res.json();
+        console.log("Errors: ", errors);
+        return;
+      }
+      const cellData = (await res.json()).data;
+      const updatedGrid = cellData.cells;
+      const payout = cellData.payout;
+      const newMulti = cellData.isGameOver && !payout ? 0 : cellData.multiplier;
+      if (cellData.isGameOver) {
+        console.log("Is game over", cellData.isGameOver);
+        setGameIsEnding(true);
+      }
+      updateGame(fields, updatedGrid, newMulti, cellData.isGameOver, payout);
+    } catch (error) {
+      console.log("Errors: ", error);
+    }
   };
 
   const scheduleFetch = (field) => {
@@ -64,6 +79,7 @@ const MinesGrid = ({
           fetchCells(fieldsAppended);
           setFields([]);
           setTimerId(null);
+          setActionsCount((prev) => prev - fieldsAppended.length);
         }, BATCH_DELAY);
       });
 
@@ -81,7 +97,6 @@ const MinesGrid = ({
           resetCells={resetCells}
           updateGame={updateGame}
           endGame={endGame}
-          setGameIsEnding={setGameIsEnding}
           gameIsEnding={gameIsEnding}
           setActionsCount={setActionsCount}
           scheduleFetch={scheduleFetch}

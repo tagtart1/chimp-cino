@@ -14,6 +14,7 @@ const MinesPage = () => {
   const getGameEndpoint = "http://localhost:5000/api/v1/mines/games";
 
   const [gameInProgress, setGameInProgress] = useState(false);
+  const [gameIsEnding, setGameIsEnding] = useState(false);
   const [loadedGrid, setLoadedGrid] = useState(baseGrid);
   const [betAmount, setBetAmount] = useState(0.0);
   const [minesAmount, setMinesAmount] = useState(3);
@@ -39,7 +40,7 @@ const MinesPage = () => {
     setBetMultiplier(1);
     setFinalPayout(0);
     setDisableActions(false);
-
+    setGameIsEnding(false);
     // Deduct user UI balance
     setUser((prev) => {
       const newCosmeticBal = { ...prev };
@@ -64,12 +65,20 @@ const MinesPage = () => {
     }
   };
 
-  const updateGame = (field, value, multiplier) => {
+  const updateGame = (fields, values, multiplier, isGameOver, payout) => {
     const updatedGrid = [...loadedGrid];
-    updatedGrid[field] = value;
+    for (const field of fields) {
+      updatedGrid[field] = values[field];
+    }
     setLoadedGrid(updatedGrid);
     setBetMultiplier(parseFloat(multiplier));
-    if (value !== 2) setGemAmount((gems) => gems - 1);
+    if (isGameOver) {
+      setTimeout(() => {
+        endGame(values, payout);
+      }, 650);
+      return;
+    }
+    setGemAmount((gems) => gems - fields.length);
   };
 
   const revealRandomCell = () => {
@@ -148,6 +157,8 @@ const MinesPage = () => {
             updateGame={updateGame}
             endGame={endGame}
             setDisableActions={setDisableActions}
+            setGameIsEnding={setGameIsEnding}
+            gameIsEnding={gameIsEnding}
           />
           <PayoutPopup payout={finalPayout} multiplier={betMultiplier} />
         </div>

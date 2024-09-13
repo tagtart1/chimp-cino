@@ -10,7 +10,6 @@ const MinesCell = ({
   resetCells,
   updateGame,
   endGame,
-  setGameIsEnding,
   gameIsEnding,
   setActionsCount,
   scheduleFetch,
@@ -21,6 +20,7 @@ const MinesCell = ({
   const revealCellEndpoint = "http://localhost:5000/api/v1/mines/reveal";
   const [fetched, setFetched] = useState(false);
   const [explode, setExplode] = useState(false);
+  const [queued, setQueued] = useState(false);
 
   // Reveals if the cell is a mine or a gem
   const revealCell = async (e) => {
@@ -33,13 +33,13 @@ const MinesCell = ({
 
     cover.classList.add("expand-cover");
     setFetched(true);
+    if (gameIsEnding || fetched) return;
+    scheduleFetch(field);
+    setQueued(true);
     cover.addEventListener(
       "animationend",
       async () => {
         // Game is ending, dont fetch anything more
-        if (gameIsEnding || fetched) return;
-        const cellData = scheduleFetch(field);
-
         /** 
         const updatedGrid = cellData.cells;
         const newMultiplier =
@@ -91,13 +91,24 @@ const MinesCell = ({
       cover.addEventListener(
         "animationend",
         () => {
-          hidden.classList.add(value === 1 ? "gem" : "mine");
+          const isMine = value === 2;
+          if (!isMine && gameInProgress && queued) {
+            soundManager.playAudio("gem");
+            setQueued(false);
+          } else if (isMine && gameIsEnding && queued && !explode) {
+            setExplode(true);
+
+            soundManager.playAudio("bomb");
+            setQueued(false);
+          }
+          hidden.classList.add(!isMine ? "gem" : "mine");
+
           hidden.classList.add(gameInProgress ? "expand" : "expand-dim");
         },
         { once: true }
       );
     }
-  }, [value, gameInProgress]);
+  }, [value, gameInProgress, gameIsEnding, queued, explode]);
 
   useEffect(() => {
     if (!resetCells) return;
@@ -118,6 +129,7 @@ const MinesCell = ({
         cover.classList.remove("expand-cover");
         setExplode(false);
         setFetched(false);
+        setQueued(false);
       },
       { once: true }
     );
@@ -129,7 +141,7 @@ const MinesCell = ({
         <img
           alt="mine explosion effect"
           className="mine-effect"
-          src={`${explosionEffect}?a=${Math.random()}`}
+          src={`${explosionEffect}?a=${value}`}
         />
       )}
       <div className="cell-value"></div>
