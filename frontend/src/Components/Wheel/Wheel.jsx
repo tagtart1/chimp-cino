@@ -33,7 +33,7 @@ const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
     };
   };
 
-  // Generate unique colors for the wedges
+  // Generate colors for the wedges
   const getWedgeColor = (index) => {
     if (index === 0) return "#419e3f"; // Green for the '0' wedge
     return index % 2 === 0 ? "#2f4553" : "#fe2247"; // Alternating black and red for others

@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./PlayingCard.scss";
 import { motion, useAnimation } from "framer-motion";
 
 export const PlayingCard = ({
   style,
-
   staticCard,
   dealerCard,
   nthCard,
@@ -12,75 +11,85 @@ export const PlayingCard = ({
   suit,
   gameResults,
   isBlank,
+  startExit,
+  splitCard,
+  selected,
+  shiftX,
+  shiftY,
 }) => {
   const controls = useAnimation();
+  const card = useRef();
 
   // The first card's container is usually off on the start so we account for it with the offset
   // nthcard of 0 receives a greater buffer
-  const startOffsetX = nthCard === 0 ? -100 : nthCard * -33;
-  const startOffsetY = nthCard === 0 ? 100 : 0;
 
-  const playerCardVariants = !staticCard
+  const initialState = splitCard
     ? {
-        initial: {
-          transform: `translate(${startOffsetX + 375}%, -${
-            320 + startOffsetY
-          }%) `,
-          opacity: 1,
-        },
-        toPosition: {
-          transform: "translate(0, 0)",
-          transition: { duration: 0.5 },
-        },
-        rotate: {
-          transform: "rotateY(180deg) ",
-          transition: { duration: 0.5 },
-        },
-        exit: {
-          opacity: 0,
-          transform: `translateY(20px) rotateY(180deg) `,
-          transition: { delay: 0.1 * nthCard },
-        },
+        transform: "translateX(-195%) rotateY(180deg)",
+        opacity: 1,
       }
-    : {
-        exit: {
-          opacity: 0,
-          transform: `translateY(20px) rotateY(180deg)`,
-          transition: { delay: 0.1 * nthCard },
-        },
-      };
+    : {};
 
   const dealerCardVariants = !staticCard
     ? {
-        initial: { transform: `translate(${startOffsetX + 375}%, -100%)` },
+        initial: { transform: `translate(${shiftX}px, ${shiftY}px)` },
         toPosition: {
           transform: "translate(0, 0)",
-          transition: { duration: 0.5 },
+          transition: { duration: 0.3, ease: "easeOut" },
         },
         rotate: {
           transform: "rotateY(180deg)",
           transition: { duration: 0.5 },
         },
+        leave: {
+          transform: !isBlank
+            ? "translate(-10px, 10px) rotateY(180deg)"
+            : "translate(-10px, 10px)",
+          opacity: 0,
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
+        },
       }
     : {
-        exit: {
+        leave: {
+          transform: !isBlank
+            ? "translate(-10px, 10px) rotateY(180deg)"
+            : "translate(-10px, 10px)",
           opacity: 0,
-          transform: `translateY(20px) `,
-          transition: { delay: 0.1 * nthCard },
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
         },
       };
 
   useEffect(() => {
-    if (staticCard) return;
-    const sequence = async () => {
+    const moveSplitCard = async () => {
       await controls.start("toPosition");
-      if (isBlank) return;
-      await controls.start("rotate");
     };
 
+    const sequence = async () => {
+      if (!startExit) {
+        await controls.start("toPosition");
+
+        if (isBlank) return;
+        await controls.start("rotate");
+      } else {
+        if (!isBlank)
+          card.current.removeChild(card.current.querySelector(".back"));
+        await controls.start("leave");
+      }
+    };
+    if (splitCard) {
+      moveSplitCard();
+    }
+    if (staticCard && !startExit) return;
     sequence();
     // Log
-  }, [controls, staticCard, isBlank]);
+  }, [controls, staticCard, isBlank, startExit, splitCard]);
+
+  useEffect(() => {
+    if (!card) return;
+    if (dealerCard || rank === undefined || staticCard) return;
+    const computed = window.getComputedStyle(card.current);
+    const marginLeft = computed.getPropertyValue("margin-left");
+  }, [rank, dealerCard, nthCard, staticCard]);
 
   const gameResultsStyle =
     gameResults === "player"
@@ -91,16 +100,57 @@ export const PlayingCard = ({
       ? "push"
       : "";
 
+  const isSplitAndSelected = selected ? "selected-hand" : "";
+
+  const playerCardVariants = !staticCard
+    ? // If the card is from a split hand then do different initials based on the handIndex
+      {
+        initial: {
+          transform: `translate(${shiftX}px, ${shiftY}px)`,
+        },
+
+        toPosition: {
+          transform: "translate(0, 0)",
+
+          transition: { duration: 0.3, ease: "easeOut" },
+        },
+        rotate: {
+          transform: "rotateY(180deg) ",
+
+          transition: { duration: 0.5 },
+        },
+
+        leave: {
+          transform: "translate(-10px, 10px) rotateY(180deg)",
+          opacity: 0,
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
+        },
+      }
+    : {
+        initial: initialState,
+        toPosition: {
+          transform: "translate(0, 0) rotateY(180deg)",
+          transition: { duration: 0.5 },
+        },
+        leave: {
+          transform: "translate(-10px, 10px) rotateY(180deg) ",
+          opacity: 0,
+          transition: { duration: 0.2, delay: 0.15 * nthCard },
+        },
+      };
+
   return (
     <motion.div
       className={
-        !dealerCard ? `playing-card ${gameResultsStyle}` : "playing-card"
+        !dealerCard
+          ? `playing-card ${gameResultsStyle} ${isSplitAndSelected} `
+          : "playing-card"
       }
       style={style}
       variants={dealerCard ? dealerCardVariants : playerCardVariants}
-      initial="initial"
+      initial={"initial"}
       animate={controls}
-      exit="exit"
+      ref={card}
     >
       <div className="front">
         {!isBlank ? (
@@ -124,29 +174,10 @@ export const PlayingCard = ({
           </div>
         ) : null}
       </div>
+
       <div className="back"></div>
     </motion.div>
   );
-};
-
-const CardSuit = ({ symbol }) => {
-  switch (symbol) {
-    case "H": {
-      console.log("hey");
-      return <HeartIcon />;
-    }
-    case "D":
-      return <DiamondIcon />;
-    case "S":
-      return <SpadeIcon />;
-    case "C":
-      return <ClubIcon />;
-    case undefined:
-      return <div>hey</div>;
-
-    default:
-      return <div>hey</div>;
-  }
 };
 
 const HeartIcon = () => {

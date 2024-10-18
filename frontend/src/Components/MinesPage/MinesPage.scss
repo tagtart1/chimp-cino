@@ -1,0 +1,37 @@
+.mines-main {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  overflow: auto;
+  background-color: #1a2c38;
+  padding-top: 32px;
+  padding-left: 32px;
+  padding-right: 32px;
+  box-sizing: border-box;
+
+  .mines-section {
+    display: flex;
+    overflow: none;
+    width: 100%;
+    max-width: 1200px;
+    max-height: 750px;
+    border-radius: 8px;
+    overflow: none;
+    background-color: #213743;
+    .game-screen-mines {
+      // Board background and shape
+      box-sizing: border-box;
+      background-color: #0f212e;
+      flex-grow: 1;
+
+      border-top-right-radius: 8px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 4px;
+    }
+  }
+}

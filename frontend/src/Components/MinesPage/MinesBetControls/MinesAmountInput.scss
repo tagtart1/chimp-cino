@@ -1,0 +1,60 @@
+.mines-amount-wrapper {
+  display: flex;
+
+  gap: 8px;
+  font-family: "Segoe UI", sans-serif;
+  position: relative;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    position: relative;
+  }
+  label {
+    font-weight: bold;
+    color: #b1bad3;
+    font-size: 14px;
+  }
+
+  #mines-amount-input,
+  #gems-amount-input {
+    background-color: #0f212e;
+    border: 2px solid #2f4553;
+    width: 100%;
+    color: white;
+    font-size: 15px;
+    padding: 8px 8px;
+    font-family: "Segoe UI", sans-serif;
+    padding-right: 28px;
+    font-weight: bold;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    appearance: none;
+    &:focus,
+    &:hover {
+      border-color: #537a92;
+    }
+    &.in-progress {
+      border: clear;
+      background-color: #2f4553;
+    }
+  }
+
+  .mines-select-arrow-icon {
+    position: absolute;
+    right: -90%;
+    top: 52%;
+    z-index: 1;
+    pointer-events: none;
+    svg {
+      width: 16px;
+      color: #b1bad3;
+    }
+  }
+}

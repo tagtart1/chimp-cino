@@ -7,6 +7,8 @@ import { Routes, Route, useNavigate, BrowserRouter } from "react-router-dom";
 import { useUser } from "../../Contexts/UserProvider";
 import BlackjackPage from "../BlackjackPage/BlackjackPage";
 import Navigation from "../Navigation/Navigation";
+import MinesPage from "../MinesPage/MinesPage";
+import soundManager from "../../Helpers/sfxPlayer";
 
 function App() {
   const { user, setUser } = useUser();
@@ -26,6 +28,7 @@ function App() {
         );
 
         if (!response.ok) {
+          // Show login notification
           return;
         }
 
@@ -38,6 +41,7 @@ function App() {
       }
     };
     fetchUser();
+    soundManager.initialize();
   }, [setUser, user]);
 
   // use skeleton later
@@ -57,6 +61,7 @@ function App() {
               <Route path="/home" element={<Dashboard />} />
               <Route path="/roulette" element={<RoulettePage />} />
               <Route path="/blackjack" element={<BlackjackPage />} />
+              <Route path="/mines" element={<MinesPage />} />
             </Routes>
           </div>
         </div>

@@ -4,8 +4,8 @@
     right: 0;
     top: 0;
     font-size: 1.2em;
-    transform: translate(-50%, -65%);
-
+    transform: translate(-50%, -75%);
+    z-index: 1;
     .playing-card:not(:nth-child(1)) {
       position: absolute;
       top: 0;

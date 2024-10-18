@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Navigation.scss";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,11 +6,19 @@ import MiniNavigation from "./MiniNavigation";
 
 const Navigation = () => {
   const navigate = useNavigate();
-  const [minimize, setMinimize] = useState(false);
+  const [minimize, setMinimize] = useState(() => {
+    const storedValue = localStorage.getItem("isSidebarOpen");
+    return storedValue ? JSON.parse(storedValue) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("isSidebarOpen", JSON.stringify(minimize));
+  }, [minimize]);
 
   return (
     <motion.div
       className="navigation-container"
+      initial={{ maxWidth: minimize ? "60px" : "240px" }}
       animate={{ maxWidth: minimize ? "60px" : "240px" }}
       transition={{ duration: 0.2 }}
     >
@@ -69,6 +77,14 @@ const Navigation = () => {
                     <path d="M8.313 21.03h5.595l3.995 3.995 22.056 22.137a6.021 6.021 0 0 0 0 .857v-.018a7.992 7.992 0 1 0 15.985 0 7.992 7.992 0 0 0-7.992-7.992h-.84L20.9 13.916V.049h-9.91v10.99H0v9.988l8.313.003ZM47.952.052A47.352 47.352 0 0 0 28.67 4.17l.303-.12v6.593l2.997 2.997c4.723-2.26 10.267-3.581 16.12-3.581 21.031 0 38.08 17.049 38.08 38.08 0 21.032-17.049 38.08-38.08 38.08-21.032 0-38.081-17.048-38.081-38.08 0-5.765 1.282-11.23 3.574-16.127l.007.007.1-.23-.107.224-2.99-2.952H4C1.537 34.645.102 41.157.102 48.001c0 26.483 21.466 47.95 47.949 47.95C74.534 95.95 96 74.483 96 48 96 21.518 74.534.052 48.05.052h-.098ZM30.009 48.463c.246 9.707 8.181 17.501 17.942 17.52l-.003.041h.219c9.931 0 17.98-8.05 17.98-17.98 0-9.854-7.926-17.859-17.762-17.981l-8.79-8.751-.194.054a27.416 27.416 0 0 1 8.475-1.334h.072c15.445 0 27.97 12.52 27.97 27.97 0 15.445-12.525 27.969-27.97 27.969-15.446 0-27.97-12.52-27.97-27.97v-.071c0-2.958.468-5.805 1.28-8.28l8.75 8.789v.024Z"></path>
                   </svg>
                   Roulette
+                </li>
+
+                <li
+                  onClick={() => {
+                    navigate("/mines");
+                  }}
+                >
+                  Mines
                 </li>
               </ul>
             </div>

@@ -8,6 +8,7 @@ const AppError = require("./utils/appError");
 var rouletteRouter = require("./routes/roulette");
 var usersRouter = require("./routes/users");
 var blackjackRouter = require("./routes/blackjack");
+var minesRouter = require("./routes/mines");
 
 var app = express();
 
@@ -22,7 +23,7 @@ app.use(
     optionsSuccessStatus: 200,
   })
 );
-// Serve favicon - avoids log
+// Serve favicon - avoids warning log
 app.use(
   "/favicon.ico",
   express.static(path.join(__dirname, "utils/chimcino-logo.png"))
@@ -32,6 +33,7 @@ app.use(
 app.use("/api/v1/roulette", rouletteRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/blackjack", blackjackRouter);
+app.use("/api/v1/mines", minesRouter);
 
 // Error Handler
 app.use((err, req, res, next) => {

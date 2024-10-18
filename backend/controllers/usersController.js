@@ -146,7 +146,7 @@ exports.validateUser = asyncHandler(async (req, res, next) => {
       const balance = (await pool.query(casinoQueries.getBalance, [user.id]))
         .rows[0].balance;
 
-      user.balance = balance;
+      user.balance = parseFloat(balance);
 
       return res.json({ data: user });
     }
