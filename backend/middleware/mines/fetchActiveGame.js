@@ -1,10 +1,10 @@
 const AppError = require("../../utils/appError");
-const pool = require("../../db");
+const { getPool } = require("../../db");
 const minesQueries = require("../../queries/minesQueries");
 
 const fetchActiveGame = async (req, res, next) => {
   const userId = req.user.id;
-
+  const pool = getPool();
   try {
     const game = (await pool.query(minesQueries.getGame, [userId])).rows[0];
     if (!game) {
