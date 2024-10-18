@@ -1,4 +1,4 @@
-const { getPool } = require("../db");
+const { getPool } = require("../../db");
 const AppError = require("../../utils/appError");
 
 const beginTransaction = async (req, res, next) => {
