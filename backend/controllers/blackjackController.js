@@ -481,6 +481,7 @@ exports.double = async (req, res, next) => {
 };
 // Split hand flow is you play the the rightmost hand first, then move left after decision has been made
 exports.split = async (req, res, next) => {
+  let pool = getPool();
   let client;
   let gameId = req.game.id;
   let activeHand = req.game.activeHand;
@@ -640,6 +641,7 @@ exports.split = async (req, res, next) => {
 };
 
 exports.insurance = async (req, res, next) => {
+  const pool = getPool();
   const userID = req.user.id;
   const acceptInsurance = req.body.acceptInsurance;
   const dealerCards = req.game.dealerHand.cards;

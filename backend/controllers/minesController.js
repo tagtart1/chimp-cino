@@ -1,5 +1,5 @@
 const AppError = require("../utils/appError");
-const pool = require("../db");
+const { getPool } = require("../db");
 const minesQueries = require("../queries/minesQueries");
 const casinoQueries = require("../queries/casinoQueries");
 
@@ -63,6 +63,7 @@ exports.newGame = async (req, res, next) => {
 };
 
 exports.getGame = async (req, res, next) => {
+  const pool = getPool();
   const userId = req.user.id;
   try {
     const game = req.game;
