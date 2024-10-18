@@ -18,8 +18,8 @@ const MinesBetControls = ({
   gemAmount,
   disableActions,
 }) => {
-  const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
-  const cashoutEndpoint = "http://localhost:5000/api/v1/mines/cashout";
+  const startGameEndpoint = "https://api.chimpcino.com/api/v1/mines/games";
+  const cashoutEndpoint = "https://api.chimpcino.com/api/v1/mines/cashout";
 
   const { user } = useUser();
 

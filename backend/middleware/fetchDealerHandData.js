@@ -1,9 +1,10 @@
 const blackjackQueries = require("../queries/blackjackQueries");
-const pool = require("../db");
+const { getPool } = require("../db");
 const AppError = require("../utils/appError");
 
 const fetchDealerHandData = async (req, res, next) => {
   const gameId = req.game.id;
+  const pool = getPool();
   try {
     const dealerHandData = (
       await pool.query(blackjackQueries.getHandData, [gameId, false])

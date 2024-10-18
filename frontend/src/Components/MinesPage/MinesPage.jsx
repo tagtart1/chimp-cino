@@ -11,7 +11,7 @@ const MinesPage = () => {
   const baseGrid = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ];
-  const getGameEndpoint = "http://localhost:5000/api/v1/mines/games";
+  const getGameEndpoint = "https://api.chimpcino.com/api/v1/mines/games";
 
   const [gameInProgress, setGameInProgress] = useState(false);
   const [gameIsEnding, setGameIsEnding] = useState(false);

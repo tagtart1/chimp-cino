@@ -12,7 +12,7 @@ const MinesGrid = ({
   setGameIsEnding,
   gameIsEnding,
 }) => {
-  const REVEAL_FIELD_ENDPOINT = "http://localhost:5000/api/v1/mines/reveal";
+  const REVEAL_FIELD_ENDPOINT = "https://api.chimpcino.com/api/v1/mines/reveal";
 
   // Can be adjusted but also matches the animation time to expand the cover
   const BATCH_DELAY = 250;
