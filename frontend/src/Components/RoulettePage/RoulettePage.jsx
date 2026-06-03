@@ -4,9 +4,9 @@ import RouletteChip from "../RouletteChip/RouletteChip";
 import RouletteButton from "../RouletteButton/RouletteButton";
 import Wheel from "../Wheel/Wheel";
 import { useUser } from "../../Contexts/UserProvider";
+import { apiUrl } from "../../config/api";
 
 const RoulettePage = () => {
-  const rouletteEndpooint = "http://localhost:5000/api/v1/roulette";
   const { setUser, user } = useUser();
   const [chipType, setChipType] = useState({
     value: 1,
@@ -68,7 +68,7 @@ const RoulettePage = () => {
     };
 
     try {
-      const response = await fetch(rouletteEndpooint, options);
+      const response = await fetch(apiUrl("/roulette"), options);
       if (!response.ok) {
         console.log("ERROR");
         return;

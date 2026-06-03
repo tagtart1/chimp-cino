@@ -9,13 +9,11 @@ import { useUser } from "../../Contexts/UserProvider";
 
 import { delay, getCardValueFromArray } from "../../Helpers/blackjackHelpers";
 import { BlackjackBetInput } from "./BlackjackBetInput/BlackjackBetInput";
+import { apiUrl } from "../../config/api";
 
 // TODO: MODULARIZE THIS COMPONENT TOO MUCH STUFF HERE
 
 const BlackjackPage = () => {
-  const blackjackStartEndpoint = "http://localhost:5000/api/v1/blackjack/games";
-  const blackjackInProgressEndpoint =
-    "http://localhost:5000/api/v1/blackjack/games/in-progress";
   const gameScreenRef = useRef(null);
   const playerStackRef = useRef(null);
   const otherPlayerStackRef = useRef(null);
@@ -42,7 +40,7 @@ const BlackjackPage = () => {
   const thresholdWidth = 875;
 
   const playGame = async () => {
-    const res = await fetch(blackjackStartEndpoint, {
+    const res = await fetch(apiUrl("/blackjack/games"), {
       credentials: "include",
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -135,7 +133,7 @@ const BlackjackPage = () => {
     const getGame = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(blackjackInProgressEndpoint, {
+        const response = await fetch(apiUrl("/blackjack/games/in-progress"), {
           credentials: "include",
           method: "GET",
         });

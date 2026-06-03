@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./MinesGrid.scss";
 import MinesCell from "./MinesCell";
+import { apiUrl } from "../../../config/api";
 
 const MinesGrid = ({
   gameInProgress,
@@ -12,8 +13,6 @@ const MinesGrid = ({
   setGameIsEnding,
   gameIsEnding,
 }) => {
-  const REVEAL_FIELD_ENDPOINT = "http://localhost:5000/api/v1/mines/reveal";
-
   // Can be adjusted but also matches the animation time to expand the cover
   const BATCH_DELAY = 250;
 
@@ -40,7 +39,7 @@ const MinesGrid = ({
 
     // Use promises.
     try {
-      const res = await fetch(REVEAL_FIELD_ENDPOINT, {
+      const res = await fetch(apiUrl("/mines/reveal"), {
         credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },

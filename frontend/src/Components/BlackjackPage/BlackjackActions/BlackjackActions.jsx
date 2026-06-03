@@ -1,5 +1,6 @@
 import React from "react";
 import "./BlackjackActions.scss";
+import { apiUrl } from "../../../config/api";
 
 const BlackjackActions = ({
   handleAction,
@@ -7,16 +8,9 @@ const BlackjackActions = ({
   manageInsurance,
   offerInsurance,
 }) => {
-  const hitEndpoint = "http://localhost:5000/api/v1/blackjack/games/hit";
-  const standEndpoint = "http://localhost:5000/api/v1/blackjack/games/stand";
-  const doubleEndpoint = "http://localhost:5000/api/v1/blackjack/games/double";
-  const splitEndpoint = "http://localhost:5000/api/v1/blackjack/games/split";
-  const insuranceEndpoint =
-    "http://localhost:5000/api/v1/blackjack/games/insurance";
-
   // TODO: Conditionally block the ability to select the play and certain actions depending on the state of the game
   const hitNewCard = async () => {
-    const response = await fetch(hitEndpoint, {
+    const response = await fetch(apiUrl("/blackjack/games/hit"), {
       credentials: "include",
       method: "PATCH",
     });
@@ -48,7 +42,7 @@ const BlackjackActions = ({
   };
 
   const standHand = async () => {
-    const response = await fetch(standEndpoint, {
+    const response = await fetch(apiUrl("/blackjack/games/stand"), {
       credentials: "include",
       method: "PATCH",
     });
@@ -73,7 +67,7 @@ const BlackjackActions = ({
   };
 
   const doubleDown = async () => {
-    const response = await fetch(doubleEndpoint, {
+    const response = await fetch(apiUrl("/blackjack/games/double"), {
       credentials: "include",
       method: "PATCH",
     });
@@ -104,7 +98,7 @@ const BlackjackActions = ({
   };
 
   const splitHand = async () => {
-    const response = await fetch(splitEndpoint, {
+    const response = await fetch(apiUrl("/blackjack/games/split"), {
       credentials: "include",
       method: "PATCH",
     });
@@ -123,7 +117,7 @@ const BlackjackActions = ({
   };
 
   const handleInsurance = async (acceptInsurance) => {
-    const response = await fetch(insuranceEndpoint, {
+    const response = await fetch(apiUrl("/blackjack/games/insurance"), {
       credentials: "include",
       method: "PATCH",
       headers: {

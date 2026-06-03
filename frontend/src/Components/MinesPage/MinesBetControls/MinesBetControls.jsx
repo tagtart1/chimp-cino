@@ -4,6 +4,7 @@ import MinesBetInput from "./MinesBetInput";
 import MinesAmountInput from "./MinesAmountInput";
 import TotalGainOutput from "./TotalGainOutput";
 import { useUser } from "../../../Contexts/UserProvider";
+import { apiUrl } from "../../../config/api";
 
 const MinesBetControls = ({
   betAmount,
@@ -18,9 +19,6 @@ const MinesBetControls = ({
   gemAmount,
   disableActions,
 }) => {
-  const startGameEndpoint = "http://localhost:5000/api/v1/mines/games";
-  const cashoutEndpoint = "http://localhost:5000/api/v1/mines/cashout";
-
   const { user } = useUser();
 
   const playGame = async () => {
@@ -35,7 +33,7 @@ const MinesBetControls = ({
     }
     try {
       // Call to api to start a game
-      const resolution = await fetch(startGameEndpoint, {
+      const resolution = await fetch(apiUrl("/mines/games"), {
         credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,7 +63,7 @@ const MinesBetControls = ({
     // Show multiplier popup on grid
 
     try {
-      const res = await fetch(cashoutEndpoint, {
+      const res = await fetch(apiUrl("/mines/cashout"), {
         credentials: "include",
         method: "POST",
       });

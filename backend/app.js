@@ -2,7 +2,7 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-require("dotenv").config();
+require("./utils/loadEnv");
 const cors = require("cors");
 const AppError = require("./utils/appError");
 var rouletteRouter = require("./routes/roulette");

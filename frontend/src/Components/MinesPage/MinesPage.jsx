@@ -5,14 +5,13 @@ import MinesBetControls from "./MinesBetControls/MinesBetControls";
 import { useUser } from "../../Contexts/UserProvider";
 import PayoutPopup from "./PayoutPopup/PayoutPopup";
 import GameFooter from "../GameFooter/GameFooter";
+import { apiUrl } from "../../config/api";
 
 const MinesPage = () => {
   // Test grid - simulates a loadedGrid
   const baseGrid = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ];
-  const getGameEndpoint = "http://localhost:5000/api/v1/mines/games";
-
   const [gameInProgress, setGameInProgress] = useState(false);
   const [gameIsEnding, setGameIsEnding] = useState(false);
   const [loadedGrid, setLoadedGrid] = useState(baseGrid);
@@ -108,7 +107,7 @@ const MinesPage = () => {
     // Test grid - simulates a loadedGrid
     // Retrieve and load game from API
     const fetchGame = async () => {
-      const res = await fetch(getGameEndpoint, {
+      const res = await fetch(apiUrl("/mines/games"), {
         credentials: "include",
       });
       if (!res.ok) {

@@ -5,6 +5,7 @@ import AuthPopup from "../AuthPopup/AuthPopup";
 import { useUser } from "../../Contexts/UserProvider";
 import { Link } from "react-router-dom";
 import soundManager from "../../Helpers/sfxPlayer";
+import { apiUrl } from "../../config/api";
 
 const Header = () => {
   const { user, setUser } = useUser();
@@ -12,11 +13,10 @@ const Header = () => {
   const [showLogin, setShowLogin] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-  const logoutEndpoint = "http://localhost:5000/api/v1/users/log-out";
 
   const logOut = async () => {
     try {
-      const response = await fetch(logoutEndpoint, {
+      const response = await fetch(apiUrl("/users/log-out"), {
         credentials: "include",
         method: "POST",
       });

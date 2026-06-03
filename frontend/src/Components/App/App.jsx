@@ -9,6 +9,7 @@ import BlackjackPage from "../BlackjackPage/BlackjackPage";
 import Navigation from "../Navigation/Navigation";
 import MinesPage from "../MinesPage/MinesPage";
 import soundManager from "../../Helpers/sfxPlayer";
+import { apiUrl } from "../../config/api";
 
 function App() {
   const { user, setUser } = useUser();
@@ -20,12 +21,9 @@ function App() {
     const fetchUser = async () => {
       setLoadingUser(true);
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/v1/users/validate-user",
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(apiUrl("/users/validate-user"), {
+          credentials: "include",
+        });
 
         if (!response.ok) {
           // Show login notification

@@ -17,7 +17,6 @@ const MinesCell = ({
   // Grabs the cell ref to manipulate the cover and the hidden value's classses
   // Alternative approach was to use state for the classnames
   const cellRef = useRef();
-  const revealCellEndpoint = "http://localhost:5000/api/v1/mines/reveal";
   const [fetched, setFetched] = useState(false);
   const [explode, setExplode] = useState(false);
   const [queued, setQueued] = useState(false);

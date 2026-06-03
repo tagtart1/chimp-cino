@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./AuthPopup.scss";
 import { useUser } from "../../Contexts/UserProvider";
+import { apiUrl } from "../../config/api";
 
 const SignUp = ({ close, toggleSelf }) => {
   const { setUser } = useUser();
   const [showPassword, setShowPassword] = useState(false);
-  const signUpEndpoint = "http://localhost:5000/api/v1/users/sign-up";
 
   const passwordInputRef = useRef(null);
 
@@ -47,7 +47,7 @@ const SignUp = ({ close, toggleSelf }) => {
     };
 
     try {
-      const response = await fetch(signUpEndpoint, options);
+      const response = await fetch(apiUrl("/users/sign-up"), options);
 
       if (!response.ok) {
         const errors = await response.json();

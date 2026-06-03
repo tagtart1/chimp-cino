@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("./utils/loadEnv");
 
 const Pool = require("pg").Pool;
 

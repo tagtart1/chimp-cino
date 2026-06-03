@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./AuthPopup.scss";
 import { useUser } from "../../Contexts/UserProvider";
+import { apiUrl } from "../../config/api";
 
 const LogIn = ({ close, toggleSelf }) => {
   const { setUser } = useUser();
   const [showPassword, setShowPassword] = useState(false);
-  const logInEndpoint = "http://localhost:5000/api/v1/users/log-in";
 
   const passwordInputRef = useRef(null);
 
@@ -45,7 +45,7 @@ const LogIn = ({ close, toggleSelf }) => {
     };
 
     try {
-      const response = await fetch(logInEndpoint, options);
+      const response = await fetch(apiUrl("/users/log-in"), options);
 
       if (!response.ok) {
         const errors = await response.json();
