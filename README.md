@@ -23,4 +23,4 @@ This repo uses pnpm workspaces for the frontend and backend apps.
    pnpm dev
    ```
 
-The frontend runs on `http://localhost:3000` and the backend runs on `http://localhost:3001`.
+The frontend runs on `http://localhost:3010` and the backend runs on `http://localhost:3011`.

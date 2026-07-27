@@ -18,7 +18,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "dev": "react-scripts start",
+    "dev": "PORT=3010 react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -41,5 +41,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "eslint": "8.57.1",
+    "eslint-config-react-app": "7.0.1"
   }
 }

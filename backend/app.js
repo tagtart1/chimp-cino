@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://www.chimpcino.com"],
+    origin: ["http://localhost:3010", "https://www.chimpcino.com"],
     credentials: true,
     optionsSuccessStatus: 200,
   })
