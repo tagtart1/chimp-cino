@@ -12,7 +12,7 @@
  * @property {string} rank
  * @property {string} suit
  * @property {number} value
- * @property {number} sequence
+ * @property {number} [sequence]
  *
  * @typedef {object} HandRecord
  * @property {number} id
@@ -55,11 +55,11 @@
  *
  * @typedef {object} BlackjackRepository
  * @property {function(number): Promise<BlackjackGameRecord|null>} findGameByUserId
+ * @property {function(number): Promise<{id: number, isGameOver: boolean}|null>} findGameStatusByUserId
  * @property {function({userId: number, bet: number}): Promise<BlackjackGameRecord>} createGame
  * @property {function(number): Promise<void>} deleteGame
- * @property {function(number, number): Promise<void>} createDeck
- * @property {function(number): Promise<CardRecord[]>} listActiveDeckCards
- * @property {function(object): Promise<CardRecord|null>} moveDeckCardToHand
+ * @property {function(): Promise<CardRecord[]>} listCanonicalCards
+ * @property {function(object[]): Promise<number>} addCardsToHands
  * @property {function(number, number): Promise<object>} removeCardFromHand
  * @property {function(object): Promise<HandRecord>} createHand
  * @property {function(number): Promise<number>} countPlayerHands
@@ -67,7 +67,6 @@
  * @property {function(number): Promise<void>} doubleHandBet
  * @property {function(number, boolean=): Promise<void>} setGameOver
  * @property {function(number, boolean): Promise<void>} setOfferInsurance
- * @property {function(): Promise<number>} countCanonicalCards
  *
  * @typedef {object} MinesRepository
  * @property {function(number): Promise<MinesGameRecord|null>} findGameByUserId
@@ -89,11 +88,11 @@ const repositoryMethods = {
   wallet: ["getBalance", "withdrawIfSufficient", "credit"],
   blackjack: [
     "findGameByUserId",
+    "findGameStatusByUserId",
     "createGame",
     "deleteGame",
-    "createDeck",
-    "listActiveDeckCards",
-    "moveDeckCardToHand",
+    "listCanonicalCards",
+    "addCardsToHands",
     "removeCardFromHand",
     "createHand",
     "countPlayerHands",
@@ -101,7 +100,6 @@ const repositoryMethods = {
     "doubleHandBet",
     "setGameOver",
     "setOfferInsurance",
-    "countCanonicalCards",
   ],
   mines: [
     "findGameByUserId",

@@ -11,6 +11,7 @@
     "dev": "nodemon ./bin/www",
     "prestart": "prisma generate",
     "start": "node ./bin/www",
+    "test": "node --test",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:format": "prisma format",

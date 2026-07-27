@@ -44,6 +44,13 @@ const mapCard = (handCard) => ({
   sequence: handCard.sequence,
 });
 
+const mapCanonicalCard = (card) => ({
+  id: card.id,
+  suit: card.suit,
+  rank: card.rank,
+  value: card.value,
+});
+
 const handInclude = {
   cards: {
     orderBy: { sequence: "asc" },
@@ -171,12 +178,12 @@ function repositories(client, inTransaction = false) {
       },
 
       async withdrawIfSufficient(userId, amount) {
-        const result = await client.user.updateMany({
+        const [user] = await client.user.updateManyAndReturn({
           where: { id: userId, balance: { gte: amount } },
           data: { balance: { decrement: amount } },
+          select: { balance: true },
         });
-        if (result.count === 0) return null;
-        return this.getBalance(userId);
+        return user ? number(user.balance) : null;
       },
 
       async credit(userId, amount) {
@@ -201,6 +208,13 @@ function repositories(client, inTransaction = false) {
           },
         });
         return mapBlackjackGame(game);
+      },
+
+      async findGameStatusByUserId(userId) {
+        return client.activeBlackjackGame.findUnique({
+          where: { userId },
+          select: { id: true, isGameOver: true },
+        });
       },
 
       async createGame({ userId, bet }) {
@@ -229,52 +243,18 @@ function repositories(client, inTransaction = false) {
         await client.activeBlackjackGame.delete({ where: { id: gameId } });
       },
 
-      async createDeck(gameId, deckCount) {
-        const cards = Array.from({ length: deckCount * 52 }, (_, index) => ({
-          gameId,
-          cardId: (index % 52) + 1,
-        }));
-        await client.deckCard.createMany({ data: cards });
-      },
-
-      async listActiveDeckCards(gameId) {
-        const cards = await client.deckCard.findMany({
-          where: { gameId, isActive: true },
-          include: { card: true },
+      async listCanonicalCards() {
+        const cards = await client.card.findMany({
           orderBy: { id: "asc" },
         });
-        return cards.map((deckCard) => ({
-          deckCardId: deckCard.id,
-          id: deckCard.card.id,
-          rank: deckCard.card.rank,
-          suit: deckCard.card.suit,
-          value: deckCard.card.value,
-        }));
+        return cards.map(mapCanonicalCard);
       },
 
-      async moveDeckCardToHand({ deckCardId, handId, sequence }) {
-        const deckCard = await client.deckCard.findUnique({
-          where: { id: deckCardId },
-          include: { card: true },
+      async addCardsToHands(cards) {
+        const result = await client.activeHandCard.createMany({
+          data: cards,
         });
-        if (!deckCard || !deckCard.isActive) return null;
-
-        const consumed = await client.deckCard.updateMany({
-          where: { id: deckCardId, isActive: true },
-          data: { isActive: false },
-        });
-        if (consumed.count === 0) return null;
-
-        await client.activeHandCard.create({
-          data: { handId, cardId: deckCard.cardId, sequence },
-        });
-        return {
-          id: deckCard.id,
-          rank: deckCard.card.rank,
-          suit: deckCard.card.suit,
-          value: deckCard.card.value,
-          sequence,
-        };
+        return result.count;
       },
 
       async removeCardFromHand(handId, sequence) {
@@ -342,9 +322,6 @@ function repositories(client, inTransaction = false) {
         });
       },
 
-      countCanonicalCards() {
-        return client.card.count();
-      },
     },
 
     mines: {

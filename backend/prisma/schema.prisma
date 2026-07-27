@@ -29,7 +29,6 @@ model Card {
   value Int
 
   activeHandCards ActiveHandCard[]
-  deckCards       DeckCard[]
 
   @@unique([rank, suit])
   @@map("cards")
@@ -44,7 +43,6 @@ model ActiveBlackjackGame {
 
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   hands     ActiveHand[]
-  deckCards DeckCard[]
 
   @@map("active_blackjack_games")
 }
@@ -76,20 +74,6 @@ model ActiveHandCard {
   @@id([handId, sequence])
   @@index([cardId])
   @@map("active_hand_cards")
-}
-
-model DeckCard {
-  id       Int     @id @default(autoincrement())
-  gameId   Int     @map("game_id")
-  cardId   Int     @map("card_id")
-  isActive Boolean @default(true) @map("is_active")
-
-  game ActiveBlackjackGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  card Card                @relation(fields: [cardId], references: [id], onDelete: Restrict)
-
-  @@index([gameId, isActive])
-  @@index([cardId])
-  @@map("deck_cards")
 }
 
 model ActiveMinesGame {

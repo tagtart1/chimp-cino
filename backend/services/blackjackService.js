@@ -1,5 +1,9 @@
 import AppError from "../utils/appError.js";
-import secureRandomNumber from "../utils/secureRandomNumber.js";
+import { BLACKJACK_RULES } from "../config/blackjackRules.js";
+import {
+  buildRemainingShoe,
+  drawRandomCard,
+} from "./blackjackShoe.js";
 import {
   checkFor21,
   checkForBust,
@@ -8,8 +12,6 @@ import {
   isHandSoft,
   validateAceValue,
 } from "../utils/deckChecks.js";
-
-const NUMBER_OF_DECKS = 2;
 
 function playerHands(game) {
   return game.hands.filter((hand) => hand.isPlayer);
@@ -43,38 +45,54 @@ function requireInsuranceResolved(game) {
   }
 }
 
-async function drawCard(transaction, gameId, hand) {
-  const deckCards =
-    await transaction.blackjack.listActiveDeckCards(gameId);
-  if (deckCards.length === 0) {
-    throw new AppError("Deck is empty", 400, "SERVER_ERROR");
+async function addCardsToHands(transaction, cards) {
+  const insertedCount = await transaction.blackjack.addCardsToHands(cards);
+  if (insertedCount !== cards.length) {
+    throw new AppError("Failed to deal cards", 500, "SERVER_ERROR");
   }
+}
 
-  const selected =
-    deckCards[secureRandomNumber(0, deckCards.length - 1)];
+async function drawCard(transaction, game, hand, cardCatalog) {
+  const remainingShoe = buildRemainingShoe(cardCatalog, game.hands);
+  const selected = drawRandomCard(remainingShoe);
   const sequence = hand.cards.length
     ? hand.cards[hand.cards.length - 1].sequence + 1
     : 1;
-  const card = await transaction.blackjack.moveDeckCardToHand({
-    deckCardId: selected.deckCardId,
-    handId: hand.id,
-    sequence,
-  });
-  if (!card) {
-    throw new AppError("Failed to draw card", 400, "SERVER_ERROR");
-  }
+  const card = { ...selected, sequence };
+
+  await addCardsToHands(transaction, [
+    { handId: hand.id, cardId: card.id, sequence },
+  ]);
   hand.cards.push(card);
   validateAceValue(hand.cards);
   return card;
 }
 
-async function drawDealer(transaction, game) {
+async function dealInitialCards(transaction, game, cardCatalog) {
+  const player = playerHands(game)[0];
+  const dealer = dealerHand(game);
+  const remainingShoe = buildRemainingShoe(cardCatalog, game.hands);
+  const assignments = [];
+
+  for (const hand of [player, dealer, player, dealer]) {
+    const selected = drawRandomCard(remainingShoe);
+    const sequence = hand.cards.length + 1;
+    const card = { ...selected, sequence };
+    hand.cards.push(card);
+    assignments.push({ handId: hand.id, cardId: card.id, sequence });
+  }
+
+  await addCardsToHands(transaction, assignments);
+  return dealer.cards[0];
+}
+
+async function drawDealer(transaction, game, cardCatalog) {
   const hand = dealerHand(game);
   validateAceValue(hand.cards);
   let handValue = hand.cards.reduce((total, card) => total + card.value, 0);
 
   while (handValue < 17) {
-    await drawCard(transaction, game.id, hand);
+    await drawCard(transaction, game, hand, cardCatalog);
     validateAceValue(hand.cards);
     handValue = hand.cards.reduce((total, card) => total + card.value, 0);
   }
@@ -87,9 +105,9 @@ async function drawDealer(transaction, game) {
   };
 }
 
-async function finishAgainstDealer(transaction, game, hands) {
+async function finishAgainstDealer(transaction, game, hands, cardCatalog) {
   await transaction.blackjack.setGameOver(game.id);
-  const dealer = await drawDealer(transaction, game);
+  const dealer = await drawDealer(transaction, game, cardCatalog);
   hands.sort((left, right) => right.id - left.id);
 
   const winners = hands.map((hand) => {
@@ -148,8 +166,8 @@ async function swapSelectedHand(
   nextHand.isSelected = true;
 }
 
-async function hitHand(transaction, game, hand) {
-  await drawCard(transaction, game.id, hand);
+async function hitHand(transaction, game, hand, cardCatalog) {
+  await drawCard(transaction, game, hand, cardCatalog);
   return {
     data: {
       player: { cards: hand.cards },
@@ -162,6 +180,30 @@ async function hitHand(transaction, game, hand) {
 }
 
 export function createBlackjackService(store) {
+  let cardCatalogPromise;
+
+  const getCardCatalog = async () => {
+    if (!cardCatalogPromise) {
+      cardCatalogPromise = store.blackjack
+        .listCanonicalCards()
+        .then((cards) => {
+          if (cards.length !== BLACKJACK_RULES.cardsPerDeck) {
+            throw new AppError(
+              `Blackjack card catalog must contain ${BLACKJACK_RULES.cardsPerDeck} cards`,
+              500,
+              "SERVER_ERROR"
+            );
+          }
+          return Object.freeze(cards.map((card) => Object.freeze(card)));
+        })
+        .catch((error) => {
+          cardCatalogPromise = null;
+          throw error;
+        });
+    }
+    return cardCatalogPromise;
+  };
+
   return {
     async newGame({ userId, betAmount }) {
       const bet = Number.parseFloat(betAmount);
@@ -169,6 +211,7 @@ export function createBlackjackService(store) {
         throw new AppError("Could not place bet", 401, "INVALID_BET");
       }
 
+      const cardCatalog = await getCardCatalog();
       return store.transaction(async (transaction) => {
         const balance = await transaction.wallet.withdrawIfSufficient(
           userId,
@@ -183,7 +226,7 @@ export function createBlackjackService(store) {
         }
 
         const existing =
-          await transaction.blackjack.findGameByUserId(userId);
+          await transaction.blackjack.findGameStatusByUserId(userId);
         if (existing && !existing.isGameOver) {
           throw new AppError(
             "Game already in progress",
@@ -199,18 +242,14 @@ export function createBlackjackService(store) {
           userId,
           bet,
         });
-        await transaction.blackjack.createDeck(game.id, NUMBER_OF_DECKS);
 
         const player = playerHands(game)[0];
         const dealer = dealerHand(game);
-        await drawCard(transaction, game.id, player);
-        const firstDealerCard = await drawCard(
+        const firstDealerCard = await dealInitialCards(
           transaction,
-          game.id,
-          dealer
+          game,
+          cardCatalog
         );
-        await drawCard(transaction, game.id, player);
-        await drawCard(transaction, game.id, dealer);
 
         const dealerBlackjack = isBlackjack(dealer.cards);
         const playerBlackjack = isBlackjack(player.cards);
@@ -293,6 +332,7 @@ export function createBlackjackService(store) {
     },
 
     async hit(userId) {
+      const cardCatalog = await getCardCatalog();
       return store.transaction(async (transaction) => {
         const game = requireActionGame(
           await transaction.blackjack.findGameByUserId(userId)
@@ -300,7 +340,12 @@ export function createBlackjackService(store) {
         requireInsuranceResolved(game);
         const { activeHand, nextHand } = actionHands(game);
         const hands = [activeHand, nextHand].filter(Boolean);
-        const result = await hitHand(transaction, game, activeHand);
+        const result = await hitHand(
+          transaction,
+          game,
+          activeHand,
+          cardCatalog
+        );
         activeHand.isBust = result.data.is_hand_bust;
 
         if (result.data.is_hand_bust) {
@@ -315,7 +360,14 @@ export function createBlackjackService(store) {
           } else if (nextHand.isCompleted) {
             Object.assign(
               result.data,
-              (await finishAgainstDealer(transaction, game, hands)).data
+              (
+                await finishAgainstDealer(
+                  transaction,
+                  game,
+                  hands,
+                  cardCatalog
+                )
+              ).data
             );
           } else {
             await swapSelectedHand(
@@ -330,7 +382,14 @@ export function createBlackjackService(store) {
           if (!nextHand || nextHand.isBust || nextHand.isCompleted) {
             Object.assign(
               result.data,
-              (await finishAgainstDealer(transaction, game, hands)).data
+              (
+                await finishAgainstDealer(
+                  transaction,
+                  game,
+                  hands,
+                  cardCatalog
+                )
+              ).data
             );
           } else {
             await swapSelectedHand(
@@ -354,6 +413,7 @@ export function createBlackjackService(store) {
     },
 
     async stand(userId) {
+      const cardCatalog = await getCardCatalog();
       return store.transaction(async (transaction) => {
         const game = requireActionGame(
           await transaction.blackjack.findGameByUserId(userId)
@@ -364,7 +424,12 @@ export function createBlackjackService(store) {
         let result = { data: { game_winners: [] } };
 
         if (!nextHand || nextHand.isCompleted || nextHand.isBust) {
-          result = await finishAgainstDealer(transaction, game, hands);
+          result = await finishAgainstDealer(
+            transaction,
+            game,
+            hands,
+            cardCatalog
+          );
           result.data.is_game_over = true;
         } else {
           await swapSelectedHand(
@@ -387,6 +452,7 @@ export function createBlackjackService(store) {
     },
 
     async double(userId) {
+      const cardCatalog = await getCardCatalog();
       return store.transaction(async (transaction) => {
         const game = requireActionGame(
           await transaction.blackjack.findGameByUserId(userId)
@@ -417,7 +483,12 @@ export function createBlackjackService(store) {
 
         await transaction.blackjack.doubleHandBet(activeHand.id);
         activeHand.bet *= 2;
-        const result = await hitHand(transaction, game, activeHand);
+        const result = await hitHand(
+          transaction,
+          game,
+          activeHand,
+          cardCatalog
+        );
         activeHand.isBust = result.data.is_hand_bust;
 
         if (!nextHand) {
@@ -428,7 +499,14 @@ export function createBlackjackService(store) {
           } else {
             Object.assign(
               result.data,
-              (await finishAgainstDealer(transaction, game, hands)).data
+              (
+                await finishAgainstDealer(
+                  transaction,
+                  game,
+                  hands,
+                  cardCatalog
+                )
+              ).data
             );
           }
         } else if (nextHand.isCompleted || nextHand.isBust) {
@@ -439,7 +517,14 @@ export function createBlackjackService(store) {
           } else {
             Object.assign(
               result.data,
-              (await finishAgainstDealer(transaction, game, hands)).data
+              (
+                await finishAgainstDealer(
+                  transaction,
+                  game,
+                  hands,
+                  cardCatalog
+                )
+              ).data
             );
           }
         } else {
@@ -463,6 +548,7 @@ export function createBlackjackService(store) {
     },
 
     async split(userId) {
+      const cardCatalog = await getCardCatalog();
       return store.transaction(async (transaction) => {
         const game = requireActionGame(
           await transaction.blackjack.findGameByUserId(userId)
@@ -518,13 +604,20 @@ export function createBlackjackService(store) {
           card: { cardId: removed.cardId, sequence: 1 },
         });
         newHand.cards = [{ ...movedCard, sequence: 1 }];
+        game.hands.push(newHand);
 
         const originalResult = await hitHand(
           transaction,
           game,
-          activeHand
+          activeHand,
+          cardCatalog
         );
-        const newResult = await hitHand(transaction, game, newHand);
+        const newResult = await hitHand(
+          transaction,
+          game,
+          newHand,
+          cardCatalog
+        );
         const result = {
           data: {
             player: {
@@ -542,7 +635,14 @@ export function createBlackjackService(store) {
           const hands = [newHand, activeHand];
           Object.assign(
             result.data,
-            (await finishAgainstDealer(transaction, game, hands)).data
+            (
+              await finishAgainstDealer(
+                transaction,
+                game,
+                hands,
+                cardCatalog
+              )
+            ).data
           );
           result.data.payout = await payout(
             transaction,
