@@ -35,3 +35,35 @@
     }
   }
 }
+
+@media (max-width: 800px) {
+  .mines-main {
+    align-items: stretch;
+    padding: 12px 10px 20px;
+
+    .mines-section {
+      max-height: none;
+      flex-direction: column-reverse;
+      border-radius: 10px 10px 0 0;
+      overflow: hidden;
+
+      .game-screen-mines {
+        width: 100%;
+        min-height: 0;
+        padding: 10px;
+        margin-bottom: 0;
+        border-radius: 10px 10px 0 0;
+      }
+
+      .mines-bet-controls {
+        width: 100%;
+        border-radius: 0;
+      }
+    }
+
+    .game-footer-wrapper {
+      min-height: 56px;
+      border-radius: 0 0 10px 10px;
+    }
+  }
+}

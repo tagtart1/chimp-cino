@@ -203,3 +203,67 @@
     min-height: 630px;
   }
 }
+
+@media (max-width: 800px) {
+  .blackjack-main {
+    align-items: stretch;
+    padding: 12px 10px 20px;
+
+    .blackjack-game-section {
+      max-height: none;
+      flex-direction: column-reverse;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #213743;
+
+      .bet-controls {
+        width: 100%;
+        padding: 14px;
+        gap: 10px;
+        border-radius: 0;
+        border-top: 1px solid rgba(177, 186, 211, 0.12);
+      }
+
+      .game-screen {
+        width: 100%;
+        min-height: 430px;
+        padding: 46px 12px 34px;
+        border-radius: 10px 10px 0 0;
+        background-size: min(72%, 240px);
+        font-size: 0.72em;
+
+        .card-group {
+          font-size: 1.15em;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 420px) {
+  .blackjack-main {
+    .blackjack-game-section {
+      .game-screen {
+        min-height: 370px;
+        padding: 38px 8px 28px;
+        font-size: 0.64em;
+
+        .card-group .cards-value {
+          width: 48px;
+          height: 20px;
+          font-size: 12px;
+        }
+      }
+
+      .bet-controls {
+        .blackjack-actions {
+          row-gap: 8px;
+        }
+
+        .blackjack-play-button {
+          padding-block: 14px;
+        }
+      }
+    }
+  }
+}

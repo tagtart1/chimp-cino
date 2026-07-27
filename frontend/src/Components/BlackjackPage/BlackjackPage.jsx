@@ -114,9 +114,12 @@ const BlackjackPage = () => {
           gameScreenRef.current.style.minHeight = newMinHeight + "px";
           gameScreenRef.current.style.fontSize = mult + "em";
         }
-      } else if (width > thresholdWidth) {
+      } else if (width >= thresholdWidth) {
         gameScreenRef.current.style.minHeight = 630 + "px";
         gameScreenRef.current.style.fontSize = 1 + "em";
+      } else {
+        gameScreenRef.current.style.removeProperty("min-height");
+        gameScreenRef.current.style.removeProperty("font-size");
       }
     };
 

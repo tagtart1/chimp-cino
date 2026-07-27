@@ -55,6 +55,13 @@
   }
 }
 
+@media (max-width: 800px) {
+  .mines-bet-controls {
+    padding: 14px;
+    gap: 10px;
+  }
+}
+
 @keyframes jiggle {
   0%,
   20% {

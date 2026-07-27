@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import "./RoulettePage.scss";
 import RouletteChip from "../RouletteChip/RouletteChip";
 import RouletteButton from "../RouletteButton/RouletteButton";
@@ -31,16 +32,10 @@ const RoulettePage = () => {
   const [pendingRoundResult, setPendingRoundResult] = useState(null);
   const [roundResult, setRoundResult] = useState(null);
   const [roundHistory, setRoundHistory] = useState([]);
-  const [historySequence, setHistorySequence] = useState(0);
   const roundIdRef = useRef(0);
-  const historyRemovalTimerRef = useRef(null);
 
   // Displays after the animation of the wheel has completed
   const [updatedBalance, setUpdatedBalance] = useState();
-
-  useEffect(() => {
-    return () => clearTimeout(historyRemovalTimerRef.current);
-  }, []);
 
   const resetBoard = () => {
     setTotalBetValue(0);
@@ -136,12 +131,7 @@ const RoulettePage = () => {
     setRoundResult(pendingRoundResult);
 
     if (pendingRoundResult) {
-      clearTimeout(historyRemovalTimerRef.current);
-      setRoundHistory((prev) => [pendingRoundResult, ...prev].slice(0, 6));
-      setHistorySequence((prev) => prev + 1);
-      historyRemovalTimerRef.current = setTimeout(() => {
-        setRoundHistory((prev) => prev.slice(0, 5));
-      }, 500);
+      setRoundHistory((prev) => [pendingRoundResult, ...prev].slice(0, 5));
     }
 
     setGameRunning(false);
@@ -166,15 +156,20 @@ const RoulettePage = () => {
           aria-live="polite"
         >
           {roundHistory.map((result, index) => (
-            <li
-              className={`roulette-history-entry${
-                index === 0 ? " is-new" : ""
-              }${index === 1 || index === 2 ? " is-shifting" : ""}${
-                index === 3 ? " is-fading" : ""
-              }${index === 4 ? " is-faint" : ""}${
-                index === 5 ? " is-exiting" : ""
-              }`}
-              key={`${result.id}-${historySequence}`}
+            <motion.li
+              className="roulette-history-entry"
+              key={result.id}
+              layout="position"
+              initial={{ y: -10 }}
+              animate={{
+                y: 0,
+                opacity: index === 3 ? 0.55 : index === 4 ? 0.22 : 1,
+              }}
+              transition={{
+                layout: { type: "spring", stiffness: 460, damping: 34 },
+                y: { type: "spring", stiffness: 460, damping: 30 },
+                opacity: { duration: 0.2 },
+              }}
             >
               <span
                 className={`roulette-result-number${
@@ -200,7 +195,7 @@ const RoulettePage = () => {
                     maximumFractionDigits: 2,
                   })}
               </strong>
-            </li>
+            </motion.li>
           ))}
         </ol>
       </div>

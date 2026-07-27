@@ -44,29 +44,6 @@
       align-items: center;
       gap: 10px;
       color: #d9e3e8;
-
-      &.is-new {
-        animation: roulette-history-enter 0.45s ease-out;
-      }
-
-      &.is-shifting {
-        animation: roulette-history-shift 0.45s ease-out;
-      }
-
-      &.is-fading {
-        opacity: 0.55;
-        animation: roulette-history-fade 0.45s ease-out;
-      }
-
-      &.is-faint {
-        opacity: 0.22;
-        animation: roulette-history-fade-further 0.45s ease-out;
-      }
-
-      &.is-exiting {
-        opacity: 0;
-        animation: roulette-history-exit 0.5s ease-out forwards;
-      }
     }
 
     .roulette-result-number {
@@ -343,59 +320,6 @@
   }
 }
 
-@keyframes roulette-history-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.92);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes roulette-history-shift {
-  from {
-    transform: translateY(-14px);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes roulette-history-fade {
-  from {
-    opacity: 1;
-    transform: translateY(-14px);
-  }
-  to {
-    opacity: 0.55;
-    transform: translateY(0);
-  }
-}
-
-@keyframes roulette-history-fade-further {
-  from {
-    opacity: 0.55;
-    transform: translateY(-14px);
-  }
-  to {
-    opacity: 0.22;
-    transform: translateY(0);
-  }
-}
-
-@keyframes roulette-history-exit {
-  from {
-    opacity: 0.22;
-    transform: translateY(-14px);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
 @keyframes roulette-wheel-win-glow {
   0%,
   100% {
@@ -403,5 +327,131 @@
   }
   35% {
     filter: drop-shadow(0 0 17px rgba(0, 231, 1, 0.72));
+  }
+}
+
+@media (max-width: 800px) {
+  .roulette-main {
+    align-items: stretch;
+    padding: 12px 10px 20px;
+
+    .roulette-wheel-stage {
+      min-height: 0;
+      gap: 8px;
+      margin-bottom: 14px;
+
+      > div:first-child {
+        width: min(250px, 78vw);
+
+        svg {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+      }
+    }
+
+    .roulette-result-history {
+      position: static;
+      width: 100%;
+      min-height: 56px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 4px;
+      overflow: hidden;
+
+      .roulette-history-entry {
+        min-width: 0;
+        min-height: 54px;
+        padding: 4px 3px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        border-radius: 10px;
+        background-color: #213743;
+      }
+
+      .roulette-result-number {
+        width: 24px;
+        height: 24px;
+        border-width: 1px;
+        font-size: 11px;
+      }
+
+      .roulette-result-label {
+        display: none;
+      }
+
+      strong {
+        max-width: 100%;
+        overflow: hidden;
+        font-size: 11px;
+        line-height: 1.1;
+        text-align: center;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .roulette-game-section {
+      flex: 0 0 auto;
+      flex-direction: column-reverse;
+      border-radius: 10px;
+    }
+
+    .game-screen {
+      width: 100%;
+      padding: 14px 10px 12px;
+      justify-content: flex-start;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      scrollbar-color: #2f4553 transparent;
+      border-radius: 10px 10px 0 0;
+
+      .roulette-buttons {
+        width: 690px;
+        min-width: 690px;
+
+        button {
+          min-height: 46px;
+        }
+      }
+    }
+
+    .roulette-options {
+      width: 100%;
+      flex-basis: auto;
+      padding: 14px;
+      border-top: 1px solid rgba(177, 186, 211, 0.12);
+
+      .chip-selection {
+        justify-content: center;
+        padding: 12px 0;
+      }
+
+      .roulette-actions {
+        grid-template-columns: 1fr 1fr;
+
+        button {
+          min-height: 46px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 420px) {
+  .roulette-main {
+    .roulette-wheel-stage > div:first-child {
+      width: min(220px, 76vw);
+    }
+
+    .roulette-result-history {
+      min-height: 52px;
+
+      .roulette-history-entry {
+        min-height: 50px;
+      }
+    }
   }
 }
