@@ -1,58 +1,18 @@
-const jwt = require("jsonwebtoken");
-const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcryptjs");
-const { body, validationResult } = require("express-validator");
-const AppError = require("../utils/appError");
-const pool = require("../db");
-const userQueries = require("../queries/userQueries");
-const casinoQueries = require("../queries/casinoQueries");
+import jwt from "jsonwebtoken";
+import asyncHandler from "express-async-handler";
+import { body, validationResult } from "express-validator";
+import AppError from "../utils/appError.js";
+import { authService } from "../services/index.js";
 
-exports.logIn = asyncHandler(async (req, res, next) => {
-  console.log(req.body);
-  const inputEmailOrUsername = req.body.emailOrUsername;
-  const inputPassword = req.body.password;
-
-  // Null values fail credential check automatically
-  if (!inputPassword || !inputEmailOrUsername) {
-    throw new AppError(
-      "The username/email or password provided is empty",
-      401,
-      "INVALID_CREDENTIALS"
-    );
-  }
-
-  // Find user
-
-  const user = (
-    await pool.query(userQueries.getUserByUsernameOrEmail, [
-      inputEmailOrUsername,
-    ])
-  ).rows[0];
-
-  if (!user) {
-    throw new AppError(
-      "The username or password provided is incorrect",
-      401,
-      "INVALID_CREDENTIALS"
-    );
-  }
-
-  // Authenticate password
-  const result = await bcrypt.compare(inputPassword, user.password);
-  if (!result) {
-    console.log("failed compare");
-    throw new AppError(
-      "The username or password provided is incorrect",
-      401,
-      "INVALID_CREDENTIALS"
-    );
-  }
-
-  req.user = user;
+export const logIn = asyncHandler(async (req, res, next) => {
+  req.user = await authService.logIn({
+    identifier: req.body.emailOrUsername,
+    password: req.body.password,
+  });
   next();
 });
 
-exports.signUp = [
+export const signUp = [
   body("username", "Must have a username")
     .trim()
     .isLength({ min: 1 })
@@ -76,68 +36,36 @@ exports.signUp = [
     ),
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-
     if (!errors.isEmpty()) {
-      const formattedErrors = errors.array().map((err) => err.msg);
-      throw new AppError(formattedErrors[0], 400, "VALIDATION_ERROR");
+      throw new AppError(errors.array()[0].msg, 400, "VALIDATION_ERROR");
     }
 
-    // Check if user already exists
-    const usernameOrEmailExists = await pool.query(
-      userQueries.checkIfUserExists,
-      [req.body.username, req.body.email]
-    );
-
-    // Seperate errors later
-    if (usernameOrEmailExists.rows[0].count !== "0") {
-      console.log(usernameOrEmailExists);
-      throw new AppError("Username or email taken", 400, "VALIDATION_ERROR");
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(req.body.password, 12);
-
-    const newUser = (
-      await pool.query(userQueries.addNewUser, [
-        req.body.username,
-        req.body.email.toLowerCase(),
-        hashedPassword,
-        10000.0,
-      ])
-    ).rows[0];
-
-    if (!newUser) {
-      throw new AppError("Failed to sign up", 500, "SERVER_ERROR");
-    }
-
-    // Add user to req
-    req.user = newUser;
-    // Send token res in next
+    req.user = await authService.signUp(req.body);
     next();
   }),
 ];
 
-exports.logOut = (req, res) => {
+export const logOut = (req, res) => {
   res.clearCookie("token", { path: "/" });
   res.status(200).json({ data: { message: "Logged out successfully" } });
 };
 
-exports.validateUser = asyncHandler(async (req, res, next) => {
+export const validateUser = asyncHandler(async (req, res, next) => {
   const token = req.cookies.token;
-
-  jwt.verify(token, process.env.SECRETKEY, async (err, userData) => {
-    if (err) {
+  jwt.verify(token, process.env.SECRETKEY, async (error, userData) => {
+    if (error) {
       next(
         new AppError("User timed out, please log back in", 401, "TIMED_OUT")
       );
-    } else {
-      const user = userData.user;
-      const balance = (await pool.query(casinoQueries.getBalance, [user.id]))
-        .rows[0].balance;
+      return;
+    }
 
-      user.balance = parseFloat(balance);
-
-      return res.json({ data: user });
+    try {
+      res.json({
+        data: await authService.validateSession(userData.user),
+      });
+    } catch (serviceError) {
+      next(serviceError);
     }
   });
 });

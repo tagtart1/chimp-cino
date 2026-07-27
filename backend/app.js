@@ -1,16 +1,18 @@
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
-require("./utils/loadEnv");
-const cors = require("cors");
-const AppError = require("./utils/appError");
-var rouletteRouter = require("./routes/roulette");
-var usersRouter = require("./routes/users");
-var blackjackRouter = require("./routes/blackjack");
-var minesRouter = require("./routes/mines");
+import "./utils/loadEnv.js";
+import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import cookieParser from "cookie-parser";
+import logger from "morgan";
+import cors from "cors";
+import AppError from "./utils/appError.js";
+import rouletteRouter from "./routes/roulette.js";
+import usersRouter from "./routes/users.js";
+import blackjackRouter from "./routes/blackjack.js";
+import minesRouter from "./routes/mines.js";
 
-var app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -23,33 +25,28 @@ app.use(
     optionsSuccessStatus: 200,
   })
 );
-// Serve favicon - avoids warning log
 app.use(
   "/favicon.ico",
   express.static(path.join(__dirname, "utils/chimcino-logo.png"))
 );
 
-// Routes
 app.use("/api/v1/roulette", rouletteRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/blackjack", blackjackRouter);
 app.use("/api/v1/mines", minesRouter);
 
-// Error Handler
 app.use((err, req, res, next) => {
   if (err instanceof AppError && err.isOperational) {
-    // Handle operational errors by returning a specific error message to the client.
     console.log(err);
     return res
       .status(err.statusCode)
       .json({ code: err.code, message: err.message });
   }
 
-  // Handle other unknown errors.
   console.error("An unknown error occurred:", err);
-  res
+  return res
     .status(500)
     .json({ code: "UNKNOWN", message: "An unexpected error occurred" });
 });
 
-module.exports = app;
+export default app;

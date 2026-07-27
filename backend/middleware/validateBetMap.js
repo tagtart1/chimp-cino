@@ -1,4 +1,4 @@
-const AppError = require("../utils/appError");
+import AppError from "../utils/appError.js";
 
 const validateBetMap = (req, res, next) => {
   const betMap = req.body.betMap;
@@ -24,4 +24,4 @@ const validateBetMap = (req, res, next) => {
   next();
 };
 
-module.exports = validateBetMap;
+export default validateBetMap;

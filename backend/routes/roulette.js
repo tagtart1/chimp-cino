@@ -1,10 +1,10 @@
-var express = require("express");
-var router = express.Router();
-const validateToken = require("../middleware/validateToken");
-const validateBetMap = require("../middleware/validateBetMap");
-const rouletteController = require("../controllers/rouletteController");
+import express from "express";
+import validateToken from "../middleware/validateToken.js";
+import validateBetMap from "../middleware/validateBetMap.js";
+import * as rouletteController from "../controllers/rouletteController.js";
 
-/* GET users listing. */
+const router = express.Router();
+
 router.patch("/", validateToken, validateBetMap, rouletteController.playGame);
 
-module.exports = router;
+export default router;

@@ -1,42 +1,24 @@
-var express = require("express");
-var router = express.Router();
-const minesController = require("../controllers/minesController");
-const validateToken = require("../middleware/validateToken");
-const beginTransaction = require("../middleware/mines/beginTransaction");
-const sanitizeInput = require("../middleware/mines/sanitizeInputs");
-const withdrawBalance = require("../middleware/mines/withdrawBalance");
-const santizeTargetInput = require("../middleware/mines/sanitizeTargetInput");
-const fetchActiveGame = require("../middleware/mines/fetchActiveGame");
-// Create a new mines game
+import express from "express";
+import * as minesController from "../controllers/minesController.js";
+import validateToken from "../middleware/validateToken.js";
+import sanitizeInput from "../middleware/mines/sanitizeInputs.js";
+import sanitizeTargetInput from "../middleware/mines/sanitizeTargetInput.js";
+
+const router = express.Router();
+
 router.post(
   "/games",
   validateToken,
   sanitizeInput,
-  beginTransaction,
-  withdrawBalance,
   minesController.newGame
 );
-
-// Fetch an active mines game
-router.get("/games", validateToken, fetchActiveGame, minesController.getGame);
-
-// Reveal a cell
+router.get("/games", validateToken, minesController.getGame);
 router.post(
   "/reveal",
   validateToken,
-  fetchActiveGame,
-  santizeTargetInput,
-  beginTransaction,
-  minesController.revealCell,
-  minesController.cashout
+  sanitizeTargetInput,
+  minesController.revealCell
 );
+router.post("/cashout", validateToken, minesController.cashout);
 
-router.post(
-  "/cashout",
-  validateToken,
-  fetchActiveGame,
-  beginTransaction,
-  minesController.cashout
-);
-
-module.exports = router;
+export default router;

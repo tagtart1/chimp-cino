@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+import crypto from "node:crypto";
 
 const secureRandomNumber = (min, max) => {
   const range = max - min + 1;
@@ -13,4 +13,4 @@ const secureRandomNumber = (min, max) => {
   return min + (randomByte % range);
 };
 
-module.exports = secureRandomNumber;
+export default secureRandomNumber;
