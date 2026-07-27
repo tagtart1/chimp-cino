@@ -4,7 +4,7 @@ import { useUser } from "../../Contexts/UserProvider";
 import { apiUrl } from "../../config/api";
 import PasswordField from "./PasswordField";
 
-const SignUp = ({ close, titleId, toggleSelf }) => {
+const SignUp = ({ autoFocus, close, titleId, toggleSelf }) => {
   const { setUser } = useUser();
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +67,7 @@ const SignUp = ({ close, titleId, toggleSelf }) => {
             autoComplete="username"
             autoCapitalize="none"
             spellCheck="false"
-            autoFocus
+            autoFocus={autoFocus}
             required
           />
         </div>

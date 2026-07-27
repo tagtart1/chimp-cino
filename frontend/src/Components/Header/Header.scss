@@ -184,3 +184,55 @@ header {
     transform: translate(-50%, 9px) scale(0.98);
   }
 }
+
+@media (max-width: 800px) {
+  header {
+    .header-wrapper {
+      padding-left: 64px;
+    }
+  }
+}
+
+@media (max-width: 420px) {
+  header {
+    .header-wrapper {
+      gap: 8px;
+      padding: 8px 12px 8px 64px;
+    }
+
+    .logo {
+      width: 96px;
+    }
+
+    .auth-actions-group {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+
+      .sign-in-button,
+      .register-button {
+        padding: 0.75rem 0.65rem;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+      }
+
+      .profile-dropdown-button {
+        margin-right: 0;
+        padding: 12px;
+      }
+    }
+
+    .balance-bar {
+      margin-left: auto;
+
+      .balance-num {
+        padding: 0.8rem 0.65rem;
+        font-size: 0.8125rem;
+      }
+
+      .wallet-button {
+        display: none;
+      }
+    }
+  }
+}

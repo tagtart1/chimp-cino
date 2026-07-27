@@ -38,7 +38,6 @@
     box-shadow:
       0 28px 80px rgba(0, 0, 0, 0.48),
       0 1px 0 rgba(255, 255, 255, 0.05) inset;
-    animation: auth-modal-enter 180ms ease-out;
 
     &::before {
       position: absolute;
@@ -302,22 +301,11 @@
   }
 }
 
-@keyframes auth-modal-enter {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @media (max-width: 520px) {
   .auth-popup-wrapper {
     align-items: flex-end;
     padding: 0;
+    overflow-y: hidden;
 
     .auth-modal {
       width: 100%;
@@ -360,11 +348,5 @@
 @media (max-height: 680px) and (min-width: 521px) {
   .auth-popup-wrapper {
     align-items: flex-start;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .auth-popup-wrapper .auth-modal {
-    animation: none;
   }
 }

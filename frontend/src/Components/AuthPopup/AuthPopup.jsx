@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import "./AuthPopup.scss";
 import SignUp from "./SignUp";
 import LogIn from "./LogIn";
 
 const AuthPopup = ({ isLogIn, isVisible, close }) => {
   const [showLogIn, setToggleLogInForm] = useState(null);
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia("(max-width: 520px)").matches
+  );
   const dialogRef = useRef(null);
   const closeRef = useRef(close);
 
@@ -20,6 +24,14 @@ const AuthPopup = ({ isLogIn, isVisible, close }) => {
   useEffect(() => {
     setToggleLogInForm(isLogIn);
   }, [isLogIn]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 520px)");
+    const updateMobileState = (event) => setIsMobile(event.matches);
+
+    mobileQuery.addEventListener("change", updateMobileState);
+    return () => mobileQuery.removeEventListener("change", updateMobileState);
+  }, []);
 
   const isOpen = isVisible && showLogIn !== null;
 
@@ -76,12 +88,19 @@ const AuthPopup = ({ isLogIn, isVisible, close }) => {
         aria-label="Close dialog backdrop"
         onClick={closeSelf}
       />
-      <section
+      <motion.section
         className="auth-modal"
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        initial={{ y: isMobile ? window.innerHeight : 10 }}
+        animate={{ y: 0 }}
+        transition={
+          isMobile
+            ? { type: "spring", duration: 0.52, bounce: 0.2 }
+            : { type: "tween", duration: 0.18, ease: "easeOut" }
+        }
       >
         <button
           className="close-popup-button"
@@ -96,18 +115,20 @@ const AuthPopup = ({ isLogIn, isVisible, close }) => {
 
         {showLogIn ? (
           <LogIn
+            autoFocus={!isMobile}
             close={closeSelf}
             titleId={titleId}
             toggleSelf={() => setToggleLogInForm(false)}
           />
         ) : (
           <SignUp
+            autoFocus={!isMobile}
             close={closeSelf}
             titleId={titleId}
             toggleSelf={() => setToggleLogInForm(true)}
           />
         )}
-      </section>
+      </motion.section>
     </div>
   );
 };
