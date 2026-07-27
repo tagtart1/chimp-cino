@@ -3,6 +3,7 @@ import "./Navigation.scss";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import MiniNavigation from "./MiniNavigation";
+import MinesIcon from "./MinesIcon";
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -84,6 +85,7 @@ const Navigation = () => {
                     navigate("/mines");
                   }}
                 >
+                  <MinesIcon />
                   Mines
                 </li>
               </ul>
