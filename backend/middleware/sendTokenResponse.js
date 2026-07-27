@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
 const sendTokenResponse = (req, res, next) => {
   // Sign everything but password and balance
@@ -7,7 +7,10 @@ const sendTokenResponse = (req, res, next) => {
     id: req.user.id,
     username: req.user.username,
 
-    last_bonus_claimed: req.user.last_bonus_claimed,
+    last_bonus_claimed:
+      req.user.lastBonusClaimed !== undefined
+        ? req.user.lastBonusClaimed
+        : req.user.last_bonus_claimed,
   };
   const returnedUser = jwtUser;
   returnedUser.balance = parseFloat(req.user.balance);
@@ -32,4 +35,4 @@ const sendTokenResponse = (req, res, next) => {
   );
 };
 
-module.exports = sendTokenResponse;
+export default sendTokenResponse;

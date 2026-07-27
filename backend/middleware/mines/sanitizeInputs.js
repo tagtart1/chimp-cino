@@ -1,4 +1,4 @@
-const AppError = require("../../utils/appError");
+import AppError from "../../utils/appError.js";
 
 const sanitizeInput = (req, res, next) => {
   const minMines = 1;
@@ -39,4 +39,4 @@ const sanitizeInput = (req, res, next) => {
   next();
 };
 
-module.exports = sanitizeInput;
+export default sanitizeInput;

@@ -1,4 +1,4 @@
-const AppError = require("../../utils/appError");
+import AppError from "../../utils/appError.js";
 
 const santizeTargetInput = (req, res, next) => {
   const minField = 0;
@@ -41,4 +41,4 @@ const santizeTargetInput = (req, res, next) => {
   next();
 };
 
-module.exports = santizeTargetInput;
+export default santizeTargetInput;

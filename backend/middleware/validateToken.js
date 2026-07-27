@@ -1,5 +1,5 @@
-const AppError = require("../utils/appError");
-const jwt = require("jsonwebtoken");
+import AppError from "../utils/appError.js";
+import jwt from "jsonwebtoken";
 
 // Verified and grabs user payload from JWT
 const validateToken = (req, res, next) => {
@@ -26,4 +26,4 @@ const validateToken = (req, res, next) => {
   });
 };
 
-module.exports = validateToken;
+export default validateToken;

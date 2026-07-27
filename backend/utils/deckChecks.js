@@ -76,7 +76,7 @@ const isCardAce = (card) => {
   return false;
 };
 
-module.exports = {
+export {
   validateAceValue,
   checkFor21,
   checkForBust,

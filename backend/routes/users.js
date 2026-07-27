@@ -1,13 +1,12 @@
-var express = require("express");
-var router = express.Router();
-const usersController = require("../controllers/usersController");
-const sendTokenResponse = require("../middleware/sendTokenResponse");
+import express from "express";
+import * as usersController from "../controllers/usersController.js";
+import sendTokenResponse from "../middleware/sendTokenResponse.js";
 
-/* GET users listing. */
+const router = express.Router();
+
 router.post("/log-in", usersController.logIn, sendTokenResponse);
 router.post("/sign-up", usersController.signUp, sendTokenResponse);
-
 router.post("/log-out", usersController.logOut);
 router.get("/validate-user", usersController.validateUser);
 
-module.exports = router;
+export default router;

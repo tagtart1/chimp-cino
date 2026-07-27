@@ -9,6 +9,7 @@
 # production
 **/build
 **/.pem
+backend/generated/prisma
 
 
 # misc
