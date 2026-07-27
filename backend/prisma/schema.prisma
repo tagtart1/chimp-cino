@@ -1,0 +1,111 @@
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  username         String    @db.VarChar(50)
+  email            String    @unique @db.VarChar(255)
+  password         String
+  balance          Decimal   @default(10000.00) @db.Decimal(14, 2)
+  lastBonusClaimed DateTime? @map("last_bonus_claimed") @db.Timestamptz(3)
+
+  blackjackGame ActiveBlackjackGame?
+  minesGame     ActiveMinesGame?
+
+  @@map("users")
+}
+
+model Card {
+  id    Int    @id
+  rank  String @db.VarChar(2)
+  suit  String @db.Char(1)
+  value Int
+
+  activeHandCards ActiveHandCard[]
+  deckCards       DeckCard[]
+
+  @@unique([rank, suit])
+  @@map("cards")
+}
+
+model ActiveBlackjackGame {
+  id             Int     @id @default(autoincrement())
+  isGameOver     Boolean @default(false) @map("is_game_over")
+  userId         Int     @unique @map("user_id")
+  startBet       Decimal @map("start_bet") @db.Decimal(14, 2)
+  offerInsurance Boolean @default(false) @map("offer_insurance")
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hands     ActiveHand[]
+  deckCards DeckCard[]
+
+  @@map("active_blackjack_games")
+}
+
+model ActiveHand {
+  id          Int     @id @default(autoincrement())
+  gameId      Int     @map("game_id")
+  isPlayer    Boolean @map("is_player")
+  isSelected  Boolean @default(true) @map("is_selected")
+  isCompleted Boolean @default(false) @map("is_completed")
+  isBust      Boolean @default(false) @map("is_bust")
+  bet         Decimal @default(0.00) @db.Decimal(14, 2)
+
+  game  ActiveBlackjackGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  cards ActiveHandCard[]
+
+  @@index([gameId])
+  @@map("active_hands")
+}
+
+model ActiveHandCard {
+  handId   Int @map("hand_id")
+  cardId   Int @map("card_id")
+  sequence Int
+
+  hand ActiveHand @relation(fields: [handId], references: [id], onDelete: Cascade)
+  card Card       @relation(fields: [cardId], references: [id], onDelete: Restrict)
+
+  @@id([handId, sequence])
+  @@index([cardId])
+  @@map("active_hand_cards")
+}
+
+model DeckCard {
+  id       Int     @id @default(autoincrement())
+  gameId   Int     @map("game_id")
+  cardId   Int     @map("card_id")
+  isActive Boolean @default(true) @map("is_active")
+
+  game ActiveBlackjackGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  card Card                @relation(fields: [cardId], references: [id], onDelete: Restrict)
+
+  @@index([gameId, isActive])
+  @@index([cardId])
+  @@map("deck_cards")
+}
+
+model ActiveMinesGame {
+  id         Int     @id @default(autoincrement())
+  userId     Int     @unique @map("user_id")
+  bet        Decimal @db.Decimal(14, 2)
+  multiplier Decimal @default(1.000000) @db.Decimal(20, 6)
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cells ActiveCell[]
+
+  @@map("active_mines_games")
+}
+
+model ActiveCell {
+  gameId     Int     @map("game_id")
+  field      Int
+  isGem      Boolean @map("is_gem")
+  isRevealed Boolean @default(false) @map("is_revealed")
+
+  game ActiveMinesGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, field])
+  @@map("active_cells")
+}

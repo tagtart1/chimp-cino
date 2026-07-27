@@ -1,13 +1,14 @@
 require("./utils/loadEnv");
 
 const Pool = require("pg").Pool;
+const connectionString = process.env.DATABASE_URL;
+const isRenderExternalUrl = new URL(connectionString).hostname.endsWith(
+  ".render.com"
+);
 
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_DB,
-  password: process.env.DB_PASS,
-  port: process.env.DB_PORT,
+  connectionString,
+  ssl: isRenderExternalUrl ? { rejectUnauthorized: true } : undefined,
 });
 
 console.log("Total client:", pool.totalCount);

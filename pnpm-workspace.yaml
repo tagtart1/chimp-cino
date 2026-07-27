@@ -2,3 +2,7 @@ packages:
   - "frontend"
   - "backend"
   - "packages/*"
+
+onlyBuiltDependencies:
+  - "@prisma/engines"
+  - prisma
