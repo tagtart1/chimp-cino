@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./RoulettePage.scss";
 import RouletteChip from "../RouletteChip/RouletteChip";
 import RouletteButton from "../RouletteButton/RouletteButton";
+import ToggleSwitch from "../ToggleSwitch/ToggleSwitch";
 import Wheel from "../Wheel/Wheel";
 import { useUser } from "../../Contexts/UserProvider";
 import { apiUrl } from "../../config/api";
+
+const RED_POCKETS = new Set([
+  1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
+]);
 
 const RoulettePage = () => {
   const { setUser, user } = useUser();
@@ -21,9 +26,21 @@ const RoulettePage = () => {
   const [winningNum, setWinningNum] = useState(null);
   const [betMap, setBetMap] = useState({});
   const [gameRunning, setGameRunning] = useState(false);
+  const [fastMode, setFastMode] = useState(false);
+  const [spinDuration, setSpinDuration] = useState(3500);
+  const [pendingRoundResult, setPendingRoundResult] = useState(null);
+  const [roundResult, setRoundResult] = useState(null);
+  const [roundHistory, setRoundHistory] = useState([]);
+  const [historySequence, setHistorySequence] = useState(0);
+  const roundIdRef = useRef(0);
+  const historyRemovalTimerRef = useRef(null);
 
   // Displays after the animation of the wheel has completed
   const [updatedBalance, setUpdatedBalance] = useState();
+
+  useEffect(() => {
+    return () => clearTimeout(historyRemovalTimerRef.current);
+  }, []);
 
   const resetBoard = () => {
     setTotalBetValue(0);
@@ -56,8 +73,17 @@ const RoulettePage = () => {
   };
 
   const startGame = async () => {
-    if (gameRunning || !user) return;
+    if (gameRunning || !user || totalBetValue <= 0) return;
+
+    const balanceBeforeRound = Number(user.balance);
+    const amountWagered = totalBetValue;
+
+    setWinningNum(null);
+    setRoundResult(null);
+    setPendingRoundResult(null);
+    setSpinDuration(fastMode ? 1000 : 3500);
     setGameRunning(true);
+
     const options = {
       credentials: "include",
       method: "PATCH",
@@ -70,137 +96,222 @@ const RoulettePage = () => {
     try {
       const response = await fetch(apiUrl("/roulette"), options);
       if (!response.ok) {
-        console.log("ERROR");
-        return;
+        throw new Error("Unable to start roulette game");
       }
-      const result = await response.json();
-      setWinningNum(result.data.winningNum);
-      setUpdatedBalance(result.data.newBalance.balance);
-    } catch (err) {}
 
-    setUser((prev) => {
-      const newCosmeticBal = { ...prev };
-      console.log(newCosmeticBal);
-      newCosmeticBal.balance -= totalBetValue;
-      return newCosmeticBal;
-    });
+      const result = await response.json();
+      const nextBalance = Number(result.data.newBalance.balance);
+      const payout = Math.max(
+        0,
+        nextBalance - (balanceBeforeRound - amountWagered)
+      );
+
+      setPendingRoundResult({
+        id: (roundIdRef.current += 1),
+        winningNum: result.data.winningNum,
+        payout,
+        wager: amountWagered,
+      });
+      setWinningNum(result.data.winningNum);
+      setUpdatedBalance(nextBalance);
+
+      setUser((prev) => ({
+        ...prev,
+        balance: Number(prev.balance) - amountWagered,
+      }));
+    } catch (err) {
+      console.error(err);
+      setGameRunning(false);
+    }
   };
 
   const gameEnd = () => {
     setUser((prev) => {
-      console.log(updatedBalance);
-      const user = { ...prev };
-      user.balance = updatedBalance;
-      return user;
+      return {
+        ...prev,
+        balance: updatedBalance,
+      };
     });
+
+    setRoundResult(pendingRoundResult);
+
+    if (pendingRoundResult) {
+      clearTimeout(historyRemovalTimerRef.current);
+      setRoundHistory((prev) => [pendingRoundResult, ...prev].slice(0, 6));
+      setHistorySequence((prev) => prev + 1);
+      historyRemovalTimerRef.current = setTimeout(() => {
+        setRoundHistory((prev) => prev.slice(0, 5));
+      }, 500);
+    }
 
     setGameRunning(false);
   };
 
   return (
     <main className="roulette-main">
-      <div className="roulette-options">
-        <section className="bet-amount-input-wrapper">
-          <p>Chip Value {chipType.trueValue.toFixed(2)}</p>
-          <input type="text" readOnly value={totalBetValue.toFixed(2)} />
-        </section>
-        <section className="chip-selection">
-          <div
-            onClick={() => {
-              setActiveChip(0);
-              setChipType({
-                value: 1,
-                color: "rgb(252, 120, 32)",
-                trueValue: 1,
-                nthValue: "M",
-              });
-            }}
-          >
-            <RouletteChip
-              amount={"1M"}
-              showBorder={activeChip === 0 ? true : false}
-              color={"rgb(252, 120, 32)"}
-            />
-          </div>
-          <div
-            onClick={() => {
-              setActiveChip(1);
-              setChipType({
-                value: 10,
-                color: "rgb(252, 98, 24)",
-                trueValue: 10,
-                nthValue: "M",
-              });
-            }}
-          >
-            <RouletteChip
-              amount={"10M"}
-              showBorder={activeChip === 1 ? true : false}
-              color={"rgb(252, 98, 24)"}
-            />
-          </div>
-          <div
-            onClick={() => {
-              setActiveChip(2);
-              setChipType({
-                value: 100,
-                color: "rgb(252, 76, 17)",
-                trueValue: 100,
-                nthValue: "M",
-              });
-            }}
-          >
-            <RouletteChip
-              amount={"100M"}
-              showBorder={activeChip === 2 ? true : false}
-              color={"rgb(252, 76, 17)"}
-            />
-          </div>
-        </section>
-        <div>
-          {" "}
-          <button
-            onClick={startGame}
-            style={{
-              marginTop: 20,
-            }}
-          >
-            Play
-          </button>
-          <button onClick={resetBoard}>Clear</button>
-        </div>
-      </div>
-      <div className="game-screen">
+      <div
+        className={`roulette-wheel-stage${
+          roundResult?.payout > 0 ? " is-win" : ""
+        }`}
+      >
         <Wheel
           numberOfWedges={37}
           winningNum={winningNum}
           onGameEnd={gameEnd}
+          spinDuration={spinDuration}
         />
-        <section className="roulette-buttons">
-          <RouletteButton
-            className="green"
-            text={0}
-            pocketNums={[0]}
-            chipValues={chipType}
-            addNewBet={addNewBet}
-            clearChips={toggleReset}
+        <ol
+          className="roulette-result-history"
+          aria-label="Recent roulette results"
+          aria-live="polite"
+        >
+          {roundHistory.map((result, index) => (
+            <li
+              className={`roulette-history-entry${
+                index === 0 ? " is-new" : ""
+              }${index === 1 || index === 2 ? " is-shifting" : ""}${
+                index === 3 ? " is-fading" : ""
+              }${index === 4 ? " is-faint" : ""}${
+                index === 5 ? " is-exiting" : ""
+              }`}
+              key={`${result.id}-${historySequence}`}
+            >
+              <span
+                className={`roulette-result-number${
+                  result.winningNum === 0
+                    ? " is-green"
+                    : RED_POCKETS.has(result.winningNum)
+                    ? " is-red"
+                    : " is-dark"
+                }`}
+              >
+                {result.winningNum}
+              </span>
+              <span className="roulette-result-label">
+                {result.payout > 0 ? "Winner" : "No win"}
+              </span>
+              <strong className={result.payout > 0 ? "is-win" : "is-loss"}>
+                {result.payout > 0 ? "+" : "-"}
+                {(result.payout > 0
+                  ? result.payout
+                  : result.wager
+                ).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+              </strong>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div className="roulette-game-section">
+        <div className="roulette-options">
+          <section className="bet-amount-input-wrapper">
+            <p>Chip Value {chipType.trueValue.toFixed(2)}</p>
+            <input type="text" readOnly value={totalBetValue.toFixed(2)} />
+          </section>
+          <section className="chip-selection">
+            <div
+              onClick={() => {
+                setActiveChip(0);
+                setChipType({
+                  value: 1,
+                  color: "rgb(252, 120, 32)",
+                  trueValue: 1,
+                  nthValue: "M",
+                });
+              }}
+            >
+              <RouletteChip
+                amount={"1M"}
+                showBorder={activeChip === 0 ? true : false}
+                color={"rgb(252, 120, 32)"}
+              />
+            </div>
+            <div
+              onClick={() => {
+                setActiveChip(1);
+                setChipType({
+                  value: 10,
+                  color: "rgb(252, 98, 24)",
+                  trueValue: 10,
+                  nthValue: "M",
+                });
+              }}
+            >
+              <RouletteChip
+                amount={"10M"}
+                showBorder={activeChip === 1 ? true : false}
+                color={"rgb(252, 98, 24)"}
+              />
+            </div>
+            <div
+              onClick={() => {
+                setActiveChip(2);
+                setChipType({
+                  value: 100,
+                  color: "rgb(252, 76, 17)",
+                  trueValue: 100,
+                  nthValue: "M",
+                });
+              }}
+            >
+              <RouletteChip
+                amount={"100M"}
+                showBorder={activeChip === 2 ? true : false}
+                color={"rgb(252, 76, 17)"}
+              />
+            </div>
+          </section>
+          <ToggleSwitch
+            label="Fast Mode"
+            checked={fastMode}
+            disabled={gameRunning}
+            onChange={setFastMode}
           />
-          <RouletteButton
-            className="red odd oneto12 oneto18 top-row"
-            text={3}
-            pocketNums={[3]}
-            chipValues={chipType}
-            addNewBet={addNewBet}
-            clearChips={toggleReset}
-          />
-          <RouletteButton
-            className="black even oneto12 oneto18 top-row"
-            text={6}
-            pocketNums={[6]}
-            chipValues={chipType}
-            addNewBet={addNewBet}
-            clearChips={toggleReset}
-          />
+          <div className="roulette-actions">
+            <button
+              className="roulette-play-button"
+              onClick={startGame}
+              disabled={gameRunning || totalBetValue <= 0 || !user}
+            >
+              {gameRunning ? "Spinning" : "Play"}
+            </button>
+            <button
+              className="roulette-clear-button"
+              onClick={resetBoard}
+              disabled={gameRunning || totalBetValue <= 0}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+        <div className="game-screen">
+          <section className="roulette-buttons">
+            <RouletteButton
+              className="green"
+              text={0}
+              pocketNums={[0]}
+              chipValues={chipType}
+              addNewBet={addNewBet}
+              clearChips={toggleReset}
+            />
+            <RouletteButton
+              className="red odd oneto12 oneto18 top-row"
+              text={3}
+              pocketNums={[3]}
+              chipValues={chipType}
+              addNewBet={addNewBet}
+              clearChips={toggleReset}
+            />
+            <RouletteButton
+              className="black even oneto12 oneto18 top-row"
+              text={6}
+              pocketNums={[6]}
+              chipValues={chipType}
+              addNewBet={addNewBet}
+              clearChips={toggleReset}
+            />
           <RouletteButton
             className="red odd oneto12 oneto18 top-row"
             text={9}
@@ -587,6 +698,7 @@ const RoulettePage = () => {
             ]}
           />
         </section>
+      </div>
       </div>
     </main>
   );

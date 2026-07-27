@@ -10,9 +10,11 @@ import { apiUrl } from "../../config/api";
 const Header = () => {
   const { user, setUser } = useUser();
   const dropdownRef = useRef(null);
+  const previousBalanceRef = useRef(null);
   const [showLogin, setShowLogin] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const [balanceIncrease, setBalanceIncrease] = useState(null);
 
   const logOut = async () => {
     try {
@@ -56,6 +58,27 @@ const Header = () => {
     };
   }, [showAccountDropdown]);
 
+  useEffect(() => {
+    const currentBalance = Number(user?.balance);
+
+    if (!Number.isFinite(currentBalance)) {
+      previousBalanceRef.current = null;
+      return;
+    }
+
+    const previousBalance = previousBalanceRef.current;
+    previousBalanceRef.current = currentBalance;
+
+    if (previousBalance === null || currentBalance <= previousBalance) return;
+
+    setBalanceIncrease(currentBalance - previousBalance);
+    const timerId = setTimeout(() => {
+      setBalanceIncrease(null);
+    }, 1600);
+
+    return () => clearTimeout(timerId);
+  }, [user?.balance]);
+
   return (
     <header>
       <div className="header-wrapper">
@@ -64,7 +87,11 @@ const Header = () => {
         </Link>
         {user ? (
           <div className="balance-bar">
-            <div className="balance-num">
+            <div
+              className={`balance-num${
+                balanceIncrease !== null ? " balance-increased" : ""
+              }`}
+            >
               {formatNum(user.balance)}
               <svg fill="none" viewBox="0 0 96 96">
                 <path
@@ -76,6 +103,12 @@ const Header = () => {
                   fill="#473800"
                 ></path>
               </svg>
+              {balanceIncrease !== null ? (
+                <span className="balance-increase-amount">
+                  +
+                  {formatNum(balanceIncrease)}
+                </span>
+              ) : null}
             </div>
             <div
               className="wallet-button"

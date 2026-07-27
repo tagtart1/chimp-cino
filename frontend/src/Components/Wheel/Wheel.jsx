@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Wheel.scss";
 
-const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
+const Wheel = ({
+  numberOfWedges,
+  winningNum,
+  onGameEnd,
+  spinDuration = 3500,
+}) => {
   const [ballYValue, setBallYValue] = useState(1.08);
   const viewBoxSize = 280;
   const radius = (viewBoxSize * 0.85) / 2;
@@ -89,35 +94,41 @@ const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
       let start = null;
       const startValue = 1.08;
       const endValue = 0.72;
-      const duration = 3500; // 3.5 seconds
+      const durationScale = spinDuration / 3500;
+      const scaledTime = (milliseconds) => milliseconds * durationScale;
 
       const step = (timestamp) => {
         if (!start) start = timestamp;
         const progress = timestamp - start;
 
         let newValue;
-        if (progress < 2000) {
-          // Phase 1: Stay at 1.08 for 2 seconds
+        if (progress < scaledTime(2000)) {
+          // Stay on the outer track
           newValue = startValue;
-        } else if (progress < 2200) {
-          // Phase 2: Drop to 0.72 in 0.2 seconds
-          const phaseProgress = (progress - 2000) / 200;
+        } else if (progress < scaledTime(2200)) {
+          // Drop inward
+          const phaseProgress =
+            (progress - scaledTime(2000)) / scaledTime(200);
           newValue = startValue - (startValue - endValue) * phaseProgress;
-        } else if (progress < 2400) {
-          // Phase 3: Jump to 0.97 in 0.2 seconds
-          const phaseProgress = (progress - 2200) / 200;
+        } else if (progress < scaledTime(2400)) {
+          // First bounce
+          const phaseProgress =
+            (progress - scaledTime(2200)) / scaledTime(200);
           newValue = endValue + (0.85 - endValue) * phaseProgress;
-        } else if (progress < 2600) {
-          // Phase 4: Drop back to 0.72 in 0.2 seconds
-          const phaseProgress = (progress - 2400) / 200;
+        } else if (progress < scaledTime(2600)) {
+          // Settle inward
+          const phaseProgress =
+            (progress - scaledTime(2400)) / scaledTime(200);
           newValue = 0.85 - (0.85 - endValue) * phaseProgress;
-        } else if (progress < 2800) {
-          // Phase 5: Jump to 0.85 in 0.2 seconds
-          const phaseProgress = (progress - 2600) / 200;
+        } else if (progress < scaledTime(2800)) {
+          // Second bounce
+          const phaseProgress =
+            (progress - scaledTime(2600)) / scaledTime(200);
           newValue = endValue + (0.85 - endValue) * phaseProgress;
-        } else if (progress < 3000) {
-          // Final Phase: Go to 0.72 in 0.2 seconds
-          const phaseProgress = (progress - 2800) / 200;
+        } else if (progress < scaledTime(3000)) {
+          // Final settle
+          const phaseProgress =
+            (progress - scaledTime(2800)) / scaledTime(200);
           newValue = 0.85 - (0.85 - endValue) * phaseProgress;
         } else {
           newValue = endValue; // Ensure it ends at 0.72
@@ -125,7 +136,7 @@ const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
 
         setBallYValue(newValue);
 
-        if (progress < duration) {
+        if (progress < spinDuration) {
           requestAnimationFrame(step);
         }
       };
@@ -135,7 +146,7 @@ const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
     console.log(winningNum);
     ballRef.current.classList.remove("roulette-visible");
     startAnimation();
-  }, [winningNum]);
+  }, [winningNum, spinDuration]);
 
   return (
     <div>
@@ -152,8 +163,18 @@ const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
         <circle
           cx={viewBoxSize / 2}
           cy={viewBoxSize / 2}
-          r={viewBoxSize * 0.49}
+          r={viewBoxSize * 0.47}
           fill="#041A22"
+          stroke="#c68f18"
+          strokeWidth={viewBoxSize * 0.045}
+        />
+        <circle
+          cx={viewBoxSize / 2}
+          cy={viewBoxSize / 2}
+          r={viewBoxSize * 0.445}
+          fill="none"
+          stroke="rgba(255, 225, 145, 0.55)"
+          strokeWidth={viewBoxSize * 0.008}
         />
         {wedges}
         {numbers}
@@ -169,6 +190,28 @@ const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
           r={viewBoxSize * 0.28}
           fill="#041A22"
         />
+        <circle
+          cx={viewBoxSize / 2}
+          cy={viewBoxSize / 2}
+          r={viewBoxSize * 0.155}
+          fill="#10232e"
+          stroke="#c68f18"
+          strokeWidth={viewBoxSize * 0.025}
+        />
+        <circle
+          cx={viewBoxSize / 2}
+          cy={viewBoxSize / 2}
+          r={viewBoxSize * 0.082}
+          fill="#213743"
+          stroke="#f3d17c"
+          strokeWidth={viewBoxSize * 0.012}
+        />
+        <circle
+          cx={viewBoxSize / 2}
+          cy={viewBoxSize / 2}
+          r={viewBoxSize * 0.022}
+          fill="#c68f18"
+        />
 
         <circle
           cx={winningMarkerPosition.x}
@@ -178,6 +221,7 @@ const Wheel = ({ numberOfWedges, winningNum, onGameEnd }) => {
           ref={ballRef}
           style={{
             visibility: "hidden",
+            "--roulette-spin-duration": `${spinDuration}ms`,
           }}
           onAnimationEnd={(e) => {
             e.currentTarget.classList.remove("roulette-ball");

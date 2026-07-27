@@ -23,7 +23,8 @@
 
 .roulette-ball {
   transform-origin: center center;
-  animation: moveAroundWheel 3.5s ease-out forwards;
+  animation: moveAroundWheel var(--roulette-spin-duration, 3500ms) ease-out
+    forwards;
   z-index: 1;
 }
 

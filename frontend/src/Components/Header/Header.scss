@@ -29,6 +29,7 @@ header {
 
   .balance-bar {
     display: flex;
+    position: relative;
     .wallet-button {
       font-size: 0.915rem;
       padding: 1.05rem 1rem;
@@ -45,6 +46,7 @@ header {
     }
 
     .balance-num {
+      position: relative;
       font-weight: bold;
       color: white;
       background-color: #0f212e;
@@ -55,6 +57,29 @@ header {
       display: flex;
       align-items: center;
       gap: 4px;
+      transition: color 0.2s, background-color 0.2s, box-shadow 0.2s;
+
+      &.balance-increased {
+        animation: wallet-balance-win 1.3s ease-out;
+      }
+
+      .balance-increase-amount {
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 8px);
+        z-index: 2;
+        padding: 4px 9px;
+        border: 1px solid rgba(92, 255, 100, 0.45);
+        border-radius: 999px;
+        background-color: #102d25;
+        color: #5cff64;
+        font-size: 12px;
+        line-height: 1;
+        white-space: nowrap;
+        pointer-events: none;
+        animation: wallet-balance-rise 1.6s ease-out forwards;
+      }
+
       svg {
         width: 15px;
       }
@@ -125,5 +150,37 @@ header {
       padding: 0.9375rem 1.25rem;
       cursor: pointer;
     }
+  }
+}
+
+@keyframes wallet-balance-win {
+  0%,
+  100% {
+    color: white;
+    background-color: #0f212e;
+    box-shadow: none;
+  }
+  22%,
+  60% {
+    color: #5cff64;
+    background-color: #123429;
+    box-shadow: inset 0 0 0 1px rgba(92, 255, 100, 0.5),
+      0 0 16px rgba(0, 231, 1, 0.2);
+  }
+}
+
+@keyframes wallet-balance-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -4px) scale(0.92);
+  }
+  18%,
+  68% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 9px) scale(0.98);
   }
 }
