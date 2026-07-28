@@ -64,72 +64,6 @@
   animation: global-loader-logo 2.2s ease-in-out infinite;
 }
 
-.global-loader-sparkles {
-  position: absolute;
-  width: 58px;
-  height: 56px;
-}
-
-.global-loader-sparkles-top {
-  top: 3px;
-  left: 6px;
-}
-
-.global-loader-sparkles-bottom {
-  right: 4px;
-  bottom: 2px;
-  transform: rotate(180deg);
-}
-
-.global-loader-spark {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  color: #00e701;
-  background: currentColor;
-  box-shadow:
-    -10px 0 currentColor,
-    10px 0 currentColor,
-    0 -10px currentColor,
-    0 10px currentColor,
-    0 0 16px rgba(0, 231, 1, 0.9);
-  animation: global-loader-sprite-spark 1.2s steps(4, end) infinite;
-
-  &::before,
-  &::after {
-    position: absolute;
-    content: "";
-    background: currentColor;
-  }
-
-  &::before {
-    top: -5px;
-    left: 0;
-    width: 5px;
-    height: 15px;
-  }
-
-  &::after {
-    top: 0;
-    left: -5px;
-    width: 15px;
-    height: 5px;
-  }
-}
-
-.global-loader-spark-large {
-  top: 18px;
-  left: 19px;
-}
-
-.global-loader-spark-small {
-  right: 2px;
-  bottom: 2px;
-  color: #ffc800;
-  transform: scale(0.55);
-  animation-delay: 300ms;
-}
-
 .global-loader-status {
   display: flex;
   gap: 7px;
@@ -165,24 +99,6 @@
   }
 }
 
-@keyframes global-loader-sprite-spark {
-  0% {
-    opacity: 0;
-    transform: scale(0.2) rotate(0deg);
-  }
-
-  35%,
-  65% {
-    opacity: 1;
-    transform: scale(1) rotate(45deg);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(0.2) rotate(90deg);
-  }
-}
-
 @keyframes global-loader-dot {
   0%,
   60%,
@@ -209,7 +125,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .global-loader-logo,
-  .global-loader-spark,
   .global-loader-status span {
     animation: none;
   }
