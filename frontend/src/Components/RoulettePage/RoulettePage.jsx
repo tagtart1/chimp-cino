@@ -5,6 +5,7 @@ import RouletteChip from "../RouletteChip/RouletteChip";
 import RouletteButton from "../RouletteButton/RouletteButton";
 import ToggleSwitch from "../ToggleSwitch/ToggleSwitch";
 import Wheel from "../Wheel/Wheel";
+import GameWinPopup from "../GameWinPopup/GameWinPopup";
 import { useUser } from "../../Contexts/UserProvider";
 import { apiUrl } from "../../config/api";
 
@@ -137,72 +138,23 @@ const RoulettePage = () => {
     setGameRunning(false);
   };
 
+  const winMultiplier =
+    roundResult?.payout > roundResult?.wager
+      ? roundResult.payout / roundResult.wager
+      : 0;
+
   return (
-    <main className="roulette-main">
-      <div
-        className={`roulette-wheel-stage${
-          roundResult?.payout > 0 ? " is-win" : ""
-        }`}
-      >
-        <Wheel
-          numberOfWedges={37}
-          winningNum={winningNum}
-          onGameEnd={gameEnd}
-          spinDuration={spinDuration}
-        />
-        <ol
-          className="roulette-result-history"
-          aria-label="Recent roulette results"
-          aria-live="polite"
-        >
-          {roundHistory.map((result, index) => (
-            <motion.li
-              className="roulette-history-entry"
-              key={result.id}
-              layout="position"
-              initial={{ y: -10 }}
-              animate={{
-                y: 0,
-                opacity: index === 3 ? 0.55 : index === 4 ? 0.22 : 1,
-              }}
-              transition={{
-                layout: { type: "spring", stiffness: 460, damping: 34 },
-                y: { type: "spring", stiffness: 460, damping: 30 },
-                opacity: { duration: 0.2 },
-              }}
-            >
-              <span
-                className={`roulette-result-number${
-                  result.winningNum === 0
-                    ? " is-green"
-                    : RED_POCKETS.has(result.winningNum)
-                    ? " is-red"
-                    : " is-dark"
-                }`}
-              >
-                {result.winningNum}
-              </span>
-              <span className="roulette-result-label">
-                {result.payout > 0 ? "Winner" : "No win"}
-              </span>
-              <strong className={result.payout > 0 ? "is-win" : "is-loss"}>
-                {result.payout > 0 ? "+" : "-"}
-                {(result.payout > 0
-                  ? result.payout
-                  : result.wager
-                ).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-              </strong>
-            </motion.li>
-          ))}
-        </ol>
-      </div>
+    <main
+      className={`roulette-main${gameRunning ? " is-spinning" : ""}${
+        roundResult ? " has-round-result" : ""
+      }`}
+    >
       <div className="roulette-game-section">
         <div className="roulette-options">
           <section className="bet-amount-input-wrapper">
-            <p>Chip Value {chipType.trueValue.toFixed(2)}</p>
+            <p>
+              Chip Value <strong>{chipType.trueValue.toFixed(2)}</strong>
+            </p>
             <input type="text" readOnly value={totalBetValue.toFixed(2)} />
           </section>
           <section className="chip-selection">
@@ -272,17 +224,67 @@ const RoulettePage = () => {
             >
               {gameRunning ? "Spinning" : "Play"}
             </button>
-            <button
-              className="roulette-clear-button"
-              onClick={resetBoard}
-              disabled={gameRunning || totalBetValue <= 0}
-            >
-              Clear
-            </button>
           </div>
         </div>
         <div className="game-screen">
-          <section className="roulette-buttons">
+          <div
+            className={`roulette-wheel-stage${
+              winMultiplier > 1 ? " is-win" : ""
+            }`}
+          >
+            <Wheel
+              numberOfWedges={37}
+              winningNum={winningNum}
+              onGameEnd={gameEnd}
+              spinDuration={spinDuration}
+            />
+            <ol
+              className="roulette-result-history"
+              aria-label="Recent roulette results"
+              aria-live="polite"
+            >
+              {roundHistory.map((result, index) => (
+                <motion.li
+                  className="roulette-history-entry"
+                  key={result.id}
+                  animate={{
+                    opacity: index === 3 ? 0.55 : index === 4 ? 0.22 : 1,
+                  }}
+                  transition={{
+                    opacity: { duration: 0.2 },
+                  }}
+                >
+                  <span
+                    className={`roulette-result-number${
+                      result.winningNum === 0
+                        ? " is-green"
+                        : RED_POCKETS.has(result.winningNum)
+                        ? " is-red"
+                        : " is-dark"
+                    }`}
+                  >
+                    {result.winningNum}
+                  </span>
+                  <span className="roulette-result-label">
+                    {result.payout > 0 ? "Winner" : "No win"}
+                  </span>
+                  <strong className={result.payout > 0 ? "is-win" : "is-loss"}>
+                    {result.payout > 0 ? "+" : "-"}
+                    {(result.payout > 0
+                      ? result.payout
+                      : result.wager
+                    ).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </strong>
+                </motion.li>
+              ))}
+            </ol>
+          </div>
+          <div className="roulette-board-scroll">
+            <div className="roulette-board-frame">
+              <section className="roulette-buttons">
             <RouletteButton
               className="green"
               text={0}
@@ -692,8 +694,28 @@ const RoulettePage = () => {
               35, 36,
             ]}
           />
-        </section>
-      </div>
+              </section>
+              <div className="roulette-board-footer">
+                <button
+                  className="roulette-clear-button"
+                  onClick={resetBoard}
+                  disabled={gameRunning || totalBetValue <= 0}
+                  aria-label="Clear all roulette bets"
+                >
+                  <span>Clear</span>
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M20 6v5h-5" />
+                    <path d="M19 11a7.5 7.5 0 1 0 .2 3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <GameWinPopup
+            payout={roundResult?.payout}
+            multiplier={winMultiplier}
+          />
+        </div>
       </div>
     </main>
   );

@@ -3,7 +3,7 @@ import "./MinesPage.scss";
 import MinesGrid from "./MinesGrid/MinesGrid";
 import MinesBetControls from "./MinesBetControls/MinesBetControls";
 import { useUser } from "../../Contexts/UserProvider";
-import PayoutPopup from "./PayoutPopup/PayoutPopup";
+import GameWinPopup from "../GameWinPopup/GameWinPopup";
 import GameFooter from "../GameFooter/GameFooter";
 import { apiUrl } from "../../config/api";
 
@@ -159,7 +159,7 @@ const MinesPage = () => {
             setGameIsEnding={setGameIsEnding}
             gameIsEnding={gameIsEnding}
           />
-          <PayoutPopup payout={finalPayout} multiplier={betMultiplier} />
+          <GameWinPopup payout={finalPayout} multiplier={betMultiplier} />
         </div>
       </section>
       <GameFooter />

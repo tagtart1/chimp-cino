@@ -108,6 +108,8 @@
       .blackjack-play-button {
         background-color: #00e701;
         border: none;
+        color: #08220b;
+        -webkit-text-fill-color: #08220b;
         font-weight: bold;
         padding: 16px 0px;
         font-size: 16px;
@@ -116,6 +118,7 @@
         &:disabled {
           background-color: #108f21;
           color: #121f26;
+          -webkit-text-fill-color: #121f26;
           cursor: not-allowed;
         }
 

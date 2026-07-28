@@ -27,7 +27,9 @@ const soundManager = {
       // Create a new Audio instance to allow overlapping
       const audio = new Audio(this.sounds[key].src);
       audio.volume = fetchVolume(); // Set volume from local storage
-      audio.play(); // Play the audio
+      audio.play().catch(() => {
+        // Browsers can reject delayed audio without a fresh user gesture.
+      });
     }
   },
 };

@@ -1,0 +1,58 @@
+.game-win-popup-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  pointer-events: none;
+  place-items: center;
+}
+
+.game-win-popup {
+  display: flex;
+  width: auto;
+  min-width: 150px;
+  max-width: calc(100% - 24px);
+  padding: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #00e701;
+  background-color: #1a2c38;
+  border: 3px solid #00e701;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(2, 12, 18, 0.35);
+}
+
+.game-win-multiplier {
+  display: flex;
+  align-items: center;
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
+
+  span {
+    margin-left: 2px;
+  }
+}
+
+.game-win-divider {
+  width: 30%;
+  height: 2px;
+  margin: 10px 0;
+  background-color: #2f4553;
+}
+
+.game-win-payout {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.game-win-coin {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+}

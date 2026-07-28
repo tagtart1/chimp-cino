@@ -9,6 +9,7 @@ import { useUser } from "../../Contexts/UserProvider";
 
 import { delay, getCardValueFromArray } from "../../Helpers/blackjackHelpers";
 import { BlackjackBetInput } from "./BlackjackBetInput/BlackjackBetInput";
+import GameWinPopup from "../GameWinPopup/GameWinPopup";
 import { apiUrl } from "../../config/api";
 
 // TODO: MODULARIZE THIS COMPONENT TOO MUCH STUFF HERE
@@ -19,6 +20,7 @@ const BlackjackPage = () => {
   const otherPlayerStackRef = useRef(null);
   const dealerStackRef = useRef(null);
   const staticCardsRef = useRef(null);
+  const wageredAmountRef = useRef(0);
 
   const { user, setUser } = useUser();
 
@@ -36,8 +38,23 @@ const BlackjackPage = () => {
   const [betAmount, setBetAmount] = useState(0);
   const [loadedBet, setLoadedBet] = useState(0);
   const [offerInsurance, setOfferInsurance] = useState(false);
+  const [winResult, setWinResult] = useState(null);
 
   const thresholdWidth = 875;
+
+  const showWin = (payout, winners) => {
+    const numericPayout = Number(payout);
+    const amountWagered = Number(wageredAmountRef.current);
+    const multiplier =
+      amountWagered > 0 ? numericPayout / amountWagered : 0;
+
+    if (!winners?.includes("player") || multiplier <= 1) {
+      setWinResult(null);
+      return;
+    }
+
+    setWinResult({ payout: numericPayout, multiplier });
+  };
 
   const playGame = async () => {
     const res = await fetch(apiUrl("/blackjack/games"), {
@@ -55,6 +72,8 @@ const BlackjackPage = () => {
       return;
     }
     const gameData = await res.json();
+    wageredAmountRef.current = Number(betAmount);
+    setWinResult(null);
     // Change UI balance
 
     setUser((prev) => {
@@ -187,6 +206,7 @@ const BlackjackPage = () => {
         setPlayerValues(playerValueArray);
         setLoadedBet(results.data.bet);
         setBetAmount(results.data.bet);
+        wageredAmountRef.current = Number(results.data.bet);
 
         if (playerHands.length > 1) setShowSelectedOutline(true);
       } catch (err) {
@@ -269,11 +289,13 @@ const BlackjackPage = () => {
           return user;
         });
       }
+      showWin(gameData.data.payout, gameData.data.game_winners);
     }
   };
 
   const handleActionResults = async (results, isHit, isDoubled) => {
     if (isDoubled) {
+      wageredAmountRef.current += Number(betAmount);
       setUser((prev) => {
         const user = { ...prev };
 
@@ -321,19 +343,22 @@ const BlackjackPage = () => {
       setGameWinners(results.game_winners);
 
       console.log(results);
-      if (!results.payout) return;
-      setUser((prev) => {
-        const user = { ...prev };
+      if (results.payout) {
+        setUser((prev) => {
+          const user = { ...prev };
 
-        parseFloat(user.balance);
-        user.balance += results.payout;
+          parseFloat(user.balance);
+          user.balance += results.payout;
 
-        return user;
-      });
+          return user;
+        });
+      }
+      showWin(results.payout, results.game_winners);
     }
   };
 
   const handleSplit = async (resultData) => {
+    wageredAmountRef.current += Number(betAmount);
     const playerResult = resultData.player;
     const leftCard = playerResult.hands[0][playerResult.hands[0].length - 1];
     const rightCard = playerResult.hands[1][playerResult.hands[1].length - 1];
@@ -419,6 +444,7 @@ const BlackjackPage = () => {
 
         return user;
       });
+      showWin(resultData.payout, resultData.game_winners);
     } else {
       setShowSelectedOutline(true);
     }
@@ -428,6 +454,7 @@ const BlackjackPage = () => {
     console.log(resultData);
     if (acceptedInsurance) {
       setOfferInsurance(false);
+      wageredAmountRef.current += Number(betAmount) / 2;
       // Deduct half the bet from UI balance
 
       setUser((prev) => {
@@ -780,6 +807,10 @@ const BlackjackPage = () => {
             {playerHands.length > 0 && cardsMap}
           </div>
           <BlackjackCardStack theRef={staticCardsRef} />
+          <GameWinPopup
+            payout={winResult?.payout}
+            multiplier={winResult?.multiplier}
+          />
         </div>
       </section>
     </main>
