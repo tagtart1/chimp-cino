@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useUser } from "../../Contexts/UserProvider";
 import { apiUrl } from "../../config/api";
 import CoinIcon from "../BetAmountInput/CoinIcon";
+import CustomSelect from "../CustomSelect/CustomSelect";
 import MinesIcon from "../Navigation/MinesIcon";
 import "./StatsDrawer.scss";
 
@@ -31,6 +32,7 @@ const GAME_OPTIONS = [
   { value: "blackjack", label: "Blackjack" },
   { value: "mines", label: "Mines" },
 ];
+const HISTORY_SKELETON_ROWS = 6;
 
 const formatMoney = (value, { signed = false } = {}) => {
   const number = Number(value) || 0;
@@ -72,6 +74,79 @@ const GameIcon = ({ game }) => {
     </svg>
   );
 };
+
+const GameFilterIcon = ({ game }) => {
+  if (game !== "all") return <GameIcon game={game} />;
+
+  return (
+    <svg fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4" y="4" width="4" height="4" rx="1" />
+      <rect x="4" y="10" width="4" height="4" rx="1" />
+      <rect x="4" y="16" width="4" height="4" rx="1" />
+      <path d="M11 6h9M11 12h9M11 18h9" />
+    </svg>
+  );
+};
+
+const SummarySkeleton = ({ game }) => (
+  <div
+    className="stats-summary-skeleton"
+    role="status"
+    aria-label="Loading statistics"
+  >
+    <div className="stats-summary-grid" aria-hidden="true">
+      <div className="stats-summary-card">
+        <span className="stats-skeleton-line stats-skeleton-summary-label" />
+        <span className="stats-skeleton-line stats-skeleton-summary-total" />
+      </div>
+      <div className="stats-summary-card">
+        <span className="stats-skeleton-line stats-skeleton-summary-label" />
+        <span className="stats-skeleton-line stats-skeleton-summary-value" />
+      </div>
+      <div className="stats-summary-card">
+        <span className="stats-skeleton-line stats-skeleton-summary-label" />
+        <span className="stats-skeleton-line stats-skeleton-summary-value" />
+      </div>
+    </div>
+    <div className="stats-game-breakdown" aria-hidden="true">
+      {Array.from({ length: game === "all" ? 3 : 1 }, (_, index) => (
+        <div key={index}>
+          <span>
+            <span className="stats-skeleton-circle stats-skeleton-game-icon" />
+            <span className="stats-skeleton-line stats-skeleton-game-name" />
+          </span>
+          <span className="stats-skeleton-line stats-skeleton-game-result" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const HistorySkeleton = () => (
+  <div
+    className="stats-history-skeleton"
+    role="status"
+    aria-label="Loading game history"
+  >
+    <div aria-hidden="true">
+      {Array.from({ length: HISTORY_SKELETON_ROWS }, (_, index) => (
+        <div className="stats-history-row" key={index}>
+          <div className="stats-history-game">
+            <span className="stats-skeleton-circle stats-skeleton-history-icon" />
+            <div>
+              <span className="stats-skeleton-line stats-skeleton-history-name" />
+              <span className="stats-skeleton-line stats-skeleton-history-time" />
+            </div>
+          </div>
+          <div className="stats-skeleton-history-result">
+            <span className="stats-skeleton-line stats-skeleton-history-value" />
+            <span className="stats-skeleton-circle stats-skeleton-coin" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 const StatsDrawer = ({
   desktopOffset = 240,
@@ -261,6 +336,23 @@ const StatsDrawer = ({
   ]);
 
   const summary = analytics?.summary ?? EMPTY_SUMMARY;
+  const handleRangeChange = (nextRange) => {
+    if (nextRange === range) return;
+
+    setAnalytics(null);
+    setSummaryError("");
+    setRange(nextRange);
+  };
+  const handleGameChange = (nextGame) => {
+    if (nextGame === game) return;
+
+    setAnalytics(null);
+    setSummaryError("");
+    setResults([]);
+    setHistoryReady(false);
+    setHistoryError("");
+    setGame(nextGame);
+  };
 
   return (
     <AnimatePresence>
@@ -300,22 +392,17 @@ const StatsDrawer = ({
           >
             {isMobile ? <span className="stats-drawer-handle" /> : null}
             <header className="stats-drawer-header">
-              <label className="stats-game-select">
-                <span className="stats-visually-hidden">Game</span>
-                <select
-                  value={game}
-                  onChange={(event) => setGame(event.target.value)}
-                >
-                  {GAME_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <svg fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m7 10 5 5 5-5" />
-                </svg>
-              </label>
+              <CustomSelect
+                className="stats-game-select"
+                label="Game"
+                menuLabel="Games"
+                options={GAME_OPTIONS}
+                value={game}
+                onChange={handleGameChange}
+                renderIcon={(option) => (
+                  <GameFilterIcon game={option.value} />
+                )}
+              />
               <button
                 className="stats-close-button"
                 type="button"
@@ -331,178 +418,184 @@ const StatsDrawer = ({
 
             <div className="stats-drawer-scroll" ref={scrollRef}>
               <section className="stats-overview" aria-label="Stats summary">
-                    <div className="stats-range-toggle">
-                      <button
-                        type="button"
-                        className={range === "day" ? "is-selected" : ""}
-                        aria-pressed={range === "day"}
-                        onClick={() => setRange("day")}
-                      >
-                        Today
-                      </button>
-                      <button
-                        type="button"
-                        className={range === "week" ? "is-selected" : ""}
-                        aria-pressed={range === "week"}
-                        onClick={() => setRange("week")}
-                      >
-                        7 days
-                      </button>
+                <div className="stats-range-toggle">
+                  <button
+                    type="button"
+                    className={range === "day" ? "is-selected" : ""}
+                    aria-pressed={range === "day"}
+                    onClick={() => handleRangeChange("day")}
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    className={range === "week" ? "is-selected" : ""}
+                    aria-pressed={range === "week"}
+                    onClick={() => handleRangeChange("week")}
+                  >
+                    7 days
+                  </button>
+                </div>
+
+                {summaryError ? (
+                  <p className="stats-error" role="alert">
+                    {summaryError}
+                  </p>
+                ) : analytics ? (
+                  <>
+                    <div
+                      className="stats-summary-grid"
+                      aria-busy={summaryLoading}
+                    >
+                      <div className="stats-summary-card">
+                        <span>Games played</span>
+                        <strong>{summary.gamesPlayed}</strong>
+                      </div>
+                      <div className="stats-summary-card">
+                        <span>Net result</span>
+                        <strong
+                          className={
+                            Number(summary.netResult) > 0
+                              ? "is-positive"
+                              : Number(summary.netResult) < 0
+                                ? "is-negative"
+                                : ""
+                          }
+                        >
+                          {formatMoney(summary.netResult, {
+                            signed: true,
+                          })}
+                          <CoinIcon />
+                        </strong>
+                      </div>
+                      <div className="stats-summary-card">
+                        <span>Wagered</span>
+                        <strong>
+                          {formatMoney(summary.totalWagered)}
+                          <CoinIcon />
+                        </strong>
+                      </div>
                     </div>
 
-                    {summaryError ? (
-                      <p className="stats-error" role="alert">
-                        {summaryError}
-                      </p>
-                    ) : (
-                      <>
-                        <div
-                          className={`stats-summary-grid${
-                            summaryLoading ? " is-loading" : ""
-                          }`}
-                          aria-busy={summaryLoading}
-                        >
-                          <div className="stats-summary-card">
-                            <span>Games played</span>
-                            <strong>{summary.gamesPlayed}</strong>
-                          </div>
-                          <div className="stats-summary-card">
-                            <span>Net result</span>
+                    <div className="stats-game-breakdown">
+                      {games
+                        .filter(
+                          (gameRow) =>
+                            game === "all" || gameRow.game === game
+                        )
+                        .map((gameRow) => (
+                          <div key={gameRow.game}>
+                            <span>
+                              <GameIcon game={gameRow.game} />
+                              {GAME_NAMES[gameRow.game]}
+                            </span>
                             <strong
                               className={
-                                Number(summary.netResult) > 0
+                                Number(gameRow.netResult) > 0
                                   ? "is-positive"
-                                  : Number(summary.netResult) < 0
+                                  : Number(gameRow.netResult) < 0
                                     ? "is-negative"
                                     : ""
                               }
                             >
-                              {formatMoney(summary.netResult, {
+                              {formatMoney(gameRow.netResult, {
                                 signed: true,
                               })}
-                              <CoinIcon />
                             </strong>
                           </div>
-                          <div className="stats-summary-card">
-                            <span>Wagered</span>
-                            <strong>
-                              {formatMoney(summary.totalWagered)}
-                              <CoinIcon />
-                            </strong>
-                          </div>
-                        </div>
-
-                        <div className="stats-game-breakdown">
-                          {games
-                            .filter(
-                              (gameRow) =>
-                                game === "all" || gameRow.game === game
-                            )
-                            .map((gameRow) => (
-                              <div key={gameRow.game}>
-                                <span>
-                                  <GameIcon game={gameRow.game} />
-                                  {GAME_NAMES[gameRow.game]}
-                                </span>
-                                <strong
-                                  className={
-                                    Number(gameRow.netResult) > 0
-                                      ? "is-positive"
-                                      : Number(gameRow.netResult) < 0
-                                        ? "is-negative"
-                                        : ""
-                                  }
-                                >
-                                  {formatMoney(gameRow.netResult, {
-                                    signed: true,
-                                  })}
-                                </strong>
-                              </div>
-                            ))}
-                        </div>
-                      </>
-                    )}
-                  </section>
-
-                  <section className="stats-history" aria-label="Game history">
-                    <div className="stats-history-title">
-                      <div>
-                        <span>Recent activity</span>
-                        <h3>Game history</h3>
-                      </div>
-                      <span>Result</span>
+                        ))}
                     </div>
+                  </>
+                ) : (
+                  <SummarySkeleton game={game} />
+                )}
+              </section>
 
-                    {results.map((result) => (
-                      <article className="stats-history-row" key={result.id}>
-                        <div className="stats-history-game">
-                          <span className="stats-game-icon">
-                            <GameIcon game={result.game} />
-                          </span>
-                          <div>
-                            <strong>{GAME_NAMES[result.game]}</strong>
-                            <time dateTime={result.completedAt}>
-                              {formatCompletedAt(result.completedAt)}
-                            </time>
-                          </div>
-                        </div>
-                        <span
-                          className={`stats-history-result${
-                            Number(result.netResult) > 0
-                              ? " is-positive"
-                              : Number(result.netResult) < 0
-                                ? " is-negative"
-                                : ""
-                          }`}
-                        >
-                          {formatMoney(result.netResult, { signed: true })}
-                          <CoinIcon />
-                        </span>
-                      </article>
-                    ))}
+              <section className="stats-history" aria-label="Game history">
+                <div className="stats-history-title">
+                  <div>
+                    <span>Recent activity</span>
+                    <h3>Game history</h3>
+                  </div>
+                  <span>Result</span>
+                </div>
 
-                    {historyReady &&
-                    !historyLoading &&
-                    !historyError &&
-                    results.length === 0 ? (
-                      <div className="stats-empty-history">
-                        <p>No completed games yet.</p>
-                        <span>Your next result will show up here.</span>
+                {!historyReady &&
+                results.length === 0 &&
+                !historyError ? (
+                  <HistorySkeleton />
+                ) : null}
+
+                {results.map((result) => (
+                  <article className="stats-history-row" key={result.id}>
+                    <div className="stats-history-game">
+                      <span className="stats-game-icon">
+                        <GameIcon game={result.game} />
+                      </span>
+                      <div>
+                        <strong>{GAME_NAMES[result.game]}</strong>
+                        <time dateTime={result.completedAt}>
+                          {formatCompletedAt(result.completedAt)}
+                        </time>
                       </div>
-                    ) : null}
+                    </div>
+                    <span
+                      className={`stats-history-result${
+                        Number(result.netResult) > 0
+                          ? " is-positive"
+                          : Number(result.netResult) < 0
+                            ? " is-negative"
+                            : ""
+                      }`}
+                    >
+                      {formatMoney(result.netResult, { signed: true })}
+                      <CoinIcon />
+                    </span>
+                  </article>
+                ))}
 
-                    {historyError ? (
-                      <div className="stats-history-error">
-                        <p role="alert">{historyError}</p>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            fetchHistory(
-                              results.length ? nextCursor : null,
-                              results.length === 0
-                            )
-                          }
-                        >
-                          Try again
-                        </button>
-                      </div>
-                    ) : null}
+                {historyReady &&
+                !historyLoading &&
+                !historyError &&
+                results.length === 0 ? (
+                  <div className="stats-empty-history">
+                    <p>No completed games yet.</p>
+                    <span>Your next result will show up here.</span>
+                  </div>
+                ) : null}
 
-                    <div
-                      className="stats-history-sentinel"
-                      ref={loadMoreRef}
-                      aria-hidden="true"
-                    />
-                    {historyLoading ? (
-                      <div
-                        className="stats-history-loading"
-                        aria-label="Loading game history"
-                      >
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                    ) : null}
+                {historyError ? (
+                  <div className="stats-history-error">
+                    <p role="alert">{historyError}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        fetchHistory(
+                          results.length ? nextCursor : null,
+                          results.length === 0
+                        )
+                      }
+                    >
+                      Try again
+                    </button>
+                  </div>
+                ) : null}
+
+                <div
+                  className="stats-history-sentinel"
+                  ref={loadMoreRef}
+                  aria-hidden="true"
+                />
+                {historyLoading && results.length > 0 ? (
+                  <div
+                    className="stats-history-loading"
+                    aria-label="Loading more game history"
+                  >
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                ) : null}
               </section>
             </div>
           </motion.aside>

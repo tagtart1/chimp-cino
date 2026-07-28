@@ -113,6 +113,63 @@ describe("StatsDrawer", () => {
     jest.restoreAllMocks();
   });
 
+  it("shows shape-matched skeletons instead of zero values while loading", () => {
+    global.fetch = jest.fn(() => new Promise(() => {}));
+
+    render(
+      <StatsDrawer
+        isMobile={false}
+        isOpen
+        onClose={jest.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole("status", { name: "Loading statistics" })
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("status", { name: "Loading game history" })
+    ).not.toBeNull();
+    expect(screen.queryByText("0")).toBeNull();
+    expect(
+      document.querySelectorAll(".stats-history-skeleton .stats-history-row")
+    ).toHaveLength(6);
+  });
+
+  it("supports keyboard navigation and Escape in the game menu", async () => {
+    global.fetch = jest.fn(() => new Promise(() => {}));
+    const onClose = jest.fn();
+
+    render(
+      <StatsDrawer
+        isMobile={false}
+        isOpen
+        onClose={onClose}
+      />
+    );
+
+    const gameMenuButton = screen.getByRole("button", {
+      name: "Game: All Games",
+    });
+    fireEvent.keyDown(gameMenuButton, { key: "ArrowDown" });
+
+    const rouletteOption = screen.getByRole("option", {
+      name: "Roulette",
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(rouletteOption);
+    });
+
+    fireEvent.keyDown(rouletteOption, { key: "Escape" });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("listbox", { name: "Games" })
+      ).toBeNull();
+    });
+    expect(document.activeElement).toBe(gameMenuButton);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("loads the summary, starts history at 10, and fetches the next cursor", async () => {
     render(
       <StatsDrawer
@@ -161,9 +218,12 @@ describe("StatsDrawer", () => {
       ).toBe("false");
     });
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Game" }), {
-      target: { value: "roulette" },
+    const gameMenuButton = screen.getByRole("button", {
+      name: "Game: All Games",
     });
+    fireEvent.click(gameMenuButton);
+    expect(screen.getByRole("listbox", { name: "Games" })).not.toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: "Roulette" }));
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/analytics?range=week&game=roulette"),
@@ -175,6 +235,14 @@ describe("StatsDrawer", () => {
         ),
         { credentials: "include" }
       );
+    });
+    expect(
+      screen.getByRole("button", { name: "Game: Roulette" })
+    ).not.toBeNull();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("listbox", { name: "Games" })
+      ).toBeNull();
     });
     await waitFor(() => {
       expect(screen.getAllByRole("article")).toHaveLength(10);
