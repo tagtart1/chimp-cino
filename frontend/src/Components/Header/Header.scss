@@ -1,63 +1,139 @@
-header {
+.app-header {
   background-color: #1a2c38;
   display: flex;
   justify-content: center;
-
   box-shadow: #0003 0 4px 6px -1px, #0000001f 0 2px 4px -1px;
   position: relative;
-
   z-index: 5;
   width: 100%;
   max-width: 100vw;
 
   .header-wrapper {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns:
+      minmax(0, 1fr) minmax(0, max-content)
+      minmax(0, 1fr);
     align-items: center;
+    min-height: 64px;
     width: 100%;
     max-width: 1400px;
-    padding: 8px 3vw;
+    padding: 8px clamp(16px, 3vw, 42px);
+    gap: clamp(10px, 2vw, 24px);
   }
-  .logo {
-    max-width: 120px;
-    transition: 0.3s all;
-    cursor: pointer;
-    &:hover {
-      transform: scale(1.05);
+
+  .header-brand {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    justify-self: start;
+    color: #ffffff;
+    text-decoration: none;
+    -webkit-text-fill-color: currentColor;
+    border-radius: 8px;
+
+    &:focus-visible {
+      outline: 2px solid #00e701;
+      outline-offset: 3px;
     }
   }
 
+  .logo {
+    display: block;
+    width: 118px;
+    height: auto;
+    cursor: pointer;
+    transition: transform 180ms ease;
+
+    &:hover {
+      transform: scale(1.035);
+    }
+  }
+
+  .compact-logo {
+    display: none;
+    width: 42px;
+    height: 42px;
+    color: #ffffff;
+    font-family: "Courgette-Regular", cursive;
+    font-size: 32px;
+    line-height: 42px;
+    text-align: center;
+  }
+
   .balance-bar {
+    grid-column: 2;
     display: flex;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
     position: relative;
+    justify-self: center;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(5, 18, 26, 0.24);
+
     .wallet-button {
-      font-size: 0.915rem;
-      padding: 1.05rem 1rem;
+      display: grid;
+      width: 48px;
+      min-width: 48px;
+      height: 48px;
       background-color: #ffc800;
-      font-weight: bold;
-      color: black;
-      border-top-right-radius: 6px;
-      border-bottom-right-radius: 6px;
-      transition: 0.2s background-color;
+      color: #473800;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      place-items: center;
+      transition:
+        background-color 160ms ease,
+        transform 160ms ease;
 
       &:hover {
-        background-color: rgb(168, 143, 52);
+        background-color: #ffd32f;
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
+
+      &:focus-visible {
+        z-index: 1;
+        outline: 2px solid #ffffff;
+        outline-offset: -4px;
+      }
+
+      svg {
+        width: 22px;
+        height: 22px;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
     }
 
     .balance-num {
       position: relative;
-      font-weight: bold;
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 48px;
+      padding: 0 14px;
+      font-size: 14px;
+      font-weight: 800;
       color: white;
       background-color: #0f212e;
-      padding: 1.05rem 1.5rem;
-      border-bottom-left-radius: 6px;
-      border-top-left-radius: 6px;
+      border-radius: 8px 0 0 8px;
       text-align: center;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 7px;
       transition: color 0.2s, background-color 0.2s, box-shadow 0.2s;
+
+      .balance-value {
+        display: block;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
       &.balance-increased {
         animation: wallet-balance-win 1.3s ease-out;
@@ -67,7 +143,7 @@ header {
         position: absolute;
         left: 50%;
         top: calc(100% + 8px);
-        z-index: 2;
+        z-index: 20;
         padding: 4px 9px;
         border: 1px solid rgba(92, 255, 100, 0.45);
         border-radius: 999px;
@@ -80,57 +156,127 @@ header {
         animation: wallet-balance-rise 1.6s ease-out forwards;
       }
 
-      svg {
-        width: 15px;
+      .coin-icon {
+        width: 17px;
+        min-width: 17px;
+        height: 17px;
       }
     }
   }
 
   .auth-actions-group {
-    .profile-dropdown-button {
-      background-color: transparent;
-      border: none;
+    grid-column: 3;
+    display: flex;
+    align-items: center;
+    justify-self: end;
+
+    .account-menu {
       position: relative;
-      margin-right: 100px;
-      .account-dropdown-menu {
-        padding: 12px 8px;
-        border-radius: 6px;
-        position: absolute;
-        cursor: pointer;
-        background-color: white;
-        color: black;
-        left: -110%;
-        bottom: -65px;
+    }
 
-        .arrow {
-          position: absolute;
-          background-color: white;
-          width: 10px;
-          height: 10px;
-          transform: rotate(45deg);
-          top: -5px;
-          left: 45%;
-        }
-        li {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          p {
-            color: #2f4553;
-            font-weight: bold;
+    .profile-dropdown-button {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      color: #dce3e8;
+      background-color: #0f212e;
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      place-items: center;
+      transition:
+        color 160ms ease,
+        background-color 160ms ease,
+        border-color 160ms ease;
 
-            font-size: 16px;
-          }
-          svg {
-            color: #2f4553;
-          }
-        }
+      &:hover,
+      &[aria-expanded="true"] {
+        color: #ffffff;
+        background-color: #213743;
       }
+
+      &:focus-visible {
+        outline: 2px solid #00e701;
+        outline-offset: 3px;
+      }
+
       svg {
-        width: 18px;
-        color: white;
+        width: 19px;
+        height: 19px;
       }
     }
+
+    .account-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      z-index: 10;
+      width: 168px;
+      padding: 7px;
+      color: #ffffff;
+      background-color: #213743;
+      border: 1px solid rgba(177, 186, 211, 0.18);
+      border-radius: 10px;
+      box-shadow: 0 16px 40px rgba(3, 13, 20, 0.46);
+      animation: account-menu-in 140ms ease-out;
+      transform-origin: top right;
+
+      .arrow {
+        position: absolute;
+        top: -6px;
+        right: 16px;
+        width: 11px;
+        height: 11px;
+        background-color: #213743;
+        border-top: 1px solid rgba(177, 186, 211, 0.18);
+        border-left: 1px solid rgba(177, 186, 211, 0.18);
+        transform: rotate(45deg);
+      }
+
+      > button {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        width: 100%;
+        min-height: 42px;
+        align-items: center;
+        gap: 10px;
+        padding: 0 11px;
+        color: #e9eef2;
+        font-size: 14px;
+        font-weight: 700;
+        text-align: left;
+        border-radius: 7px;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+          color: #ffffff;
+          background-color: #2f4553;
+        }
+
+        &:focus-visible {
+          outline: 2px solid #00e701;
+          outline-offset: -2px;
+        }
+      }
+
+      .logout-icon {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        color: #b1bad3;
+        background-color: rgba(15, 33, 46, 0.65);
+        border-radius: 7px;
+        place-items: center;
+
+        svg {
+          width: 14px;
+          height: 14px;
+        }
+      }
+    }
+
     .sign-in-button {
       background-color: transparent;
       color: white;
@@ -139,7 +285,14 @@ header {
       font-size: 0.875rem;
       padding: 0.9375rem 1.25rem;
       cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid #00e701;
+        outline-offset: -2px;
+        border-radius: 6px;
+      }
     }
+
     .register-button {
       color: white;
       background-color: #1475e1;
@@ -149,7 +302,27 @@ header {
       font-size: 0.875rem;
       padding: 0.9375rem 1.25rem;
       cursor: pointer;
+
+      &:hover {
+        background-color: #2784eb;
+      }
+
+      &:focus-visible {
+        outline: 2px solid #ffffff;
+        outline-offset: -4px;
+      }
     }
+  }
+}
+
+@keyframes account-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -186,53 +359,79 @@ header {
 }
 
 @media (max-width: 800px) {
-  header {
+  .app-header {
     .header-wrapper {
-      padding-left: 64px;
+      min-height: 60px;
+      padding: 7px 14px;
+      gap: 10px;
+    }
+
+    .logo {
+      display: none;
+    }
+
+    .compact-logo {
+      display: block;
     }
   }
 }
 
-@media (max-width: 420px) {
-  header {
+@media (max-width: 480px) {
+  .app-header {
     .header-wrapper {
-      gap: 8px;
-      padding: 8px 12px 8px 64px;
-    }
-
-    .logo {
-      width: 96px;
+      grid-template-columns:
+        minmax(42px, 1fr) minmax(0, max-content)
+        minmax(42px, 1fr);
+      padding-inline: 10px;
+      gap: 7px;
     }
 
     .auth-actions-group {
-      display: flex;
-      align-items: center;
-      margin-left: auto;
-
       .sign-in-button,
       .register-button {
-        padding: 0.75rem 0.65rem;
-        font-size: 0.8125rem;
+        padding: 0.75rem 0.6rem;
+        font-size: 0.78rem;
         white-space: nowrap;
       }
 
       .profile-dropdown-button {
-        margin-right: 0;
-        padding: 12px;
+        width: 42px;
+        height: 42px;
       }
     }
 
     .balance-bar {
-      margin-left: auto;
-
       .balance-num {
-        padding: 0.8rem 0.65rem;
-        font-size: 0.8125rem;
+        height: 44px;
+        padding: 0 9px;
+        font-size: 0.78rem;
       }
 
       .wallet-button {
-        display: none;
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
       }
+    }
+  }
+}
+
+@media (max-width: 350px) {
+  .app-header {
+    .header-wrapper {
+      gap: 4px;
+      padding-inline: 7px;
+    }
+
+    .compact-logo {
+      width: 38px;
+      height: 38px;
+      font-size: 25px;
+      line-height: 38px;
+    }
+
+    .balance-bar .balance-num {
+      padding-inline: 7px;
     }
   }
 }

@@ -18,6 +18,11 @@ body {
   height: 100%;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -127,6 +132,32 @@ button {
 
   vertical-align: baseline;
 }
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  color: inherit;
+  background-color: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-text-fill-color: currentColor;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button::-moz-focus-inner {
+  padding: 0;
+  border: 0;
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* HTML5 display-role reset for older browsers */
 article,
 aside,

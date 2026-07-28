@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "./Navigation.scss";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import MiniNavigation from "./MiniNavigation";
 import MinesIcon from "./MinesIcon";
 
 const Navigation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobile, setIsMobile] = useState(
     () => window.matchMedia("(max-width: 800px)").matches
   );
@@ -30,12 +31,17 @@ const Navigation = () => {
   useEffect(() => {
     if (!mobileMenuOpen) return undefined;
 
+    const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event) => {
       if (event.key === "Escape") setMobileMenuOpen(false);
     };
 
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
   }, [mobileMenuOpen]);
 
   useEffect(() => {
@@ -50,18 +56,6 @@ const Navigation = () => {
   if (isMobile) {
     return (
       <>
-        <button
-          className="mobile-nav-toggle"
-          type="button"
-          aria-label="Open navigation menu"
-          aria-expanded={mobileMenuOpen}
-          onClick={() => setMobileMenuOpen(true)}
-        >
-          <svg fill="currentColor" viewBox="0 0 64 64" aria-hidden="true">
-            <path d="M0 0h64v13H0V0Zm0 25.5h64v13H0v-13ZM64 51H0v13h64V51Z"></path>
-          </svg>
-        </button>
-
         <AnimatePresence>
           {mobileMenuOpen ? (
             <>
@@ -76,14 +70,15 @@ const Navigation = () => {
                 onClick={() => setMobileMenuOpen(false)}
               />
               <motion.aside
+                id="mobile-browse-menu"
                 className="mobile-nav-drawer"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Navigation menu"
-                initial={{ x: "-100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "-100%" }}
-                transition={{ type: "tween", duration: 0.24 }}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", duration: 0.48, bounce: 0.18 }}
               >
                 <div className="mobile-nav-header">
                   <button
@@ -142,6 +137,37 @@ const Navigation = () => {
             </>
           ) : null}
         </AnimatePresence>
+
+        <nav className="mobile-bottom-nav" aria-label="Primary navigation">
+          <button
+            type="button"
+            className={mobileMenuOpen ? "is-active" : ""}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-browse-menu"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <svg fill="currentColor" viewBox="0 0 64 64" aria-hidden="true">
+              <path d="M0 0h64v13H0V0Zm0 25.5h64v13H0v-13ZM64 51H0v13h64V51Z"></path>
+            </svg>
+            <span>Browse</span>
+          </button>
+          <button
+            type="button"
+            className={
+              location.pathname === "/" || location.pathname === "/home"
+                ? "is-active"
+                : ""
+            }
+            onClick={() => navigateFromMobileMenu("/")}
+          >
+            <svg fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="4.25" />
+              <path d="M12 3v4.75M21 12h-4.75M12 21v-4.75M3 12h4.75" />
+            </svg>
+            <span>Casino</span>
+          </button>
+        </nav>
       </>
     );
   }

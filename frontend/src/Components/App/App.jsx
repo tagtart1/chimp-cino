@@ -3,21 +3,21 @@ import Dashboard from "../Dashbaord/Dashboard";
 import Header from "../Header/Header";
 import RoulettePage from "../RoulettePage/RoulettePage";
 import "./App.scss";
-import { Routes, Route, useNavigate, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 import { useUser } from "../../Contexts/UserProvider";
 import BlackjackPage from "../BlackjackPage/BlackjackPage";
 import Navigation from "../Navigation/Navigation";
 import MinesPage from "../MinesPage/MinesPage";
+import GlobalLoader from "../GlobalLoader/GlobalLoader";
+import NotFoundPage from "../NotFoundPage/NotFoundPage";
 import soundManager from "../../Helpers/sfxPlayer";
 import { apiUrl } from "../../config/api";
 
 function App() {
-  const { user, setUser } = useUser();
+  const { setUser } = useUser();
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    if (user) return;
-
     const fetchUser = async () => {
       setLoadingUser(true);
       try {
@@ -40,12 +40,12 @@ function App() {
     };
     fetchUser();
     soundManager.initialize();
-  }, [setUser, user]);
+  }, [setUser]);
 
-  // use skeleton later
   if (loadingUser) {
-    return <div className="loading-test">LOADING</div>;
+    return <GlobalLoader />;
   }
+
   return (
     <div className="App">
       <BrowserRouter>
@@ -60,6 +60,7 @@ function App() {
               <Route path="/roulette" element={<RoulettePage />} />
               <Route path="/blackjack" element={<BlackjackPage />} />
               <Route path="/mines" element={<MinesPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </div>
         </div>

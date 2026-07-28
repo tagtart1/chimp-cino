@@ -45,16 +45,22 @@ const Header = () => {
   };
 
   useEffect(() => {
+    if (!showAccountDropdown) return undefined;
+
     const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowAccountDropdown(false);
-        document.removeEventListener("mouseup", handleOutsideClick);
       }
     };
+    const handleEscape = (e) => {
+      if (e.key === "Escape") setShowAccountDropdown(false);
+    };
 
-    document.addEventListener("mouseup", handleOutsideClick);
+    document.addEventListener("pointerdown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("mouseup", handleOutsideClick);
+      document.removeEventListener("pointerdown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [showAccountDropdown]);
 
@@ -80,10 +86,13 @@ const Header = () => {
   }, [user?.balance]);
 
   return (
-    <header>
+    <header className="app-header">
       <div className="header-wrapper">
-        <Link to="/">
-          <img src={logo} alt="logo" className="logo" />
+        <Link className="header-brand" to="/" aria-label="Chimps Casino home">
+          <img src={logo} alt="Chimps" className="logo" />
+          <span className="compact-logo" aria-hidden="true">
+            C
+          </span>
         </Link>
         {user ? (
           <div className="balance-bar">
@@ -92,8 +101,15 @@ const Header = () => {
                 balanceIncrease !== null ? " balance-increased" : ""
               }`}
             >
-              {formatNum(user.balance)}
-              <svg fill="none" viewBox="0 0 96 96">
+              <span className="balance-value" title={formatNum(user.balance)}>
+                {formatNum(user.balance)}
+              </span>
+              <svg
+                className="coin-icon"
+                fill="none"
+                viewBox="0 0 96 96"
+                aria-hidden="true"
+              >
                 <path
                   d="M48 96c26.51 0 48-21.49 48-48S74.51 0 48 0 0 21.49 0 48s21.49 48 48 48Z"
                   fill="#FFC800"
@@ -110,42 +126,58 @@ const Header = () => {
                 </span>
               ) : null}
             </div>
-            <div
+            <button
+              type="button"
               className="wallet-button"
+              aria-label="Wallet"
+              title="Wallet"
               onClick={() => {
                 soundManager.playAudio("bomb");
               }}
             >
-              Wallet
-            </div>
+              <svg
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M4.75 6.75h13.5A1.75 1.75 0 0 1 20 8.5v9.75H4.75A2.75 2.75 0 0 1 2 15.5v-8A2.75 2.75 0 0 1 4.75 4.75h11.5" />
+                <path d="M20 10h-4.25a2.25 2.25 0 0 0 0 4.5H20V10Z" />
+                <circle cx="16" cy="12.25" r=".75" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
           </div>
         ) : null}
         <div className="auth-actions-group">
           {user ? (
-            <button
-              className="profile-dropdown-button"
-              aria-label="Open Dropdown"
-              onClick={() => {
-                setShowAccountDropdown(true);
-              }}
-            >
-              <svg fill="currentColor" viewBox="0 0 64 64">
-                <path d="M48.322 30.536A19.63 19.63 0 0 0 51.63 19.63 19.619 19.619 0 0 0 32 0a19.63 19.63 0 1 0 16.322 30.536ZM42.197 43.97a26.63 26.63 0 0 0 8.643-5.78A19.84 19.84 0 0 1 64 56.86V64H0v-7.14a19.84 19.84 0 0 1 13.16-18.67 26.63 26.63 0 0 0 29.037 5.78Z"></path>
-              </svg>
+            <div className="account-menu" ref={dropdownRef}>
+              <button
+                type="button"
+                className="profile-dropdown-button"
+                aria-label="Open account menu"
+                aria-haspopup="menu"
+                aria-expanded={showAccountDropdown}
+                onClick={() => {
+                  setShowAccountDropdown((isOpen) => !isOpen);
+                }}
+              >
+                <svg fill="currentColor" viewBox="0 0 64 64" aria-hidden="true">
+                  <path d="M48.322 30.536A19.63 19.63 0 0 0 51.63 19.63 19.619 19.619 0 0 0 32 0a19.63 19.63 0 1 0 16.322 30.536ZM42.197 43.97a26.63 26.63 0 0 0 8.643-5.78A19.84 19.84 0 0 1 64 56.86V64H0v-7.14a19.84 19.84 0 0 1 13.16-18.67 26.63 26.63 0 0 0 29.037 5.78Z"></path>
+                </svg>
+              </button>
               {showAccountDropdown ? (
-                <div className="account-dropdown-menu" ref={dropdownRef}>
-                  <div className="arrow"></div>
-                  <ul>
-                    <li onClick={logOut}>
+                <div className="account-dropdown-menu" role="menu">
+                  <span className="arrow" aria-hidden="true"></span>
+                  <button type="button" role="menuitem" onClick={logOut}>
+                    <span className="logout-icon">
                       <svg fill="currentColor" viewBox="0 0 64 64">
                         <path d="M23.174 48.96h15.174v-6.506h8V56.96H23.174V64L0 56.96V7.04L23.174 0v7.04h23.174v14.506h-8V15.04H23.174v33.92Zm25.332-25.895L64 32l-15.494 8.934V36h-16.16v-8h16.16v-4.934Z"></path>
                       </svg>
-                      <p>Logout</p>
-                    </li>
-                  </ul>
+                    </span>
+                    <span>Log out</span>
+                  </button>
                 </div>
               ) : null}
-            </button>
+            </div>
           ) : (
             <>
               <button
