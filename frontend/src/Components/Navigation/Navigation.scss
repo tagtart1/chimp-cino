@@ -88,6 +88,47 @@
         }
       }
     }
+
+    .desktop-stats-button {
+      width: 100%;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 0 14px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      background-color: #1a2c38;
+      border-radius: 7px;
+      transition:
+        color 150ms ease,
+        background-color 150ms ease;
+
+      &:hover,
+      &:focus-visible,
+      &.is-active {
+        color: #ffffff;
+        background-color: #213743;
+      }
+
+      &:focus-visible {
+        outline: 2px solid #00e701;
+        outline-offset: 2px;
+      }
+
+      svg {
+        width: 17px;
+        height: 17px;
+        color: #b1bad3;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    }
   }
 }
 
@@ -243,6 +284,10 @@
     box-shadow: 0 -8px 24px rgba(4, 16, 24, 0.34);
     backdrop-filter: blur(12px);
 
+    &.has-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     button {
       position: relative;
       display: flex;
@@ -291,10 +336,17 @@
         flex: 0 0 19px;
       }
 
-      &:last-child svg {
+      &:nth-child(2) svg {
         stroke: currentColor;
         stroke-width: 1.6;
         stroke-linecap: round;
+      }
+
+      &:last-child svg {
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
     }
   }

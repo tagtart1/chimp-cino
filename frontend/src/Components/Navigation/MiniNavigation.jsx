@@ -2,8 +2,15 @@ import React from "react";
 import "./MiniNavigation.scss";
 import { useNavigate } from "react-router-dom";
 import MinesIcon from "./MinesIcon";
+import StatsIcon from "./StatsIcon";
 
-const MiniNavigation = ({ setMinimize, minimize }) => {
+const MiniNavigation = ({
+  setMinimize,
+  minimize,
+  onOpenStats,
+  showStats,
+  statsOpen,
+}) => {
   const navigate = useNavigate();
   return (
     <>
@@ -56,6 +63,18 @@ const MiniNavigation = ({ setMinimize, minimize }) => {
             </li>
           </ul>
         </div>
+        {showStats ? (
+          <button
+            className={`mini-stats-button${statsOpen ? " is-active" : ""}`}
+            type="button"
+            aria-label="Stats"
+            aria-expanded={statsOpen}
+            aria-controls="stats-drawer"
+            onClick={onOpenStats}
+          >
+            <StatsIcon />
+          </button>
+        ) : null}
       </div>
     </>
   );

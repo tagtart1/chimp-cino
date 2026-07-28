@@ -81,5 +81,39 @@
         }
       }
     }
+
+    .mini-stats-button {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      color: #b1bad3;
+      cursor: pointer;
+      background-color: #1a2c38;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      place-items: center;
+
+      &:hover,
+      &:focus-visible,
+      &.is-active {
+        color: #ffffff;
+        background-color: #213743;
+        border-color: rgba(177, 186, 211, 0.14);
+      }
+
+      &:focus-visible {
+        outline: 2px solid #00e701;
+        outline-offset: 2px;
+      }
+
+      svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    }
   }
 }
