@@ -6,6 +6,7 @@ const MinesAmountInput = ({
   minesAmount,
   gameInProgress,
   gemAmount,
+  disabled = false,
 }) => {
   const defaultMines = 3;
   // TODO: if there are loaded mines, we need to make the width not stretch, only 50% to make room for the gems
@@ -20,6 +21,7 @@ const MinesAmountInput = ({
             id="mines-amount-input"
             onChange={(e) => setMinesAmount(e.target.value)}
             defaultValue={!minesAmount ? defaultMines : minesAmount}
+            disabled={disabled}
           >
             {[...Array(24)].map((_, index) => (
               <option key={index} value={index + 1}>

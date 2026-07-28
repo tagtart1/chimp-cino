@@ -6,13 +6,19 @@ import { useUser } from "../../Contexts/UserProvider";
 import { Link } from "react-router-dom";
 import soundManager from "../../Helpers/sfxPlayer";
 import { apiUrl } from "../../config/api";
+import { useAuthPopup } from "../../Contexts/AuthPopupProvider";
 
 const Header = () => {
   const { user, setUser } = useUser();
+  const {
+    isLogIn,
+    isVisible,
+    openLogin,
+    openSignUp,
+    closeAuth,
+  } = useAuthPopup();
   const dropdownRef = useRef(null);
   const previousBalanceRef = useRef(null);
-  const [showLogin, setShowLogin] = useState(null);
-  const [showPopup, setShowPopup] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [balanceIncrease, setBalanceIncrease] = useState(null);
 
@@ -182,19 +188,13 @@ const Header = () => {
             <>
               <button
                 className="sign-in-button"
-                onClick={() => {
-                  setShowLogin(true);
-                  setShowPopup(true);
-                }}
+                onClick={openLogin}
               >
                 Sign In
               </button>
               <button
                 className="register-button"
-                onClick={() => {
-                  setShowLogin(false);
-                  setShowPopup(true);
-                }}
+                onClick={openSignUp}
               >
                 Register
               </button>
@@ -203,12 +203,9 @@ const Header = () => {
         </div>
       </div>
       <AuthPopup
-        isLogIn={showLogin}
-        isVisible={showPopup}
-        close={() => {
-          setShowPopup(false);
-          setShowLogin(null);
-        }}
+        isLogIn={isLogIn}
+        isVisible={isVisible}
+        close={closeAuth}
       />
     </header>
   );

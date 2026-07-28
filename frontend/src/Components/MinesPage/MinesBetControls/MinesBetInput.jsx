@@ -2,12 +2,17 @@ import React, { useEffect, useRef, useState } from "react";
 import "../../BetAmountInput/BetAmountInput.scss";
 import CoinIcon from "../../BetAmountInput/CoinIcon";
 
-const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
+const MinesBetInput = ({
+  setBetAmount,
+  betAmount,
+  gameInProgress,
+  disabled = false,
+}) => {
   const betAmountInput = useRef(null);
   const [insideInput, setInsideInput] = useState(false);
 
   const doubleBet = () => {
-    if (gameInProgress) {
+    if (gameInProgress || disabled) {
       return;
     }
     // Can't double 0 so just set it 1 cent
@@ -25,7 +30,7 @@ const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
   };
 
   const halfBet = () => {
-    if (gameInProgress) {
+    if (gameInProgress || disabled) {
       return;
     }
     if (betAmountInput.current.value === "0.00") {
@@ -64,7 +69,11 @@ const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
   return (
     <div className={`amount-input-group`}>
       <label htmlFor="mines-bet-amount">Amount</label>
-      <div className={`input-wrapper ${gameInProgress ? "disabled" : ""}`}>
+      <div
+        className={`input-wrapper ${
+          gameInProgress || disabled ? "disabled" : ""
+        }`}
+      >
         <div className="bet-amount-field">
           <input
             ref={betAmountInput}
@@ -77,15 +86,23 @@ const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
               setInsideInput(true);
               setBetAmount(e.target.value);
             }}
-            disabled={gameInProgress}
+            disabled={gameInProgress || disabled}
           />
           <CoinIcon className="coin-input-img" />
         </div>
         <div className="bet-buttons">
-          <button className="half-bet-button" onClick={halfBet}>
+          <button
+            className="half-bet-button"
+            onClick={halfBet}
+            disabled={gameInProgress || disabled}
+          >
             ½
           </button>
-          <button className="double-bet-button" onClick={doubleBet}>
+          <button
+            className="double-bet-button"
+            onClick={doubleBet}
+            disabled={gameInProgress || disabled}
+          >
             2×
           </button>
         </div>

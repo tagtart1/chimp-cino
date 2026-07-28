@@ -74,6 +74,10 @@
       font-weight: 700;
       background-color: #2f4553;
       border: 0;
+
+      &:disabled {
+        cursor: not-allowed;
+      }
     }
   }
 

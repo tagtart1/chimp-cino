@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import "./BlackjackActions.scss";
 import { apiUrl } from "../../../config/api";
 
@@ -7,144 +7,141 @@ const BlackjackActions = ({
   handleSplit,
   manageInsurance,
   offerInsurance,
+  canHit,
+  canStand,
+  canSplit,
+  canDouble,
+  canInsurance,
+  setActionPending,
+  handleAuthError,
 }) => {
-  // TODO: Conditionally block the ability to select the play and certain actions depending on the state of the game
-  const hitNewCard = async () => {
-    const response = await fetch(apiUrl("/blackjack/games/hit"), {
-      credentials: "include",
-      method: "PATCH",
-    });
+  const requestPendingRef = useRef(false);
 
-    if (!response.ok) {
-      const errors = await response.json();
-      console.log("Error", errors);
-      return;
-    }
+  const runAction = async ({
+    allowed,
+    path,
+    options = {},
+    onSuccess,
+  }) => {
+    if (!allowed || requestPendingRef.current) return;
 
-    const actionResults = await response.json();
+    requestPendingRef.current = true;
+    setActionPending(true);
 
-    // Turn all valued 1 aces back to 11 as this will be displayed dynamically in the animation
-    if (actionResults.data.dealer) {
-      actionResults.data.dealer.cards.forEach((element) => {
-        if (element.value === 1) {
-          element.value = 11;
-        }
+    try {
+      const response = await fetch(apiUrl(path), {
+        credentials: "include",
+        method: "PATCH",
+        ...options,
       });
-    }
+      const actionResults = await response.json().catch(() => null);
 
-    actionResults.data.player.cards.forEach((card) => {
-      if (card.value === 1) {
-        card.value = 11;
+      if (!response.ok) {
+        handleAuthError(actionResults);
+        console.log("Error", actionResults);
+        return;
       }
-    });
 
-    handleAction(actionResults.data, true);
+      await onSuccess(actionResults.data);
+    } catch (error) {
+      console.log("Blackjack action failed", error);
+    } finally {
+      requestPendingRef.current = false;
+      setActionPending(false);
+    }
   };
 
-  const standHand = async () => {
-    const response = await fetch(apiUrl("/blackjack/games/stand"), {
-      credentials: "include",
-      method: "PATCH",
+  const normalizeAces = (cards = []) => {
+    cards.forEach((card) => {
+      if (card.value === 1) card.value = 11;
     });
-
-    if (!response.ok) {
-      const errors = await response.json();
-      console.log("error", errors);
-      return;
-    }
-
-    const actionResults = await response.json();
-
-    if (actionResults.data.dealer) {
-      actionResults.data.dealer.cards.forEach((element) => {
-        if (element.value === 1) {
-          element.value = 11;
-        }
-      });
-    }
-
-    handleAction(actionResults.data, false);
   };
 
-  const doubleDown = async () => {
-    const response = await fetch(apiUrl("/blackjack/games/double"), {
-      credentials: "include",
-      method: "PATCH",
-    });
-
-    if (!response.ok) {
-      const errors = await response.json();
-      console.log("error", errors);
-      return;
-    }
-
-    const actionResults = await response.json();
-    console.log("DOUBLE results", actionResults);
-    actionResults.data.player.cards.forEach((card) => {
-      if (card.value === 1) {
-        card.value = 11;
-      }
-    });
-
-    if (actionResults.data.dealer) {
-      actionResults.data.dealer.cards.forEach((element) => {
-        if (element.value === 1) {
-          element.value = 11;
-        }
-      });
-    }
-
-    handleAction(actionResults.data, true, true);
-  };
-
-  const splitHand = async () => {
-    const response = await fetch(apiUrl("/blackjack/games/split"), {
-      credentials: "include",
-      method: "PATCH",
-    });
-
-    if (!response.ok) {
-      const errors = await response.json();
-      console.log("error", errors);
-      return;
-    }
-
-    const actionResults = await response.json();
-
-    handleSplit(actionResults.data);
-
-    console.log("SPLIT results", actionResults);
-  };
-
-  const handleInsurance = async (acceptInsurance) => {
-    const response = await fetch(apiUrl("/blackjack/games/insurance"), {
-      credentials: "include",
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
+  const hitNewCard = () =>
+    runAction({
+      allowed: canHit,
+      path: "/blackjack/games/hit",
+      onSuccess: async (results) => {
+        normalizeAces(results.dealer?.cards);
+        normalizeAces(results.player.cards);
+        await handleAction(results, true);
       },
-      body: JSON.stringify({
-        acceptInsurance,
-      }),
     });
 
-    const actionResults = await response.json();
-    manageInsurance(actionResults.data, acceptInsurance);
-  };
+  const standHand = () =>
+    runAction({
+      allowed: canStand,
+      path: "/blackjack/games/stand",
+      onSuccess: async (results) => {
+        normalizeAces(results.dealer?.cards);
+        await handleAction(results, false);
+      },
+    });
+
+  const doubleDown = () =>
+    runAction({
+      allowed: canDouble,
+      path: "/blackjack/games/double",
+      onSuccess: async (results) => {
+        normalizeAces(results.player.cards);
+        normalizeAces(results.dealer?.cards);
+        await handleAction(results, true, true);
+      },
+    });
+
+  const splitHand = () =>
+    runAction({
+      allowed: canSplit,
+      path: "/blackjack/games/split",
+      onSuccess: handleSplit,
+    });
+
+  const handleInsurance = (acceptInsurance) =>
+    runAction({
+      allowed: canInsurance,
+      path: "/blackjack/games/insurance",
+      options: {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          acceptInsurance,
+        }),
+      },
+      onSuccess: (results) => manageInsurance(results, acceptInsurance),
+    });
 
   return !offerInsurance ? (
     <div className="blackjack-actions">
-      <button onClick={hitNewCard}>Hit</button>
-      <button onClick={standHand}>Stand</button>
-      <button onClick={splitHand}>Split</button>
-      <button onClick={doubleDown}>Double</button>
+      <button onClick={hitNewCard} disabled={!canHit}>
+        Hit
+      </button>
+      <button onClick={standHand} disabled={!canStand}>
+        Stand
+      </button>
+      <button onClick={splitHand} disabled={!canSplit}>
+        Split
+      </button>
+      <button onClick={doubleDown} disabled={!canDouble}>
+        Double
+      </button>
     </div>
   ) : (
     <div className="blackjack-insurance-offer">
       <h2>Insurance?</h2>
 
-      <button onClick={() => handleInsurance(true)}>Accept insurance</button>
-      <button onClick={() => handleInsurance(false)}>No insurance</button>
+      <button
+        onClick={() => handleInsurance(true)}
+        disabled={!canInsurance}
+      >
+        Accept insurance
+      </button>
+      <button
+        onClick={() => handleInsurance(false)}
+        disabled={!canInsurance}
+      >
+        No insurance
+      </button>
     </div>
   );
 };

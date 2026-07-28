@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef, useState } from "react";
 import "./MinesBetControls.scss";
 import MinesBetInput from "./MinesBetInput";
 import MinesAmountInput from "./MinesAmountInput";
 import TotalGainOutput from "./TotalGainOutput";
-import { useUser } from "../../../Contexts/UserProvider";
 import { apiUrl } from "../../../config/api";
+import useGameAuth from "../../../Hooks/useGameAuth";
 
 const MinesBetControls = ({
   betAmount,
@@ -18,21 +18,28 @@ const MinesBetControls = ({
   minesAmount,
   gemAmount,
   disableActions,
+  gameIsEnding,
+  isLoadingGame,
 }) => {
-  const { user } = useUser();
+  const { user, requireAuth, handleAuthError } = useGameAuth();
+  const [isStarting, setIsStarting] = useState(false);
+  const [isCashingOut, setIsCashingOut] = useState(false);
+  const startRequestRef = useRef(false);
+  const cashoutRequestRef = useRef(false);
 
   const playGame = async () => {
-    if (parseFloat(betAmount) <= 0 || gameInProgress) {
-      // Make a popup
+    if (!requireAuth()) return;
+    if (
+      startRequestRef.current ||
+      isLoadingGame ||
+      parseFloat(betAmount) <= 0 ||
+      gameInProgress
+    )
       return;
-    }
 
-    if (!user) {
-      // Make the sign in popup or a notif
-      return;
-    }
+    startRequestRef.current = true;
+    setIsStarting(true);
     try {
-      // Call to api to start a game
       const resolution = await fetch(apiUrl("/mines/games"), {
         credentials: "include",
         method: "POST",
@@ -44,31 +51,37 @@ const MinesBetControls = ({
       });
 
       if (!resolution.ok) {
-        const errors = await resolution.json();
+        const errors = await resolution.json().catch(() => null);
+        handleAuthError(errors);
         console.log("Error:", errors);
         return;
       }
+
+      const gems = 25 - minesAmount;
+      startGame(gems);
     } catch (error) {
       console.log(error);
+    } finally {
+      startRequestRef.current = false;
+      setIsStarting(false);
     }
-    const gems = 25 - minesAmount;
-    startGame(gems);
   };
 
   // Retrive the completed grid, reveals the grid
   const cashout = async () => {
-    // Should probably have the end game results here to render out each grid cell, mainly used to reset the state of grid to all closed cells
+    if (!requireAuth()) return;
+    if (cashoutRequestRef.current || disableActions || gameIsEnding) return;
 
-    // Payout
-    // Show multiplier popup on grid
-
+    cashoutRequestRef.current = true;
+    setIsCashingOut(true);
     try {
       const res = await fetch(apiUrl("/mines/cashout"), {
         credentials: "include",
         method: "POST",
       });
       if (!res.ok) {
-        const errors = await res.json();
+        const errors = await res.json().catch(() => null);
+        handleAuthError(errors);
         console.log("Error cashing out:", errors);
         return;
       }
@@ -77,8 +90,20 @@ const MinesBetControls = ({
       endGame(gameData.cells, gameData.payout);
     } catch (error) {
       console.log("Cashout catch block", error);
+    } finally {
+      cashoutRequestRef.current = false;
+      setIsCashingOut(false);
     }
   };
+
+  const hasRevealedGem =
+    parseInt(minesAmount, 10) + parseInt(gemAmount, 10) < 25;
+  const actionsDisabled = disableActions || gameIsEnding || isCashingOut;
+  const playDisabled =
+    isLoadingGame ||
+    isStarting ||
+    gameInProgress ||
+    (Boolean(user) && parseFloat(betAmount) <= 0);
 
   return (
     <section className="mines-bet-controls">
@@ -88,15 +113,21 @@ const MinesBetControls = ({
             setBetAmount={setBetAmount}
             betAmount={betAmount}
             gameInProgress={gameInProgress}
+            disabled={isLoadingGame || isStarting}
           />
           <MinesAmountInput
             setMinesAmount={setMinesAmount}
             minesAmount={minesAmount}
             gameInProgress={gameInProgress}
             gemAmount={gemAmount}
+            disabled={isLoadingGame || isStarting}
           />
-          <button className="play-mines-button" onClick={playGame}>
-            Play
+          <button
+            className="play-mines-button"
+            onClick={playGame}
+            disabled={playDisabled}
+          >
+            {isLoadingGame ? "Loading…" : isStarting ? "Starting…" : "Play"}
           </button>
         </>
       ) : (
@@ -118,23 +149,18 @@ const MinesBetControls = ({
             multiplier={betMultiplier}
           />
           <button
-            className={`random-tile-button ${
-              disableActions ? "disabled-action" : ""
-            }`}
+            className="random-tile-button"
             onClick={revealRandomCell}
+            disabled={actionsDisabled}
           >
             Pick random tile
           </button>
           <button
-            className={`play-mines-button ${
-              disableActions ||
-              parseInt(minesAmount) + parseInt(gemAmount) === 25
-                ? "disabled-action"
-                : ""
-            }`}
+            className="play-mines-button"
             onClick={cashout}
+            disabled={actionsDisabled || !hasRevealedGem}
           >
-            {disableActions ? (
+            {actionsDisabled ? (
               <svg
                 fill="currentColor"
                 viewBox="0 0 96 96"

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./MinesGrid.scss";
 import MinesCell from "./MinesCell";
 import { apiUrl } from "../../../config/api";
+import useGameAuth from "../../../Hooks/useGameAuth";
 
 const MinesGrid = ({
   gameInProgress,
@@ -17,8 +18,9 @@ const MinesGrid = ({
   const BATCH_DELAY = 250;
 
   const [actionsCount, setActionsCount] = useState(0);
-  const [timerId, setTimerId] = useState(null);
-  const [fields, setFields] = useState([]);
+  const [, setTimerId] = useState(null);
+  const [, setFields] = useState([]);
+  const { handleAuthError } = useGameAuth();
 
   useEffect(() => {
     if (actionsCount > 0) {
@@ -48,7 +50,8 @@ const MinesGrid = ({
         }),
       });
       if (!res.ok) {
-        const errors = await res.json();
+        const errors = await res.json().catch(() => null);
+        handleAuthError(errors);
         console.log("Errors: ", errors);
         return;
       }
@@ -63,6 +66,8 @@ const MinesGrid = ({
       updateGame(fields, updatedGrid, newMulti, cellData.isGameOver, payout);
     } catch (error) {
       console.log("Errors: ", error);
+    } finally {
+      setActionsCount((prev) => Math.max(0, prev - fields.length));
     }
   };
 
@@ -78,7 +83,6 @@ const MinesGrid = ({
           fetchCells(fieldsAppended);
           setFields([]);
           setTimerId(null);
-          setActionsCount((prev) => prev - fieldsAppended.length);
         }, BATCH_DELAY);
       });
 

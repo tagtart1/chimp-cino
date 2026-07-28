@@ -5,12 +5,15 @@ import BlackjackActions from "./BlackjackActions/BlackjackActions";
 import { PlayingCard } from "../PlayingCard/PlayingCard";
 import { motion, AnimatePresence } from "framer-motion";
 import BlackjackCardStack from "./BlackjackCardStack/BlackjackCardStack";
-import { useUser } from "../../Contexts/UserProvider";
 
 import { delay, getCardValueFromArray } from "../../Helpers/blackjackHelpers";
 import { BlackjackBetInput } from "./BlackjackBetInput/BlackjackBetInput";
 import GameWinPopup from "../GameWinPopup/GameWinPopup";
 import { apiUrl } from "../../config/api";
+import useGameAuth from "../../Hooks/useGameAuth";
+import getBlackjackActionState, {
+  hasLiveBlackjackHand,
+} from "../../Helpers/blackjackActionState";
 
 // TODO: MODULARIZE THIS COMPONENT TOO MUCH STUFF HERE
 
@@ -21,8 +24,9 @@ const BlackjackPage = () => {
   const dealerStackRef = useRef(null);
   const staticCardsRef = useRef(null);
   const wageredAmountRef = useRef(0);
+  const gameRequestRef = useRef(false);
 
-  const { user, setUser } = useUser();
+  const { user, setUser, requireAuth, handleAuthError } = useGameAuth();
 
   const [playerHands, setPlayerHands] = useState([[]]);
   const [selectedHandIndex, setSelectedHandIndex] = useState(0);
@@ -39,8 +43,11 @@ const BlackjackPage = () => {
   const [loadedBet, setLoadedBet] = useState(0);
   const [offerInsurance, setOfferInsurance] = useState(false);
   const [winResult, setWinResult] = useState(null);
+  const [gameInProgress, setGameInProgress] = useState(false);
+  const [isActionPending, setIsActionPending] = useState(false);
 
   const thresholdWidth = 875;
+  const isAuthenticated = Boolean(user);
 
   const showWin = (payout, winners) => {
     const numericPayout = Number(payout);
@@ -57,59 +64,71 @@ const BlackjackPage = () => {
   };
 
   const playGame = async () => {
-    const res = await fetch(apiUrl("/blackjack/games"), {
-      credentials: "include",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        betAmount: betAmount,
-      }),
-    });
-
-    if (!res.ok) {
-      const errors = await res.json();
-      console.log("Error", errors);
+    if (!requireAuth()) return;
+    if (
+      gameRequestRef.current ||
+      isLoading ||
+      gameInProgress ||
+      hasLiveBlackjackHand({ gameOver, playerHands }) ||
+      isActionPending ||
+      Number(betAmount) <= 0
+    )
       return;
+
+    gameRequestRef.current = true;
+    setIsActionPending(true);
+
+    try {
+      const res = await fetch(apiUrl("/blackjack/games"), {
+        credentials: "include",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          betAmount: betAmount,
+        }),
+      });
+      const gameData = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        handleAuthError(gameData);
+        console.log("Error", gameData);
+        return;
+      }
+
+      wageredAmountRef.current = Number(betAmount);
+      setWinResult(null);
+      setGameInProgress(true);
+      setUser((prev) => ({
+        ...prev,
+        balance: Number(prev.balance) - Number(betAmount),
+      }));
+
+      if (gameOver) {
+        setDealerValue(0);
+        setPlayerValues([0]);
+        setGameLoaded(false);
+        setGameOver(false);
+        setGameWinners([]);
+        await delay(1);
+
+        setStartCardExit(true);
+        setShowSelectedOutline(false);
+        await delay(500);
+        setPlayerHands([[]]);
+        setDealerCards([]);
+        setSelectedHandIndex(0);
+        await delay(200);
+      }
+
+      setStartCardExit(false);
+      await dealInitialCards(gameData);
+      setOfferInsurance(gameData.data.offerInsurance);
+    } catch (error) {
+      console.log("Unable to start blackjack game", error);
+    } finally {
+      gameRequestRef.current = false;
+      setIsActionPending(false);
     }
-    const gameData = await res.json();
-    wageredAmountRef.current = Number(betAmount);
-    setWinResult(null);
-    // Change UI balance
-
-    setUser((prev) => {
-      const newCosmeticBal = { ...prev };
-
-      newCosmeticBal.balance -= betAmount;
-      return newCosmeticBal;
-    });
-    if (gameOver) {
-      setDealerValue(0);
-      setPlayerValues([0]);
-
-      setGameLoaded(false);
-      setGameOver(false);
-      setGameWinners([]);
-      await delay(1);
-
-      setStartCardExit(true);
-      setShowSelectedOutline(false);
-      await delay(500);
-      setPlayerHands([[]]);
-      setDealerCards([]);
-      setSelectedHandIndex(0);
-
-      await delay(200);
-    }
-
-    console.log("PAYUOT:", gameData.data);
-    // TODO: PROMPT USER TO accept or decline insurance when needed, and block further actions till answered, setup a new route to respond to insurance
-
-    // TRICKLE THE STATE
-    // SET PLAYER CARD, WAIT .5 SECOND, ADD PLAYER CARD
-    setStartCardExit(false);
-    await dealInitialCards(gameData);
-
-    setOfferInsurance(gameData.data.offerInsurance);
   };
 
   useEffect(() => {
@@ -152,6 +171,21 @@ const BlackjackPage = () => {
   }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setGameInProgress(false);
+      setPlayerHands([[]]);
+      setPlayerValues([]);
+      setDealerCards([]);
+      setDealerValue(0);
+      setOfferInsurance(false);
+      setGameOver(false);
+      setShowSelectedOutline(false);
+      setIsLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+
     const getGame = async () => {
       try {
         setIsLoading(true);
@@ -161,11 +195,24 @@ const BlackjackPage = () => {
         });
 
         if (!response.ok) {
+          const error = await response.json().catch(() => null);
+          if (error?.code === "SESSION_INVALID") setUser(null);
+          if (!cancelled) {
+            setGameInProgress(false);
+            setPlayerHands([[]]);
+            setPlayerValues([]);
+            setDealerCards([]);
+            setDealerValue(0);
+            setOfferInsurance(false);
+            setGameOver(false);
+            setShowSelectedOutline(false);
+          }
           return;
         }
 
         const results = await response.json();
         if (results.data.is_game_over) {
+          if (!cancelled) setGameInProgress(false);
           return;
         }
 
@@ -207,17 +254,21 @@ const BlackjackPage = () => {
         setLoadedBet(results.data.bet);
         setBetAmount(results.data.bet);
         wageredAmountRef.current = Number(results.data.bet);
+        setGameInProgress(true);
 
         if (playerHands.length > 1) setShowSelectedOutline(true);
       } catch (err) {
         console.log(err);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     getGame();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, setUser]);
 
   // Once game loads the cards into the card states we turn of the game is loaded
   useEffect(() => {
@@ -276,6 +327,7 @@ const BlackjackPage = () => {
       setDealerValue(dealerValue);
       await delay(actionDelay);
       setGameOver(true);
+      setGameInProgress(false);
       setGameWinners(gameData.data.game_winners);
 
       if (
@@ -340,6 +392,7 @@ const BlackjackPage = () => {
     if (results.is_game_over) {
       await delay(520);
       setGameOver(true);
+      setGameInProgress(false);
       setGameWinners(results.game_winners);
 
       console.log(results);
@@ -434,6 +487,7 @@ const BlackjackPage = () => {
     await delay(520);
     if (resultData.is_game_over) {
       setGameOver(true);
+      setGameInProgress(false);
       setGameWinners(resultData.game_winners);
 
       setUser((prev) => {
@@ -483,6 +537,7 @@ const BlackjackPage = () => {
         });
 
         setGameOver(true);
+        setGameInProgress(false);
 
         setGameWinners(resultData.game_winners);
       }
@@ -498,6 +553,7 @@ const BlackjackPage = () => {
         await delay(300);
         setGameWinners(resultData.game_winners);
         setGameOver(true);
+        setGameInProgress(false);
       }
     }
   };
@@ -756,6 +812,24 @@ const BlackjackPage = () => {
   const dealerCardsMap = renderCardStack(dealerCards, true);
 
   const cardsMap = renderPlayerStacks(playerHands);
+  const actionState = getBlackjackActionState({
+    gameInProgress,
+    isPending: isActionPending,
+    offerInsurance,
+    playerHands,
+    selectedHandIndex,
+    balance: user?.balance,
+    betAmount,
+  });
+  const hasLiveHand = hasLiveBlackjackHand({ gameOver, playerHands });
+  const roundLocked = gameInProgress || hasLiveHand;
+  const betControlsDisabled =
+    isLoading || isActionPending || roundLocked;
+  const playDisabled =
+    isLoading ||
+    isActionPending ||
+    roundLocked ||
+    (isAuthenticated && Number(betAmount) <= 0);
 
   return (
     <main className="blackjack-main">
@@ -767,15 +841,23 @@ const BlackjackPage = () => {
             <BlackjackBetInput
               setBetAmount={setBetAmount}
               loadedBet={loadedBet}
+              disabled={betControlsDisabled}
             />
             <BlackjackActions
               handleAction={handleActionResults}
               handleSplit={handleSplit}
               manageInsurance={manageInsurance}
               offerInsurance={offerInsurance}
+              {...actionState}
+              setActionPending={setIsActionPending}
+              handleAuthError={handleAuthError}
             />
-            <button className="blackjack-play-button" onClick={playGame}>
-              Play
+            <button
+              className="blackjack-play-button"
+              onClick={playGame}
+              disabled={playDisabled}
+            >
+              {isActionPending && !roundLocked ? "Starting…" : "Play"}
             </button>
           </div>
         )}

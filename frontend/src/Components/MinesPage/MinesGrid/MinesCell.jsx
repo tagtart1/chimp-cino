@@ -25,7 +25,7 @@ const MinesCell = ({
 
   // Reveals if the cell is a mine or a gem
   const revealCell = async (e) => {
-    if (!gameInProgress || fetched) return;
+    if (!gameInProgress || gameIsEnding || fetched) return;
     setActionsCount((prev) => prev + 1);
     const cover = e.currentTarget.querySelector(".cell-cover");
 
@@ -34,7 +34,6 @@ const MinesCell = ({
 
     cover.classList.add("expand-cover");
     setFetched(true);
-    if (gameIsEnding || fetched) return;
     scheduleFetch(field);
     setQueued(true);
     cover.addEventListener(
@@ -137,7 +136,12 @@ const MinesCell = ({
   }, [resetCells]);
 
   return (
-    <button className="cell-wrapper" onClick={revealCell} ref={cellRef}>
+    <button
+      className="cell-wrapper"
+      onClick={revealCell}
+      ref={cellRef}
+      disabled={!gameInProgress || gameIsEnding || fetched}
+    >
       {explode && (
         <img
           alt="mine explosion effect"

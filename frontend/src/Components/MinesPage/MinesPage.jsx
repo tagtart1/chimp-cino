@@ -20,7 +20,9 @@ const MinesPage = () => {
   const [gemAmount, setGemAmount] = useState(0);
   const [betMultiplier, setBetMultiplier] = useState(1);
   const [finalPayout, setFinalPayout] = useState(0);
-  const { setUser } = useUser();
+  const [isLoadingGame, setIsLoadingGame] = useState(true);
+  const { user, setUser } = useUser();
+  const isAuthenticated = Boolean(user);
 
   // When an action anim is happeing like revealing, we need to disable the cashout and pick random tile buttons
   const [disableActions, setDisableActions] = useState(false);
@@ -81,12 +83,13 @@ const MinesPage = () => {
   };
 
   const revealRandomCell = () => {
-    // TODO: Ensure that this function can't spammed by waiting for the last one to finish
     // Get all unrevealed cells
     const unrevealedCells = loadedGrid
       .map((value, index) => ({ value, index }))
       .filter((item) => item.value === 0)
       .map((item) => item.index);
+
+    if (unrevealedCells.length === 0) return;
 
     // Pick a random index
     const randomIndex = Math.floor(Math.random() * unrevealedCells.length);
@@ -104,33 +107,53 @@ const MinesPage = () => {
   };
 
   useEffect(() => {
-    // Test grid - simulates a loadedGrid
-    // Retrieve and load game from API
-    const fetchGame = async () => {
-      const res = await fetch(apiUrl("/mines/games"), {
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const errors = await res.json();
-        if (errors.code !== "NOT_FOUND") {
-          console.log("Errors: ", errors);
-        }
-        return;
-      }
+    if (!isAuthenticated) {
+      setGameInProgress(false);
+      setIsLoadingGame(false);
+      return undefined;
+    }
 
-      const gameData = await res.json();
-      const { cells: grid, bet, mines, gems, multiplier } = gameData.data;
-      console.log(gameData.data);
-      setGameInProgress(true);
-      setBetAmount(parseFloat(bet));
-      setLoadedGrid(grid);
-      setMinesAmount(mines);
-      setGemAmount(gems);
-      setBetMultiplier(parseFloat(multiplier));
-      setDisableActions(false);
+    let cancelled = false;
+
+    const fetchGame = async () => {
+      setIsLoadingGame(true);
+      try {
+        const res = await fetch(apiUrl("/mines/games"), {
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const errors = await res.json().catch(() => null);
+          if (errors?.code === "SESSION_INVALID") {
+            setUser(null);
+          } else if (errors?.code !== "NOT_FOUND") {
+            console.log("Errors: ", errors);
+          }
+          return;
+        }
+
+        const gameData = await res.json();
+        if (cancelled) return;
+
+        const { cells: grid, bet, mines, gems, multiplier } = gameData.data;
+        setGameInProgress(true);
+        setBetAmount(parseFloat(bet));
+        setLoadedGrid(grid);
+        setMinesAmount(mines);
+        setGemAmount(gems);
+        setBetMultiplier(parseFloat(multiplier));
+        setDisableActions(false);
+      } catch (error) {
+        console.log("Error loading mines game:", error);
+      } finally {
+        if (!cancelled) setIsLoadingGame(false);
+      }
     };
+
     fetchGame();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, setUser]);
 
   return (
     <main className="mines-main">
@@ -147,6 +170,8 @@ const MinesPage = () => {
           setMinesAmount={setMinesAmount}
           minesAmount={minesAmount}
           disableActions={disableActions}
+          gameIsEnding={gameIsEnding}
+          isLoadingGame={isLoadingGame}
         />
         <div className="game-screen-mines">
           <MinesGrid

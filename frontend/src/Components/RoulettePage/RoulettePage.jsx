@@ -6,15 +6,15 @@ import RouletteButton from "../RouletteButton/RouletteButton";
 import ToggleSwitch from "../ToggleSwitch/ToggleSwitch";
 import Wheel from "../Wheel/Wheel";
 import GameWinPopup from "../GameWinPopup/GameWinPopup";
-import { useUser } from "../../Contexts/UserProvider";
 import { apiUrl } from "../../config/api";
+import useGameAuth from "../../Hooks/useGameAuth";
 
 const RED_POCKETS = new Set([
   1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
 ]);
 
 const RoulettePage = () => {
-  const { setUser, user } = useUser();
+  const { user, setUser, requireAuth, handleAuthError } = useGameAuth();
   const [chipType, setChipType] = useState({
     value: 1,
     color: "rgb(252, 120, 32)",
@@ -34,6 +34,7 @@ const RoulettePage = () => {
   const [roundResult, setRoundResult] = useState(null);
   const [roundHistory, setRoundHistory] = useState([]);
   const roundIdRef = useRef(0);
+  const roundRequestRef = useRef(false);
 
   // Displays after the animation of the wheel has completed
   const [updatedBalance, setUpdatedBalance] = useState();
@@ -69,11 +70,13 @@ const RoulettePage = () => {
   };
 
   const startGame = async () => {
-    if (gameRunning || !user || totalBetValue <= 0) return;
+    if (!requireAuth()) return;
+    if (roundRequestRef.current || gameRunning || totalBetValue <= 0) return;
 
     const balanceBeforeRound = Number(user.balance);
     const amountWagered = totalBetValue;
 
+    roundRequestRef.current = true;
     setWinningNum(null);
     setRoundResult(null);
     setPendingRoundResult(null);
@@ -92,7 +95,9 @@ const RoulettePage = () => {
     try {
       const response = await fetch(apiUrl("/roulette"), options);
       if (!response.ok) {
-        throw new Error("Unable to start roulette game");
+        const error = await response.json().catch(() => null);
+        handleAuthError(error);
+        throw new Error(error?.message || "Unable to start roulette game");
       }
 
       const result = await response.json();
@@ -118,6 +123,8 @@ const RoulettePage = () => {
     } catch (err) {
       console.error(err);
       setGameRunning(false);
+    } finally {
+      roundRequestRef.current = false;
     }
   };
 
@@ -220,7 +227,7 @@ const RoulettePage = () => {
             <button
               className="roulette-play-button"
               onClick={startGame}
-              disabled={gameRunning || totalBetValue <= 0 || !user}
+              disabled={gameRunning || (Boolean(user) && totalBetValue <= 0)}
             >
               {gameRunning ? "Spinning" : "Play"}
             </button>
