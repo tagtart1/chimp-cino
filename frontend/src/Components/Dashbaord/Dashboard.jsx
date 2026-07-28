@@ -1,8 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./Dashboard.scss";
-import gem from "../../images/gem.svg";
-import mine from "../../images/mine.svg";
+import { gameAssetUrls } from "../../Helpers/gameAssets";
 import { PlayingCard } from "../PlayingCard/PlayingCard";
 
 const Dashboard = () => {
@@ -66,9 +65,21 @@ const Dashboard = () => {
             aria-label="Play Mines"
           >
             <div className="game-card-visual mines-visual" aria-hidden="true">
-              <img className="mines-gem mines-gem-left" src={gem} alt="" />
-              <img className="mines-bomb" src={mine} alt="" />
-              <img className="mines-gem mines-gem-right" src={gem} alt="" />
+              <img
+                className="mines-gem mines-gem-left"
+                src={gameAssetUrls.gem}
+                alt=""
+              />
+              <img
+                className="mines-bomb"
+                src={gameAssetUrls.mine}
+                alt=""
+              />
+              <img
+                className="mines-gem mines-gem-right"
+                src={gameAssetUrls.gem}
+                alt=""
+              />
             </div>
             <div className="game-card-content">
               <h2>Mines</h2>

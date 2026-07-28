@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import explosionEffect from "../../../images/mineExplosion.CTwuSNug.gif";
 import soundManager from "../../../Helpers/sfxPlayer";
+import { gameAssetUrls } from "../../../Helpers/gameAssets";
 
 // TODO: add cleanup functions
 const MinesCell = ({
@@ -20,6 +20,8 @@ const MinesCell = ({
   const [fetched, setFetched] = useState(false);
   const [explode, setExplode] = useState(false);
   const [queued, setQueued] = useState(false);
+  const revealedAsset =
+    value === 2 ? gameAssetUrls.mine : value !== 0 ? gameAssetUrls.gem : null;
 
   // Reveals if the cell is a mine or a gem
   const revealCell = async (e) => {
@@ -140,10 +142,17 @@ const MinesCell = ({
         <img
           alt="mine explosion effect"
           className="mine-effect"
-          src={`${explosionEffect}?a=${value}`}
+          src={gameAssetUrls.mineExplosion}
         />
       )}
-      <div className="cell-value"></div>
+      <div
+        className="cell-value"
+        style={
+          revealedAsset
+            ? { backgroundImage: `url(${revealedAsset})` }
+            : undefined
+        }
+      ></div>
       <div className="cell-cover"></div>
     </button>
   );

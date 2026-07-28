@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./PlayingCard.scss";
 import { motion, useAnimation } from "framer-motion";
+import { gameAssetUrls } from "../../Helpers/gameAssets";
 
 export const PlayingCard = ({
   style,
@@ -175,7 +176,10 @@ export const PlayingCard = ({
         ) : null}
       </div>
 
-      <div className="back"></div>
+      <div
+        className="back"
+        style={{ backgroundImage: `url(${gameAssetUrls.cardBack})` }}
+      ></div>
     </motion.div>
   );
 };

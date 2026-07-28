@@ -11,6 +11,7 @@ import MinesPage from "../MinesPage/MinesPage";
 import GlobalLoader from "../GlobalLoader/GlobalLoader";
 import NotFoundPage from "../NotFoundPage/NotFoundPage";
 import soundManager from "../../Helpers/sfxPlayer";
+import { preloadGameAssets } from "../../Helpers/gameAssets";
 import { apiUrl } from "../../config/api";
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
+    preloadGameAssets();
+
     const fetchUser = async () => {
       setLoadingUser(true);
       try {

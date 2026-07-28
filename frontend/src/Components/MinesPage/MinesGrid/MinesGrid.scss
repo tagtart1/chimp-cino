@@ -43,13 +43,6 @@
     background-repeat: no-repeat;
     background-position: center;
     transform: scale(0);
-    &.mine {
-      background-image: url("../../../images/mine.svg");
-    }
-
-    &.gem {
-      background-image: url("../../../images/gem.svg");
-    }
   }
 
   .mine-effect {
