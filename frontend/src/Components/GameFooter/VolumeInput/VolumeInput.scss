@@ -37,23 +37,39 @@
     &::-webkit-slider-runnable-track {
       width: 100%;
       height: 5px;
-
       border-radius: 5px;
       cursor: pointer;
-      background-color: #213743;
+      background: linear-gradient(
+        to right,
+        #00e701 0%,
+        #00e701 var(--current),
+        #213743 var(--current),
+        #213743 100%
+      );
     }
 
-    &::after {
-      content: "";
-      position: absolute;
-      z-index: 1;
+    &::-moz-range-track {
+      width: 100%;
       height: 5px;
-      left: 0;
-      max-width: 100%;
-
-      width: var(--current);
-      background-color: #00e701;
+      background-color: #213743;
+      border: 0;
       border-radius: 5px;
+      cursor: pointer;
+    }
+
+    &::-moz-range-progress {
+      height: 5px;
+      background-color: #00e701;
+      border: 0;
+      border-radius: 5px;
+    }
+
+    &::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background-color: white;
+      border: 0;
+      border-radius: 50%;
     }
   }
 }

@@ -1,18 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import "./VolumeInput.scss";
 
 const defaultVolume = 0.5;
 
 const VolumeInput = () => {
   const [volume, setVolume] = useState(fetchVolume);
-  const inputRef = useRef(null);
+
   useEffect(() => {
     // Set localStorage volume
     setAudioVolume(volume);
-
-    if (inputRef.current) {
-      inputRef.current.style.setProperty("--current", `${volume * 100}%`);
-    }
   }, [volume]);
 
   const handleVolumeChange = (e) => {
@@ -52,13 +48,13 @@ const VolumeInput = () => {
         )}
       </button>
       <input
-        ref={inputRef}
         id="volume-range-input"
         type="range"
         min={0}
         max={1}
         step={0.05}
         value={volume}
+        style={{ "--current": `${volume * 100}%` }}
         onChange={handleVolumeChange}
       />
     </div>
