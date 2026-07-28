@@ -1,53 +1,15 @@
 .volume-setting-wrapper {
   width: min(380px, 100%);
-  display: flex;
-  align-items: center;
-  gap: 13px;
-
-  button {
-    width: 40px;
-    height: 40px;
-    display: grid;
-    flex: 0 0 40px;
-    color: hsl(var(--volume-color-hue) 100% 50%);
-    cursor: pointer;
-    background-color: #1a303c;
-    border: 1px solid rgba(177, 186, 211, 0.12);
-    border-radius: 50%;
-    place-items: center;
-    transition:
-      color 140ms ease,
-      background-color 140ms ease,
-      transform 140ms ease;
-
-    &:hover {
-      background-color: #263f4c;
-      transform: translateY(-1px);
-    }
-
-    &:focus-visible {
-      outline: 2px solid #ffffff;
-      outline-offset: 2px;
-    }
-
-    svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    .muted {
-      color: #ffffff;
-    }
-  }
 
   .volume-slider {
-    min-width: 0;
-    flex: 1;
-  }
-}
+    width: 100%;
 
-@media (prefers-reduced-motion: reduce) {
-  .volume-setting-wrapper button {
-    transition: none;
+    .custom-slider__thumb svg {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
   }
 }
