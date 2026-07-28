@@ -1,6 +1,6 @@
 import "../utils/loadEnv.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma/client.ts";
+import { Prisma, PrismaClient } from "../generated/prisma/client.ts";
 import { assertDataStore, DataStoreError } from "./dataStore.js";
 
 const TRANSACTION_OPTIONS = {
@@ -73,6 +73,7 @@ const mapBlackjackGame = (game) =>
     id: game.id,
     userId: game.userId,
     startBet: number(game.startBet),
+    totalWagered: number(game.totalWagered),
     isGameOver: game.isGameOver,
     offerInsurance: game.offerInsurance,
     hands: game.hands.map(mapHand),
@@ -106,7 +107,13 @@ function translatePersistenceError(error) {
 }
 
 function protectRepositories(store) {
-  for (const repositoryName of ["users", "wallet", "blackjack", "mines"]) {
+  for (const repositoryName of [
+    "users",
+    "wallet",
+    "blackjack",
+    "mines",
+    "analytics",
+  ]) {
     const repository = store[repositoryName];
     for (const methodName of Object.keys(repository)) {
       const method = repository[methodName];
@@ -222,6 +229,7 @@ function repositories(client, inTransaction = false) {
           data: {
             userId,
             startBet: bet,
+            totalWagered: bet,
             hands: {
               create: [
                 { isPlayer: true, isSelected: true, bet },
@@ -308,6 +316,13 @@ function repositories(client, inTransaction = false) {
         });
       },
 
+      async incrementTotalWagered(gameId, amount) {
+        await client.activeBlackjackGame.update({
+          where: { id: gameId },
+          data: { totalWagered: { increment: amount } },
+        });
+      },
+
       async setGameOver(gameId, isGameOver = true) {
         await client.activeBlackjackGame.update({
           where: { id: gameId },
@@ -362,6 +377,136 @@ function repositories(client, inTransaction = false) {
 
       async deleteGame(gameId) {
         await client.activeMinesGame.delete({ where: { id: gameId } });
+      },
+    },
+
+    analytics: {
+      async recordGameResult({ userId, gameType, wagered, payout }) {
+        await client.gameResult.create({
+          data: { userId, gameType, wagered, payout },
+        });
+      },
+
+      async findOldestGameResultAt(userId, gameType) {
+        const row = await client.gameResult.findFirst({
+          where: {
+            userId,
+            ...(gameType ? { gameType } : {}),
+          },
+          orderBy: { completedAt: "asc" },
+          select: { completedAt: true },
+        });
+        return row?.completedAt ?? null;
+      },
+
+      async summarizeGameResults({ userId, startAt, endAt }) {
+        const rows = await client.$queryRaw`
+          SELECT
+            "game_type",
+            COUNT(*)::INTEGER AS "games_played",
+            SUM("wagered") AS "total_wagered",
+            SUM("payout") AS "total_payout",
+            MAX("payout" - "wagered") AS "max_game_net"
+          FROM "game_results"
+          WHERE "user_id" = ${userId}
+            AND "completed_at" >= ${startAt}
+            AND "completed_at" < ${endAt}
+          GROUP BY "game_type"
+          ORDER BY "game_type"
+        `;
+        return rows.map((row) => ({
+          gameType: row.game_type,
+          gamesPlayed: row.games_played,
+          totalWagered: number(row.total_wagered),
+          totalPayout: number(row.total_payout),
+          maxGameNet: number(row.max_game_net),
+        }));
+      },
+
+      async summarizeGameResultTimeline({
+        userId,
+        gameType,
+        startAt,
+        endAt,
+        startDate,
+        bucket,
+      }) {
+        const gameFilter = gameType
+          ? Prisma.sql`AND "game_type"::TEXT = ${gameType}`
+          : Prisma.empty;
+        const rows = await client.$queryRaw`
+          WITH "filtered_results" AS (
+            SELECT
+              ("completed_at" AT TIME ZONE 'America/Chicago')::DATE
+                AS "local_date",
+              "wagered",
+              "payout"
+            FROM "game_results"
+            WHERE "user_id" = ${userId}
+              AND "completed_at" >= ${startAt}
+              AND "completed_at" < ${endAt}
+              ${gameFilter}
+          )
+          SELECT
+            CASE
+              WHEN ${bucket} = 'day' THEN "local_date"
+              WHEN ${bucket} = 'week' THEN
+                CAST(${startDate} AS DATE)
+                + (
+                    ("local_date" - CAST(${startDate} AS DATE)) / 7
+                  ) * 7
+              ELSE DATE_TRUNC('month', "local_date")::DATE
+            END AS "period_start",
+            COUNT(*)::INTEGER AS "games_played",
+            SUM("wagered") AS "total_wagered",
+            SUM("payout") AS "total_payout",
+            MAX("payout" - "wagered") AS "max_game_net"
+          FROM "filtered_results"
+          GROUP BY "period_start"
+          ORDER BY "period_start"
+        `;
+        return rows.map((row) => ({
+          periodStart: row.period_start,
+          gamesPlayed: row.games_played,
+          totalWagered: number(row.total_wagered),
+          totalPayout: number(row.total_payout),
+          maxGameNet: number(row.max_game_net),
+        }));
+      },
+
+      async listGameResults({
+        userId,
+        gameType,
+        cursorCompletedAt,
+        cursorId,
+        limit,
+      }) {
+        const rows = await client.gameResult.findMany({
+          where: {
+            userId,
+            ...(gameType ? { gameType } : {}),
+            ...(cursorCompletedAt
+              ? {
+                  OR: [
+                    { completedAt: { lt: cursorCompletedAt } },
+                    {
+                      completedAt: cursorCompletedAt,
+                      id: { lt: cursorId },
+                    },
+                  ],
+                }
+              : {}),
+          },
+          orderBy: [{ completedAt: "desc" }, { id: "desc" }],
+          take: limit + 1,
+        });
+        return rows.map((row) => ({
+          id: row.id.toString(),
+          gameType: row.gameType,
+          wagered: number(row.wagered),
+          payout: number(row.payout),
+          completedAt: row.completedAt,
+        }));
       },
     },
   };

@@ -12,6 +12,7 @@ import {
   isHandSoft,
   validateAceValue,
 } from "../utils/deckChecks.js";
+import { GAME_TYPES } from "../config/gameTypes.js";
 
 function playerHands(game) {
   return game.hands.filter((hand) => hand.isPlayer);
@@ -277,6 +278,12 @@ export function createBlackjackService(store) {
         }
         if (gameWinner) {
           await transaction.blackjack.setGameOver(game.id);
+          await transaction.analytics.recordGameResult({
+            userId,
+            gameType: GAME_TYPES.blackjack,
+            wagered: game.totalWagered,
+            payout: payoutAmount,
+          });
         }
 
         const dealerCards = [...dealer.cards];
@@ -408,6 +415,14 @@ export function createBlackjackService(store) {
           result.data.game_winners,
           hands
         );
+        if (result.data.is_game_over) {
+          await transaction.analytics.recordGameResult({
+            userId,
+            gameType: GAME_TYPES.blackjack,
+            wagered: game.totalWagered,
+            payout: result.data.payout,
+          });
+        }
         return result;
       });
     },
@@ -447,6 +462,14 @@ export function createBlackjackService(store) {
           result.data.game_winners,
           hands
         );
+        if (result.data.is_game_over) {
+          await transaction.analytics.recordGameResult({
+            userId,
+            gameType: GAME_TYPES.blackjack,
+            wagered: game.totalWagered,
+            payout: result.data.payout,
+          });
+        }
         return result;
       });
     },
@@ -481,6 +504,11 @@ export function createBlackjackService(store) {
           );
         }
 
+        await transaction.blackjack.incrementTotalWagered(
+          game.id,
+          activeHand.bet
+        );
+        game.totalWagered += activeHand.bet;
         await transaction.blackjack.doubleHandBet(activeHand.id);
         activeHand.bet *= 2;
         const result = await hitHand(
@@ -543,6 +571,14 @@ export function createBlackjackService(store) {
           result.data.game_winners,
           hands
         );
+        if (result.data.is_game_over) {
+          await transaction.analytics.recordGameResult({
+            userId,
+            gameType: GAME_TYPES.blackjack,
+            wagered: game.totalWagered,
+            payout: result.data.payout,
+          });
+        }
         return result;
       });
     },
@@ -591,6 +627,11 @@ export function createBlackjackService(store) {
           );
         }
 
+        await transaction.blackjack.incrementTotalWagered(
+          game.id,
+          initialBet
+        );
+        game.totalWagered += initialBet;
         const removed = await transaction.blackjack.removeCardFromHand(
           activeHand.id,
           1
@@ -650,6 +691,12 @@ export function createBlackjackService(store) {
             result.data.game_winners,
             hands
           );
+          await transaction.analytics.recordGameResult({
+            userId,
+            gameType: GAME_TYPES.blackjack,
+            wagered: game.totalWagered,
+            payout: result.data.payout,
+          });
         } else if (originalResult.data.is_21) {
           await swapSelectedHand(
             transaction,
@@ -708,6 +755,11 @@ export function createBlackjackService(store) {
               "INVALID_BET"
             );
           }
+          await transaction.blackjack.incrementTotalWagered(
+            game.id,
+            insuranceCost
+          );
+          game.totalWagered += insuranceCost;
           result.data.dealer.cards.pop();
         } else if (dealerBlackjack) {
           await transaction.blackjack.setGameOver(game.id);
@@ -718,6 +770,14 @@ export function createBlackjackService(store) {
         }
 
         await transaction.blackjack.setOfferInsurance(game.id, false);
+        if (result.data.is_game_over) {
+          await transaction.analytics.recordGameResult({
+            userId,
+            gameType: GAME_TYPES.blackjack,
+            wagered: game.totalWagered,
+            payout: result.data.payout,
+          });
+        }
         return result;
       });
     },

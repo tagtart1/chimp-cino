@@ -8,6 +8,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum GameType {
+  BLACKJACK
+  MINES
+  ROULETTE
+}
+
 model User {
   id               Int       @id @default(autoincrement())
   username         String    @db.VarChar(50)
@@ -18,6 +24,7 @@ model User {
 
   blackjackGame ActiveBlackjackGame?
   minesGame     ActiveMinesGame?
+  gameResults   GameResult[]
 
   @@map("users")
 }
@@ -39,10 +46,11 @@ model ActiveBlackjackGame {
   isGameOver     Boolean @default(false) @map("is_game_over")
   userId         Int     @unique @map("user_id")
   startBet       Decimal @map("start_bet") @db.Decimal(14, 2)
+  totalWagered   Decimal @map("total_wagered") @db.Decimal(14, 2)
   offerInsurance Boolean @default(false) @map("offer_insurance")
 
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hands     ActiveHand[]
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hands ActiveHand[]
 
   @@map("active_blackjack_games")
 }
@@ -98,4 +106,19 @@ model ActiveCell {
 
   @@id([gameId, field])
   @@map("active_cells")
+}
+
+model GameResult {
+  id          BigInt   @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  gameType    GameType @map("game_type")
+  wagered     Decimal  @db.Decimal(14, 2)
+  payout      Decimal  @db.Decimal(14, 2)
+  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, completedAt, id])
+  @@index([userId, gameType, completedAt, id])
+  @@map("game_results")
 }

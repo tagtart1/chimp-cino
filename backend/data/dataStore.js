@@ -27,6 +27,7 @@
  * @property {number} id
  * @property {number} userId
  * @property {number} startBet
+ * @property {number} totalWagered
  * @property {boolean} isGameOver
  * @property {boolean} offerInsurance
  * @property {HandRecord[]} hands
@@ -65,6 +66,7 @@
  * @property {function(number): Promise<number>} countPlayerHands
  * @property {function(number, object): Promise<void>} updateHand
  * @property {function(number): Promise<void>} doubleHandBet
+ * @property {function(number, number): Promise<void>} incrementTotalWagered
  * @property {function(number, boolean=): Promise<void>} setGameOver
  * @property {function(number, boolean): Promise<void>} setOfferInsurance
  *
@@ -75,12 +77,20 @@
  * @property {function(number, number): Promise<void>} updateMultiplier
  * @property {function(number): Promise<void>} deleteGame
  *
+ * @typedef {object} AnalyticsRepository
+ * @property {function(object): Promise<void>} recordGameResult
+ * @property {function(number, string=): Promise<Date|null>} findOldestGameResultAt
+ * @property {function(object): Promise<object[]>} summarizeGameResults
+ * @property {function(object): Promise<object[]>} summarizeGameResultTimeline
+ * @property {function(object): Promise<object[]>} listGameResults
+ *
  * @typedef {object} DataStore
  * @property {function(function(DataStore): Promise<*>): Promise<*>} transaction
  * @property {UsersRepository} users
  * @property {WalletRepository} wallet
  * @property {BlackjackRepository} blackjack
  * @property {MinesRepository} mines
+ * @property {AnalyticsRepository} analytics
  */
 
 const repositoryMethods = {
@@ -98,6 +108,7 @@ const repositoryMethods = {
     "countPlayerHands",
     "updateHand",
     "doubleHandBet",
+    "incrementTotalWagered",
     "setGameOver",
     "setOfferInsurance",
   ],
@@ -107,6 +118,13 @@ const repositoryMethods = {
     "revealCells",
     "updateMultiplier",
     "deleteGame",
+  ],
+  analytics: [
+    "recordGameResult",
+    "findOldestGameResultAt",
+    "summarizeGameResults",
+    "summarizeGameResultTimeline",
+    "listGameResults",
   ],
 };
 

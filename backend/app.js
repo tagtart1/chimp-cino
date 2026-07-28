@@ -10,6 +10,7 @@ import rouletteRouter from "./routes/roulette.js";
 import usersRouter from "./routes/users.js";
 import blackjackRouter from "./routes/blackjack.js";
 import minesRouter from "./routes/mines.js";
+import analyticsRouter from "./routes/analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api/v1/roulette", rouletteRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/blackjack", blackjackRouter);
 app.use("/api/v1/mines", minesRouter);
+app.use("/api/v1/analytics", analyticsRouter);
 
 app.use((err, req, res, next) => {
   if (err instanceof AppError && err.isOperational) {

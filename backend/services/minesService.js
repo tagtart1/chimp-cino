@@ -1,4 +1,5 @@
 import AppError from "../utils/appError.js";
+import { GAME_TYPES } from "../config/gameTypes.js";
 
 const GAME_SIZE = 25;
 
@@ -33,6 +34,12 @@ export function createMinesService(store) {
 
     const winnings = game.bet * game.multiplier;
     await transaction.wallet.credit(userId, winnings);
+    await transaction.analytics.recordGameResult({
+      userId,
+      gameType: GAME_TYPES.mines,
+      wagered: game.bet,
+      payout: winnings,
+    });
     await transaction.mines.deleteGame(game.id);
 
     return {
@@ -127,6 +134,12 @@ export function createMinesService(store) {
         }
 
         if (isGameOver) {
+          await transaction.analytics.recordGameResult({
+            userId,
+            gameType: GAME_TYPES.mines,
+            wagered: game.bet,
+            payout: 0,
+          });
           await transaction.mines.deleteGame(game.id);
           return {
             data: {
