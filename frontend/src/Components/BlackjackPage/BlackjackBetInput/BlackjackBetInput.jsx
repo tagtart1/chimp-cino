@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useRef } from "react";
+import React, { useEffect, useRef } from "react";
+import "../../BetAmountInput/BetAmountInput.scss";
+import CoinIcon from "../../BetAmountInput/CoinIcon";
 
 export const BlackjackBetInput = ({ setBetAmount, loadedBet }) => {
   const betAmountInput = useRef(null);
@@ -57,15 +58,20 @@ export const BlackjackBetInput = ({ setBetAmount, loadedBet }) => {
 
   return (
     <div className="amount-input-group">
-      <label htmlFor="bet-amount">Amount</label>
+      <label htmlFor="blackjack-bet-amount">Amount</label>
       <div className="input-wrapper">
-        <input
-          ref={betAmountInput}
-          type="number"
-          id="bet-amount"
-          step={0.01}
-          onInput={(e) => setBetAmount(e.target.value)}
-        />
+        <div className="bet-amount-field">
+          <input
+            ref={betAmountInput}
+            className="bet-amount-input"
+            type="number"
+            id="blackjack-bet-amount"
+            step={0.01}
+            onFocus={(event) => event.currentTarget.select()}
+            onInput={(e) => setBetAmount(e.target.value)}
+          />
+          <CoinIcon className="coin-input-img" />
+        </div>
         <div className="bet-buttons">
           <button className="half-bet-button" onClick={halfBet}>
             ½

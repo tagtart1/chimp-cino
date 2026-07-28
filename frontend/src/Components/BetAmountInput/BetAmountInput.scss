@@ -1,0 +1,101 @@
+.amount-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    color: #b1bad3;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .input-wrapper {
+    display: flex;
+    position: relative;
+    box-shadow:
+      0 0.0625rem 0.1875rem #00000033,
+      0 0.0625rem 0.125rem #0000001f;
+    transition: filter 0.2s;
+
+    &.disabled {
+      filter: opacity(50%);
+    }
+  }
+
+  .bet-amount-field {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .bet-amount-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 34px 8px 8px;
+    color: #ffffff;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    background-color: #0f212e;
+    border: 2px solid #2f4553;
+    border-radius: 4px 0 0 4px;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus {
+      border-color: #537a92;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  .coin-input-img {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  .bet-buttons {
+    display: flex;
+    flex: 0 0 auto;
+
+    button {
+      padding: 0.6125rem 1rem;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      background-color: #2f4553;
+      border: 0;
+    }
+  }
+
+  .half-bet-button {
+    position: relative;
+
+    &::after {
+      position: absolute;
+      top: 25%;
+      right: -1px;
+      bottom: 25%;
+      width: 2px;
+      content: "";
+      background-color: #0f212e;
+    }
+  }
+
+  .double-bet-button {
+    border-radius: 0 4px 4px 0;
+  }
+
+  &:hover .bet-amount-input {
+    border-color: #537a92;
+  }
+}

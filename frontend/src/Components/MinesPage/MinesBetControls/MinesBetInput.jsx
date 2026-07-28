@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import "./MinesBetInput.scss";
-import { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import "../../BetAmountInput/BetAmountInput.scss";
+import CoinIcon from "../../BetAmountInput/CoinIcon";
 
 const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
   const betAmountInput = useRef(null);
@@ -63,20 +63,24 @@ const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
 
   return (
     <div className={`amount-input-group`}>
-      <label htmlFor="bet-amount ">Amount</label>
+      <label htmlFor="mines-bet-amount">Amount</label>
       <div className={`input-wrapper ${gameInProgress ? "disabled" : ""}`}>
-        <input
-          ref={betAmountInput}
-          type="number"
-          id="bet-amount"
-          step={0.01}
-          onInput={(e) => {
-            setInsideInput(true);
-            setBetAmount(e.target.value);
-          }}
-          disabled={gameInProgress}
-        />
-        <CoinSVG />
+        <div className="bet-amount-field">
+          <input
+            ref={betAmountInput}
+            className="bet-amount-input"
+            type="number"
+            id="mines-bet-amount"
+            step={0.01}
+            onFocus={(event) => event.currentTarget.select()}
+            onInput={(e) => {
+              setInsideInput(true);
+              setBetAmount(e.target.value);
+            }}
+            disabled={gameInProgress}
+          />
+          <CoinIcon className="coin-input-img" />
+        </div>
         <div className="bet-buttons">
           <button className="half-bet-button" onClick={halfBet}>
             ½
@@ -86,23 +90,6 @@ const MinesBetInput = ({ setBetAmount, betAmount, gameInProgress }) => {
           </button>
         </div>
       </div>
-    </div>
-  );
-};
-
-const CoinSVG = () => {
-  return (
-    <div className="coin-input-img">
-      <svg fill="none" viewBox="0 0 96 96">
-        <path
-          d="M48 96c26.51 0 48-21.49 48-48S74.51 0 48 0 0 21.49 0 48s21.49 48 48 48Z"
-          fill="#FFC800"
-        ></path>
-        <path
-          d="M48.16 21.92c10.16 0 16.56 4.92 20.32 10.72l-8.68 4.72c-2.28-3.44-6.48-6.16-11.64-6.16-8.88 0-15.36 6.84-15.36 16.12 0 9.28 6.48 16.12 15.36 16.12 4.48 0 8.44-1.84 10.6-3.76v-5.96H45.68v-8.96h23.4v18.76c-5 5.6-12 9.28-20.88 9.28-14.32 0-26.12-10-26.12-25.44C22.08 31.92 33.84 22 48.2 22l-.04-.08Z"
-          fill="#473800"
-        ></path>
-      </svg>
     </div>
   );
 };
