@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { body, validationResult } from "express-validator";
 import AppError from "../utils/appError.js";
-import { authService } from "../services/index.js";
+import { authService, dailyBonusService } from "../services/index.js";
 
 export const logIn = asyncHandler(async (req, res, next) => {
   req.user = await authService.logIn({
@@ -68,4 +68,12 @@ export const validateUser = asyncHandler(async (req, res, next) => {
       next(serviceError);
     }
   });
+});
+
+export const claimDailyBonus = asyncHandler(async (req, res) => {
+  res.status(200).json(await dailyBonusService.claim(req.user.id));
+});
+
+export const resetDailyBonusForTesting = asyncHandler(async (req, res) => {
+  res.status(200).json(await dailyBonusService.resetForTesting(req.user.id));
 });

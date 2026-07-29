@@ -15,12 +15,13 @@ enum GameType {
 }
 
 model User {
-  id               Int       @id @default(autoincrement())
-  username         String    @db.VarChar(50)
-  email            String    @unique @db.VarChar(255)
-  password         String
-  balance          Decimal   @default(10000.00) @db.Decimal(14, 2)
-  lastBonusClaimed DateTime? @map("last_bonus_claimed") @db.Timestamptz(3)
+  id                      Int       @id @default(autoincrement())
+  username                String    @db.VarChar(50)
+  email                   String    @unique @db.VarChar(255)
+  password                String
+  balance                 Decimal   @default(10000.00) @db.Decimal(14, 2)
+  dailyBonusStreak        Int       @default(0) @map("daily_bonus_streak")
+  lastDailyBonusClaimedOn DateTime? @map("last_daily_bonus_claimed_on") @db.Date
 
   blackjackGame ActiveBlackjackGame?
   minesGame     ActiveMinesGame?

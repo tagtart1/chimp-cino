@@ -6,14 +6,13 @@ const sendTokenResponse = (req, res, next) => {
   const jwtUser = {
     id: req.user.id,
     username: req.user.username,
-
-    last_bonus_claimed:
-      req.user.lastBonusClaimed !== undefined
-        ? req.user.lastBonusClaimed
-        : req.user.last_bonus_claimed,
   };
-  const returnedUser = jwtUser;
-  returnedUser.balance = parseFloat(req.user.balance);
+  const returnedUser = {
+    ...jwtUser,
+    balance: parseFloat(req.user.balance),
+    dailyBonusStreak: req.user.dailyBonusStreak,
+    lastDailyBonusClaimedOn: req.user.lastDailyBonusClaimedOn,
+  };
 
   jwt.sign(
     { user: jwtUser },

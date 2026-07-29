@@ -5,7 +5,8 @@
  * @property {string} email
  * @property {string} password
  * @property {number} balance
- * @property {Date|null} lastBonusClaimed
+ * @property {number} dailyBonusStreak
+ * @property {Date|null} lastDailyBonusClaimedOn
  *
  * @typedef {object} CardRecord
  * @property {number} id
@@ -48,6 +49,9 @@
  * @property {function(string): Promise<UserRecord|null>} findByLogin
  * @property {function({username: string, email: string}): Promise<boolean>} exists
  * @property {function({username: string, email: string, password: string, balance: number}): Promise<UserRecord>} create
+ * @property {function(number): Promise<{balance: number, dailyBonusStreak: number, lastDailyBonusClaimedOn: Date|null}|null>} findStateById
+ * @property {function({userId: number, streak: number, payout: number, claimedOn: Date}): Promise<{balance: number}>} claimDailyBonus
+ * @property {function(number): Promise<{dailyBonusStreak: number, lastDailyBonusClaimedOn: null}>} resetDailyBonusForTesting
  *
  * @typedef {object} WalletRepository
  * @property {function(number): Promise<number|null>} getBalance
@@ -94,7 +98,14 @@
  */
 
 const repositoryMethods = {
-  users: ["findByLogin", "exists", "create"],
+  users: [
+    "findByLogin",
+    "exists",
+    "create",
+    "findStateById",
+    "claimDailyBonus",
+    "resetDailyBonusForTesting",
+  ],
   wallet: ["getBalance", "withdrawIfSufficient", "credit"],
   blackjack: [
     "findGameByUserId",

@@ -33,7 +33,8 @@ const mapUser = (user) =>
     email: user.email,
     password: user.password,
     balance: number(user.balance),
-    lastBonusClaimed: user.lastBonusClaimed,
+    dailyBonusStreak: user.dailyBonusStreak,
+    lastDailyBonusClaimedOn: user.lastDailyBonusClaimedOn,
   };
 
 const mapCard = (handCard) => ({
@@ -172,6 +173,45 @@ function repositories(client, inTransaction = false) {
             },
           })
         );
+      },
+
+      async findStateById(userId) {
+        const user = await client.user.findUnique({
+          where: { id: userId },
+          select: {
+            balance: true,
+            dailyBonusStreak: true,
+            lastDailyBonusClaimedOn: true,
+          },
+        });
+        return user && { ...user, balance: number(user.balance) };
+      },
+
+      async claimDailyBonus({ userId, streak, payout, claimedOn }) {
+        const user = await client.user.update({
+          where: { id: userId },
+          data: {
+            dailyBonusStreak: streak,
+            lastDailyBonusClaimedOn: claimedOn,
+            balance: { increment: payout },
+          },
+          select: { balance: true },
+        });
+        return { balance: number(user.balance) };
+      },
+
+      async resetDailyBonusForTesting(userId) {
+        return client.user.update({
+          where: { id: userId },
+          data: {
+            dailyBonusStreak: 0,
+            lastDailyBonusClaimedOn: null,
+          },
+          select: {
+            dailyBonusStreak: true,
+            lastDailyBonusClaimedOn: true,
+          },
+        });
       },
     },
 
