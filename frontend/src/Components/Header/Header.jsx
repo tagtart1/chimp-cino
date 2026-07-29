@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import "./Header.scss";
 import logo from "../../images/chimps-logo-small.png";
 import AuthPopup from "../AuthPopup/AuthPopup";
 import { useUser } from "../../Contexts/UserProvider";
 import { Link } from "react-router-dom";
-import soundManager from "../../Helpers/sfxPlayer";
 import { apiUrl } from "../../config/api";
 import { useAuthPopup } from "../../Contexts/AuthPopupProvider";
+import DailyBonusModal from "../DailyBonusModal/DailyBonusModal";
 
 const Header = () => {
   const { user, setUser } = useUser();
@@ -20,7 +20,9 @@ const Header = () => {
   const dropdownRef = useRef(null);
   const previousBalanceRef = useRef(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const [showDailyBonus, setShowDailyBonus] = useState(false);
   const [balanceIncrease, setBalanceIncrease] = useState(null);
+  const closeDailyBonus = useCallback(() => setShowDailyBonus(false), []);
 
   const logOut = async () => {
     try {
@@ -33,6 +35,7 @@ const Header = () => {
         console.log("log out");
         setUser(null);
         setShowAccountDropdown(false);
+        setShowDailyBonus(false);
       }
     } catch (error) {
       console.log("Error fetching!");
@@ -137,18 +140,22 @@ const Header = () => {
               className="wallet-button"
               aria-label="Wallet"
               title="Wallet"
+              aria-haspopup="dialog"
+              aria-expanded={showDailyBonus}
               onClick={() => {
-                soundManager.playAudio("bomb");
+                setShowDailyBonus(true);
               }}
             >
-              <svg
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
+              <svg fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4.75 6.75h13.5A1.75 1.75 0 0 1 20 8.5v9.75H4.75A2.75 2.75 0 0 1 2 15.5v-8A2.75 2.75 0 0 1 4.75 4.75h11.5" />
                 <path d="M20 10h-4.25a2.25 2.25 0 0 0 0 4.5H20V10Z" />
-                <circle cx="16" cy="12.25" r=".75" fill="currentColor" stroke="none" />
+                <circle
+                  cx="16"
+                  cy="12.25"
+                  r=".75"
+                  fill="currentColor"
+                  stroke="none"
+                />
               </svg>
             </button>
           </div>
@@ -206,6 +213,10 @@ const Header = () => {
         isLogIn={isLogIn}
         isVisible={isVisible}
         close={closeAuth}
+      />
+      <DailyBonusModal
+        isOpen={showDailyBonus && Boolean(user)}
+        onClose={closeDailyBonus}
       />
     </header>
   );
