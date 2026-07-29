@@ -18,6 +18,16 @@ export const gameAssetUrls = Object.freeze({
   mineExplosion,
 });
 
+const preloadableGameAssetUrls = [
+  cardBack,
+  gem,
+  gemGold,
+  gemPink,
+  gemPurple,
+  gemRed,
+  mine,
+];
+
 const preloadImage = async (src) => {
   const image = new Image();
   image.src = src;
@@ -43,9 +53,7 @@ let preloadPromise;
 
 export const preloadGameAssets = () => {
   if (!preloadPromise) {
-    preloadPromise = Promise.all(
-      Object.values(gameAssetUrls).map(preloadImage)
-    );
+    preloadPromise = Promise.all(preloadableGameAssetUrls.map(preloadImage));
   }
 
   return preloadPromise;

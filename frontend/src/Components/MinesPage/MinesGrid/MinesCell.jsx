@@ -2,6 +2,14 @@ import React, { useEffect, useState, useRef } from "react";
 import soundManager from "../../../Helpers/sfxPlayer";
 import { gameAssetUrls } from "../../../Helpers/gameAssets";
 
+let explosionSequence = 0;
+
+const nextExplosionUrl = () => {
+  explosionSequence += 1;
+  const separator = gameAssetUrls.mineExplosion.includes("?") ? "&" : "?";
+  return `${gameAssetUrls.mineExplosion}${separator}run=${explosionSequence}`;
+};
+
 // TODO: add cleanup functions
 const MinesCell = ({
   gameInProgress,
@@ -19,6 +27,7 @@ const MinesCell = ({
   const cellRef = useRef();
   const [fetched, setFetched] = useState(false);
   const [explode, setExplode] = useState(false);
+  const [explosionUrl, setExplosionUrl] = useState(null);
   const [queued, setQueued] = useState(false);
   const revealedAsset =
     value === 2 ? gameAssetUrls.mine : value !== 0 ? gameAssetUrls.gem : null;
@@ -81,6 +90,15 @@ const MinesCell = ({
   };
 
   useEffect(() => {
+    if (value !== 2 || !gameIsEnding || !queued || explode) return;
+
+    setExplosionUrl(nextExplosionUrl());
+    setExplode(true);
+    soundManager.playAudio("bomb");
+    setQueued(false);
+  }, [value, gameIsEnding, queued, explode]);
+
+  useEffect(() => {
     const cell = cellRef.current;
     const cover = cell.querySelector(".cell-cover");
     const hidden = cell.querySelector(".cell-value");
@@ -95,11 +113,6 @@ const MinesCell = ({
           if (!isMine && gameInProgress && queued) {
             soundManager.playAudio("gem");
             setQueued(false);
-          } else if (isMine && gameIsEnding && queued && !explode) {
-            setExplode(true);
-
-            soundManager.playAudio("bomb");
-            setQueued(false);
           }
           hidden.classList.add(!isMine ? "gem" : "mine");
 
@@ -108,7 +121,7 @@ const MinesCell = ({
         { once: true }
       );
     }
-  }, [value, gameInProgress, gameIsEnding, queued, explode]);
+  }, [value, gameInProgress, queued]);
 
   useEffect(() => {
     if (!resetCells) return;
@@ -128,6 +141,7 @@ const MinesCell = ({
         cover.classList.remove("expand");
         cover.classList.remove("expand-cover");
         setExplode(false);
+        setExplosionUrl(null);
         setFetched(false);
         setQueued(false);
       },
@@ -146,7 +160,7 @@ const MinesCell = ({
         <img
           alt="mine explosion effect"
           className="mine-effect"
-          src={gameAssetUrls.mineExplosion}
+          src={explosionUrl}
         />
       )}
       <div
