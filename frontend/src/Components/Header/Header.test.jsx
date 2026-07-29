@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import Header from "./Header";
@@ -22,8 +22,8 @@ jest.mock("../../Contexts/AuthPopupProvider", () => ({
 }));
 
 jest.mock("../AuthPopup/AuthPopup", () => () => null);
-jest.mock("../DailyBonusModal/DailyBonusModal", () => ({ isOpen }) =>
-  isOpen ? <div role="dialog">Daily bonus</div> : null
+jest.mock("../WalletBalance/WalletBalance", () => () =>
+  mockUser ? <div data-testid="wallet-balance" /> : null
 );
 
 const renderHeader = () =>
@@ -33,34 +33,33 @@ const renderHeader = () =>
     </MemoryRouter>
   );
 
-describe("Header wallet", () => {
+describe("Header", () => {
   beforeEach(() => {
     mockUser = null;
     mockSetUser.mockReset();
     mockOpenLogin.mockReset();
   });
 
-  it("hides the wallet from signed-out users", () => {
+  it("shows authentication actions to signed-out users", () => {
     renderHeader();
 
-    expect(screen.queryByRole("button", { name: "Wallet" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Register" })).toBeInTheDocument();
+    expect(screen.queryByTestId("wallet-balance")).toBeNull();
     expect(mockOpenLogin).not.toHaveBeenCalled();
-    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("opens the daily bonus for a signed-in user", () => {
+  it("renders the wallet balance and account menu for signed-in users", () => {
     mockUser = {
       id: 7,
       username: "bonus-tester",
       balance: 10_000,
-      dailyBonusStreak: 2,
-      lastDailyBonusClaimedOn: null,
     };
     renderHeader();
 
-    fireEvent.click(screen.getByRole("button", { name: "Wallet" }));
-
-    expect(screen.getByRole("dialog")).toHaveTextContent("Daily bonus");
-    expect(mockOpenLogin).not.toHaveBeenCalled();
+    expect(screen.getByTestId("wallet-balance")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open account menu" })
+    ).toBeInTheDocument();
   });
 });

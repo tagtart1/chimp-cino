@@ -60,110 +60,6 @@
     text-align: center;
   }
 
-  .balance-bar {
-    grid-column: 2;
-    display: flex;
-    width: max-content;
-    max-width: 100%;
-    min-width: 0;
-    position: relative;
-    justify-self: center;
-    border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(5, 18, 26, 0.24);
-
-    .wallet-button {
-      display: grid;
-      width: 48px;
-      min-width: 48px;
-      height: 48px;
-      background-color: #ffc800;
-      color: #473800;
-      border-radius: 0 8px 8px 0;
-      cursor: pointer;
-      place-items: center;
-      transition:
-        background-color 160ms ease,
-        transform 160ms ease;
-
-      &:hover {
-        background-color: #ffd32f;
-      }
-
-      &:active {
-        transform: translateY(1px);
-      }
-
-      &:focus-visible {
-        z-index: 1;
-        outline: 2px solid #ffffff;
-        outline-offset: -4px;
-      }
-
-      svg {
-        width: 22px;
-        height: 22px;
-        stroke: currentColor;
-        stroke-width: 1.8;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-    }
-
-    .balance-num {
-      position: relative;
-      flex: 1 1 auto;
-      min-width: 0;
-      height: 48px;
-      padding: 0 14px;
-      font-size: 14px;
-      font-weight: 800;
-      color: white;
-      background-color: #0f212e;
-      border-radius: 8px 0 0 8px;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      transition: color 0.2s, background-color 0.2s, box-shadow 0.2s;
-
-      .balance-value {
-        display: block;
-        flex: 1 1 auto;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      &.balance-increased {
-        animation: wallet-balance-win 1.3s ease-out;
-      }
-
-      .balance-increase-amount {
-        position: absolute;
-        left: 50%;
-        top: calc(100% + 8px);
-        z-index: 20;
-        padding: 4px 9px;
-        border: 1px solid rgba(92, 255, 100, 0.45);
-        border-radius: 999px;
-        background-color: #102d25;
-        color: #5cff64;
-        font-size: 12px;
-        line-height: 1;
-        white-space: nowrap;
-        pointer-events: none;
-        animation: wallet-balance-rise 1.6s ease-out forwards;
-      }
-
-      .coin-icon {
-        width: 17px;
-        min-width: 17px;
-        height: 17px;
-      }
-    }
-  }
-
   .auth-actions-group {
     grid-column: 3;
     display: flex;
@@ -326,38 +222,6 @@
   }
 }
 
-@keyframes wallet-balance-win {
-  0%,
-  100% {
-    color: white;
-    background-color: #0f212e;
-    box-shadow: none;
-  }
-  22%,
-  60% {
-    color: #5cff64;
-    background-color: #123429;
-    box-shadow: inset 0 0 0 1px rgba(92, 255, 100, 0.5),
-      0 0 16px rgba(0, 231, 1, 0.2);
-  }
-}
-
-@keyframes wallet-balance-rise {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -4px) scale(0.92);
-  }
-  18%,
-  68% {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, 9px) scale(0.98);
-  }
-}
-
 @media (max-width: 800px) {
   .app-header {
     .header-wrapper {
@@ -400,19 +264,6 @@
       }
     }
 
-    .balance-bar {
-      .balance-num {
-        height: 44px;
-        padding: 0 9px;
-        font-size: 0.78rem;
-      }
-
-      .wallet-button {
-        width: 44px;
-        min-width: 44px;
-        height: 44px;
-      }
-    }
   }
 }
 
@@ -428,10 +279,6 @@
       height: 38px;
       font-size: 25px;
       line-height: 38px;
-    }
-
-    .balance-bar .balance-num {
-      padding-inline: 7px;
     }
   }
 }

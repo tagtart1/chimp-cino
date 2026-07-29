@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./Header.scss";
 import logo from "../../images/chimps-logo-small.png";
 import AuthPopup from "../AuthPopup/AuthPopup";
@@ -6,7 +6,7 @@ import { useUser } from "../../Contexts/UserProvider";
 import { Link } from "react-router-dom";
 import { apiUrl } from "../../config/api";
 import { useAuthPopup } from "../../Contexts/AuthPopupProvider";
-import DailyBonusModal from "../DailyBonusModal/DailyBonusModal";
+import WalletBalance from "../WalletBalance/WalletBalance";
 
 const Header = () => {
   const { user, setUser } = useUser();
@@ -18,11 +18,7 @@ const Header = () => {
     closeAuth,
   } = useAuthPopup();
   const dropdownRef = useRef(null);
-  const previousBalanceRef = useRef(null);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-  const [showDailyBonus, setShowDailyBonus] = useState(false);
-  const [balanceIncrease, setBalanceIncrease] = useState(null);
-  const closeDailyBonus = useCallback(() => setShowDailyBonus(false), []);
 
   const logOut = async () => {
     try {
@@ -35,22 +31,10 @@ const Header = () => {
         console.log("log out");
         setUser(null);
         setShowAccountDropdown(false);
-        setShowDailyBonus(false);
       }
     } catch (error) {
       console.log("Error fetching!");
     }
-  };
-
-  const formatNum = (num) => {
-    const trueNum = parseFloat(num);
-    const res = trueNum.toLocaleString("en-US", {
-      style: "decimal",
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-    });
-
-    return res;
   };
 
   useEffect(() => {
@@ -73,27 +57,6 @@ const Header = () => {
     };
   }, [showAccountDropdown]);
 
-  useEffect(() => {
-    const currentBalance = Number(user?.balance);
-
-    if (!Number.isFinite(currentBalance)) {
-      previousBalanceRef.current = null;
-      return;
-    }
-
-    const previousBalance = previousBalanceRef.current;
-    previousBalanceRef.current = currentBalance;
-
-    if (previousBalance === null || currentBalance <= previousBalance) return;
-
-    setBalanceIncrease(currentBalance - previousBalance);
-    const timerId = setTimeout(() => {
-      setBalanceIncrease(null);
-    }, 1600);
-
-    return () => clearTimeout(timerId);
-  }, [user?.balance]);
-
   return (
     <header className="app-header">
       <div className="header-wrapper">
@@ -103,63 +66,7 @@ const Header = () => {
             C
           </span>
         </Link>
-        {user ? (
-          <div className="balance-bar">
-            <div
-              className={`balance-num${
-                balanceIncrease !== null ? " balance-increased" : ""
-              }`}
-            >
-              <span className="balance-value" title={formatNum(user.balance)}>
-                {formatNum(user.balance)}
-              </span>
-              <svg
-                className="coin-icon"
-                fill="none"
-                viewBox="0 0 96 96"
-                aria-hidden="true"
-              >
-                <path
-                  d="M48 96c26.51 0 48-21.49 48-48S74.51 0 48 0 0 21.49 0 48s21.49 48 48 48Z"
-                  fill="#FFC800"
-                ></path>
-                <path
-                  d="M48.16 21.92c10.16 0 16.56 4.92 20.32 10.72l-8.68 4.72c-2.28-3.44-6.48-6.16-11.64-6.16-8.88 0-15.36 6.84-15.36 16.12 0 9.28 6.48 16.12 15.36 16.12 4.48 0 8.44-1.84 10.6-3.76v-5.96H45.68v-8.96h23.4v18.76c-5 5.6-12 9.28-20.88 9.28-14.32 0-26.12-10-26.12-25.44C22.08 31.92 33.84 22 48.2 22l-.04-.08Z"
-                  fill="#473800"
-                ></path>
-              </svg>
-              {balanceIncrease !== null ? (
-                <span className="balance-increase-amount">
-                  +
-                  {formatNum(balanceIncrease)}
-                </span>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              className="wallet-button"
-              aria-label="Wallet"
-              title="Wallet"
-              aria-haspopup="dialog"
-              aria-expanded={showDailyBonus}
-              onClick={() => {
-                setShowDailyBonus(true);
-              }}
-            >
-              <svg fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4.75 6.75h13.5A1.75 1.75 0 0 1 20 8.5v9.75H4.75A2.75 2.75 0 0 1 2 15.5v-8A2.75 2.75 0 0 1 4.75 4.75h11.5" />
-                <path d="M20 10h-4.25a2.25 2.25 0 0 0 0 4.5H20V10Z" />
-                <circle
-                  cx="16"
-                  cy="12.25"
-                  r=".75"
-                  fill="currentColor"
-                  stroke="none"
-                />
-              </svg>
-            </button>
-          </div>
-        ) : null}
+        <WalletBalance />
         <div className="auth-actions-group">
           {user ? (
             <div className="account-menu" ref={dropdownRef}>
@@ -213,10 +120,6 @@ const Header = () => {
         isLogIn={isLogIn}
         isVisible={isVisible}
         close={closeAuth}
-      />
-      <DailyBonusModal
-        isOpen={showDailyBonus && Boolean(user)}
-        onClose={closeDailyBonus}
       />
     </header>
   );
