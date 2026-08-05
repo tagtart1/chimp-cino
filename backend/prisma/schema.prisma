@@ -20,14 +20,30 @@ model User {
   email                   String    @unique @db.VarChar(255)
   password                String
   balance                 Decimal   @default(10000.00) @db.Decimal(14, 2)
-  dailyBonusStreak        Int       @default(0) @map("daily_bonus_streak")
-  lastDailyBonusClaimedOn DateTime? @map("last_daily_bonus_claimed_on") @db.Date
+  dailyBonusStreak        Int       @default(0)
+  lastDailyBonusClaimedOn DateTime? @db.Date
 
   blackjackGame ActiveBlackjackGame?
   minesGame     ActiveMinesGame?
   gameResults   GameResult[]
+  roles         Role[]
+}
 
-  @@map("users")
+model Role {
+  id          Int    @id @default(autoincrement())
+  key         String @unique @db.VarChar(100)
+  displayName String @db.VarChar(100)
+
+  users       User[]
+  permissions Permission[]
+}
+
+model Permission {
+  id          Int    @id @default(autoincrement())
+  key         String @unique @db.VarChar(100)
+  displayName String @db.VarChar(100)
+
+  roles Role[]
 }
 
 model Card {
@@ -39,42 +55,38 @@ model Card {
   activeHandCards ActiveHandCard[]
 
   @@unique([rank, suit])
-  @@map("cards")
 }
 
 model ActiveBlackjackGame {
   id             Int     @id @default(autoincrement())
-  isGameOver     Boolean @default(false) @map("is_game_over")
-  userId         Int     @unique @map("user_id")
-  startBet       Decimal @map("start_bet") @db.Decimal(14, 2)
-  totalWagered   Decimal @map("total_wagered") @db.Decimal(14, 2)
-  offerInsurance Boolean @default(false) @map("offer_insurance")
+  isGameOver     Boolean @default(false)
+  userId         Int     @unique
+  startBet       Decimal @db.Decimal(14, 2)
+  totalWagered   Decimal @db.Decimal(14, 2)
+  offerInsurance Boolean @default(false)
 
   user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   hands ActiveHand[]
-
-  @@map("active_blackjack_games")
 }
 
 model ActiveHand {
   id          Int     @id @default(autoincrement())
-  gameId      Int     @map("game_id")
-  isPlayer    Boolean @map("is_player")
-  isSelected  Boolean @default(true) @map("is_selected")
-  isCompleted Boolean @default(false) @map("is_completed")
-  isBust      Boolean @default(false) @map("is_bust")
+  gameId      Int
+  isPlayer    Boolean
+  isSelected  Boolean @default(true)
+  isCompleted Boolean @default(false)
+  isBust      Boolean @default(false)
   bet         Decimal @default(0.00) @db.Decimal(14, 2)
 
   game  ActiveBlackjackGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
   cards ActiveHandCard[]
 
   @@index([gameId])
-  @@map("active_hands")
 }
 
 model ActiveHandCard {
-  handId   Int @map("hand_id")
-  cardId   Int @map("card_id")
+  handId   Int
+  cardId   Int
   sequence Int
 
   hand ActiveHand @relation(fields: [handId], references: [id], onDelete: Cascade)
@@ -82,44 +94,39 @@ model ActiveHandCard {
 
   @@id([handId, sequence])
   @@index([cardId])
-  @@map("active_hand_cards")
 }
 
 model ActiveMinesGame {
   id         Int     @id @default(autoincrement())
-  userId     Int     @unique @map("user_id")
+  userId     Int     @unique
   bet        Decimal @db.Decimal(14, 2)
   multiplier Decimal @default(1.000000) @db.Decimal(20, 6)
 
   user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cells ActiveCell[]
-
-  @@map("active_mines_games")
 }
 
 model ActiveCell {
-  gameId     Int     @map("game_id")
+  gameId     Int
   field      Int
-  isGem      Boolean @map("is_gem")
-  isRevealed Boolean @default(false) @map("is_revealed")
+  isGem      Boolean
+  isRevealed Boolean @default(false)
 
   game ActiveMinesGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@id([gameId, field])
-  @@map("active_cells")
 }
 
 model GameResult {
   id          BigInt   @id @default(autoincrement())
-  userId      Int      @map("user_id")
-  gameType    GameType @map("game_type")
+  userId      Int
+  gameType    GameType
   wagered     Decimal  @db.Decimal(14, 2)
   payout      Decimal  @db.Decimal(14, 2)
-  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz(3)
+  completedAt DateTime @default(now()) @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, completedAt, id])
   @@index([userId, gameType, completedAt, id])
-  @@map("game_results")
 }
