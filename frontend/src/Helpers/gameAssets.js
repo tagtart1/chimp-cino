@@ -1,4 +1,3 @@
-import cardBack from "../images/card-back-chimps2.svg";
 import gem from "../images/gem.svg";
 import gemGold from "../images/gem-gold.svg";
 import gemPink from "../images/gem-pink.svg";
@@ -8,7 +7,6 @@ import mine from "../images/mine.svg";
 import mineExplosion from "../images/mineExplosion.CTwuSNug.gif";
 
 export const gameAssetUrls = Object.freeze({
-  cardBack,
   gem,
   gemGold,
   gemPink,
@@ -19,7 +17,6 @@ export const gameAssetUrls = Object.freeze({
 });
 
 const preloadableGameAssetUrls = [
-  cardBack,
   gem,
   gemGold,
   gemPink,

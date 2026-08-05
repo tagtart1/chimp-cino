@@ -45,19 +45,24 @@
   }
 
   .back {
+    align-items: center;
     border-radius: 6px;
+    display: flex;
+    justify-content: center;
     position: absolute;
     width: 100%;
     top: 0;
     left: 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 92%;
     backface-visibility: hidden;
     background-color: rgb(255, 255, 255);
 
     pointer-events: none;
     height: 100%;
+
+    .card-back-art {
+      display: block;
+      width: 92%;
+    }
   }
 }
 

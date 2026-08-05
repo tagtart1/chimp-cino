@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./PlayingCard.scss";
 import { motion, useAnimation } from "framer-motion";
-import { gameAssetUrls } from "../../Helpers/gameAssets";
+import { ReactComponent as CardBack } from "../../images/card-back-chimps2.svg";
 
 export const PlayingCard = ({
   style,
@@ -176,10 +176,9 @@ export const PlayingCard = ({
         ) : null}
       </div>
 
-      <div
-        className="back"
-        style={{ backgroundImage: `url(${gameAssetUrls.cardBack})` }}
-      ></div>
+      <div className="back">
+        <CardBack className="card-back-art" aria-hidden="true" />
+      </div>
     </motion.div>
   );
 };
