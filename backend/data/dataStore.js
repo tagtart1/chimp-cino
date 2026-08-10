@@ -88,6 +88,21 @@
  * @property {function(object): Promise<object[]>} summarizeGameResultTimeline
  * @property {function(object): Promise<object[]>} listGameResults
  *
+ * @typedef {object} AdminRepository
+ * @property {function({query: string, limit: number}): Promise<object[]>} searchUsers
+ * @property {function(number): Promise<object|null>} findUserById
+ * @property {function(): Promise<object[]>} listRoles
+ * @property {function({key: string, displayName: string}): Promise<object>} createRole
+ * @property {function(number, {key: string, displayName: string}): Promise<object>} updateRole
+ * @property {function(number): Promise<void>} deleteRole
+ * @property {function(number, number[]): Promise<object>} setUserRoles
+ * @property {function(): Promise<object[]>} listPermissions
+ * @property {function({key: string, displayName: string}): Promise<object>} createPermission
+ * @property {function(number, {key: string, displayName: string}): Promise<object>} updatePermission
+ * @property {function(number): Promise<void>} deletePermission
+ * @property {function(number, number[]): Promise<object>} setRolePermissions
+ * @property {function(number): Promise<object>} resetDailyBonus
+ *
  * @typedef {object} DataStore
  * @property {function(function(DataStore): Promise<*>): Promise<*>} transaction
  * @property {UsersRepository} users
@@ -95,6 +110,7 @@
  * @property {BlackjackRepository} blackjack
  * @property {MinesRepository} mines
  * @property {AnalyticsRepository} analytics
+ * @property {AdminRepository} admin
  */
 
 const repositoryMethods = {
@@ -136,6 +152,21 @@ const repositoryMethods = {
     "summarizeGameResults",
     "summarizeGameResultTimeline",
     "listGameResults",
+  ],
+  admin: [
+    "searchUsers",
+    "findUserById",
+    "listRoles",
+    "createRole",
+    "updateRole",
+    "deleteRole",
+    "setUserRoles",
+    "listPermissions",
+    "createPermission",
+    "updatePermission",
+    "deletePermission",
+    "setRolePermissions",
+    "resetDailyBonus",
   ],
 };
 

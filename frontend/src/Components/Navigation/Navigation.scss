@@ -89,7 +89,8 @@
       }
     }
 
-    .desktop-stats-button {
+    .desktop-stats-button,
+    .desktop-admin-button {
       width: 100%;
       min-height: 50px;
       display: flex;
@@ -128,6 +129,10 @@
         stroke-linecap: round;
         stroke-linejoin: round;
       }
+    }
+
+    .desktop-admin-button {
+      margin-top: 8px;
     }
   }
 }

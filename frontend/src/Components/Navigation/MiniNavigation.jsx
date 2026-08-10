@@ -1,8 +1,9 @@
 import React from "react";
 import "./MiniNavigation.scss";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import MinesIcon from "./MinesIcon";
 import StatsIcon from "./StatsIcon";
+import AdminIcon from "./AdminIcon";
 
 const MiniNavigation = ({
   setMinimize,
@@ -12,6 +13,7 @@ const MiniNavigation = ({
   statsOpen,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   return (
     <>
       <div className="mini-nav-top">
@@ -75,6 +77,16 @@ const MiniNavigation = ({
             <StatsIcon />
           </button>
         ) : null}
+        <button
+          className={`mini-admin-button${
+            location.pathname === "/admin" ? " is-active" : ""
+          }`}
+          type="button"
+          aria-label="Admin"
+          onClick={() => navigate("/admin")}
+        >
+          <AdminIcon />
+        </button>
       </div>
     </>
   );

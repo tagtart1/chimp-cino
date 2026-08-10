@@ -52,6 +52,34 @@ const mapCanonicalCard = (card) => ({
   value: card.value,
 });
 
+const mapPermission = (permission) => ({
+  id: permission.id,
+  key: permission.key,
+  displayName: permission.displayName,
+});
+
+const mapRole = (role) => ({
+  id: role.id,
+  key: role.key,
+  displayName: role.displayName,
+  ...(role.permissions
+    ? { permissions: role.permissions.map(mapPermission) }
+    : {}),
+});
+
+const mapAdminUser = (user) =>
+  user && {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    balance: number(user.balance),
+    dailyBonusStreak: user.dailyBonusStreak,
+    lastDailyBonusClaimedOn: user.lastDailyBonusClaimedOn,
+    ...(user.roles
+      ? { roles: user.roles.map(mapRole) }
+      : {}),
+  };
+
 const handInclude = {
   cards: {
     orderBy: { sequence: "asc" },
@@ -114,6 +142,7 @@ function protectRepositories(store) {
     "blackjack",
     "mines",
     "analytics",
+    "admin",
   ]) {
     const repository = store[repositoryName];
     for (const methodName of Object.keys(repository)) {
@@ -547,6 +576,163 @@ function repositories(client, inTransaction = false) {
           payout: number(row.payout),
           completedAt: row.completedAt,
         }));
+      },
+    },
+
+    admin: {
+      async searchUsers({ query, limit }) {
+        const users = await client.user.findMany({
+          where: query
+            ? {
+                OR: [
+                  { username: { contains: query, mode: "insensitive" } },
+                  { email: { contains: query, mode: "insensitive" } },
+                ],
+              }
+            : undefined,
+          orderBy: { id: "desc" },
+          take: limit,
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            balance: true,
+            dailyBonusStreak: true,
+            lastDailyBonusClaimedOn: true,
+          },
+        });
+        return users.map(mapAdminUser);
+      },
+
+      async findUserById(userId) {
+        const user = await client.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            balance: true,
+            dailyBonusStreak: true,
+            lastDailyBonusClaimedOn: true,
+            roles: { orderBy: { displayName: "asc" } },
+          },
+        });
+        return mapAdminUser(user);
+      },
+
+      async listRoles() {
+        const roles = await client.role.findMany({
+          orderBy: [{ displayName: "asc" }, { id: "asc" }],
+          include: {
+            permissions: { orderBy: { displayName: "asc" } },
+          },
+        });
+        return roles.map(mapRole);
+      },
+
+      async createRole(input) {
+        return mapRole(
+          await client.role.create({
+            data: input,
+            include: { permissions: true },
+          })
+        );
+      },
+
+      async updateRole(roleId, input) {
+        return mapRole(
+          await client.role.update({
+            where: { id: roleId },
+            data: input,
+            include: {
+              permissions: { orderBy: { displayName: "asc" } },
+            },
+          })
+        );
+      },
+
+      async deleteRole(roleId) {
+        await client.role.delete({ where: { id: roleId } });
+      },
+
+      async setUserRoles(userId, roleIds) {
+        const user = await client.user.update({
+          where: { id: userId },
+          data: {
+            roles: {
+              set: roleIds.map((id) => ({ id })),
+            },
+          },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            balance: true,
+            dailyBonusStreak: true,
+            lastDailyBonusClaimedOn: true,
+            roles: { orderBy: { displayName: "asc" } },
+          },
+        });
+        return mapAdminUser(user);
+      },
+
+      async listPermissions() {
+        const permissions = await client.permission.findMany({
+          orderBy: [{ displayName: "asc" }, { id: "asc" }],
+        });
+        return permissions.map(mapPermission);
+      },
+
+      async createPermission(input) {
+        return mapPermission(await client.permission.create({ data: input }));
+      },
+
+      async updatePermission(permissionId, input) {
+        return mapPermission(
+          await client.permission.update({
+            where: { id: permissionId },
+            data: input,
+          })
+        );
+      },
+
+      async deletePermission(permissionId) {
+        await client.permission.delete({ where: { id: permissionId } });
+      },
+
+      async setRolePermissions(roleId, permissionIds) {
+        const role = await client.role.update({
+          where: { id: roleId },
+          data: {
+            permissions: {
+              set: permissionIds.map((id) => ({ id })),
+            },
+          },
+          include: {
+            permissions: { orderBy: { displayName: "asc" } },
+          },
+        });
+        return mapRole(role);
+      },
+
+      async resetDailyBonus(userId) {
+        const user = await client.user.update({
+          where: { id: userId },
+          data: {
+            dailyBonusStreak: 0,
+            lastDailyBonusClaimedOn: null,
+          },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            balance: true,
+            dailyBonusStreak: true,
+            lastDailyBonusClaimedOn: true,
+            roles: { orderBy: { displayName: "asc" } },
+          },
+        });
+        return mapAdminUser(user);
       },
     },
   };

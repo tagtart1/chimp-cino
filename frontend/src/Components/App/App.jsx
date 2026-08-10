@@ -13,6 +13,7 @@ import NotFoundPage from "../NotFoundPage/NotFoundPage";
 import soundManager from "../../Helpers/sfxPlayer";
 import { preloadGameAssets } from "../../Helpers/gameAssets";
 import { apiUrl } from "../../config/api";
+import AdminPage from "../AdminPage/AdminPage";
 
 function App() {
   const { setUser } = useUser();
@@ -63,6 +64,7 @@ function App() {
               <Route path="/roulette" element={<RoulettePage />} />
               <Route path="/blackjack" element={<BlackjackPage />} />
               <Route path="/mines" element={<MinesPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </div>

@@ -7,6 +7,7 @@ import MinesIcon from "./MinesIcon";
 import StatsIcon from "./StatsIcon";
 import StatsDrawer from "../StatsDrawer/StatsDrawer";
 import { useUser } from "../../Contexts/UserProvider";
+import AdminIcon from "./AdminIcon";
 
 const Navigation = () => {
   const { user } = useUser();
@@ -148,6 +149,13 @@ const Navigation = () => {
                   >
                     <MinesIcon />
                     Mines
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigateFromMobileMenu("/admin")}
+                  >
+                    <AdminIcon />
+                    Admin
                   </button>
                 </nav>
               </motion.aside>
@@ -302,6 +310,16 @@ const Navigation = () => {
                   Stats
                 </button>
               ) : null}
+              <button
+                className={`desktop-admin-button${
+                  location.pathname === "/admin" ? " is-active" : ""
+                }`}
+                type="button"
+                onClick={() => navigate("/admin")}
+              >
+                <AdminIcon />
+                Admin
+              </button>
             </motion.div>
           </div>
         ) : (
