@@ -173,41 +173,5 @@ export function createAdminService(store) {
     async listPermissions() {
       return { data: await store.admin.listPermissions() };
     },
-
-    async createPermission(input) {
-      try {
-        return {
-          data: await store.admin.createPermission(
-            accessInput(input, "Permission")
-          ),
-        };
-      } catch (error) {
-        return translateAdminPersistenceError(error, "Permission");
-      }
-    },
-
-    async updatePermission(rawPermissionId, input) {
-      const permissionId = positiveId(rawPermissionId, "Permission ID");
-      try {
-        return {
-          data: await store.admin.updatePermission(
-            permissionId,
-            accessInput(input, "Permission")
-          ),
-        };
-      } catch (error) {
-        return translateAdminPersistenceError(error, "Permission");
-      }
-    },
-
-    async deletePermission(rawPermissionId) {
-      const permissionId = positiveId(rawPermissionId, "Permission ID");
-      try {
-        await store.admin.deletePermission(permissionId);
-        return { data: { id: permissionId } };
-      } catch (error) {
-        return translateAdminPersistenceError(error, "Permission");
-      }
-    },
   };
 }

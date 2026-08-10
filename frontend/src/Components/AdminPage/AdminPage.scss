@@ -1050,67 +1050,6 @@
     }
   }
 
-  .permission-create-form {
-    display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(210px, 1fr) auto;
-    align-items: end;
-    gap: 12px;
-    margin-top: 21px;
-    padding: 16px;
-    background: #1a2c38;
-    border: 1px solid rgba(177, 186, 211, 0.1);
-    border-radius: 10px;
-
-    label {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-
-      > span {
-        color: #8ea0ab;
-        font-size: 10px;
-        font-weight: 800;
-        text-transform: uppercase;
-      }
-    }
-
-    input,
-    button {
-      height: 42px;
-    }
-
-    button {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-
-      span {
-        font-size: 18px;
-      }
-    }
-  }
-
-  .permission-create-form input,
-  .permission-table input {
-    width: 100%;
-    padding: 0 12px;
-    color: #ffffff;
-    font-size: 12px;
-    background: #0f212e;
-    border: 1px solid #2f4553;
-    border-radius: 7px;
-    outline: none;
-
-    &:focus {
-      border-color: #00c901;
-      box-shadow: 0 0 0 3px rgba(0, 231, 1, 0.08);
-    }
-
-    &::placeholder {
-      color: #5f737f;
-    }
-  }
-
   .permission-table-wrap {
     margin-top: 17px;
     overflow-x: auto;
@@ -1161,9 +1100,6 @@
       border-radius: 5px;
     }
 
-    input {
-      height: 37px;
-    }
   }
 
   .permission-name-cell {
@@ -1177,10 +1113,6 @@
       stroke: currentColor;
       stroke-width: 1.7;
     }
-  }
-
-  .permission-actions {
-    white-space: nowrap;
   }
 
   .table-action {
@@ -1211,16 +1143,6 @@
     text-align: center;
   }
 
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
 }
 
 @keyframes admin-skeleton {
@@ -1365,10 +1287,6 @@
       gap: 8px;
     }
 
-    .permission-create-form {
-      grid-template-columns: 1fr;
-    }
-
     .role-profile {
       grid-template-columns: 48px minmax(0, 1fr);
       padding: 18px;
@@ -1394,15 +1312,11 @@
       }
 
       th:nth-child(1) {
-        width: 34%;
+        width: 50%;
       }
 
       th:nth-child(2) {
-        width: 35%;
-      }
-
-      th:nth-child(3) {
-        width: 31%;
+        width: 50%;
       }
 
       code {
@@ -1425,8 +1339,5 @@
       }
     }
 
-    .permission-actions {
-      white-space: normal;
-    }
   }
 }

@@ -51,21 +51,3 @@ export const setRolePermissions = asyncHandler(async (req, res) => {
 export const listPermissions = asyncHandler(async (req, res) => {
   res.status(200).json(await adminService.listPermissions());
 });
-
-export const createPermission = asyncHandler(async (req, res) => {
-  res.status(201).json(await adminService.createPermission(req.body));
-});
-
-export const updatePermission = asyncHandler(async (req, res) => {
-  res
-    .status(200)
-    .json(
-      await adminService.updatePermission(req.params.permissionId, req.body)
-    );
-});
-
-export const deletePermission = asyncHandler(async (req, res) => {
-  res
-    .status(200)
-    .json(await adminService.deletePermission(req.params.permissionId));
-});

@@ -97,9 +97,6 @@
  * @property {function(number): Promise<void>} deleteRole
  * @property {function(number, number[]): Promise<object>} setUserRoles
  * @property {function(): Promise<object[]>} listPermissions
- * @property {function({key: string, displayName: string}): Promise<object>} createPermission
- * @property {function(number, {key: string, displayName: string}): Promise<object>} updatePermission
- * @property {function(number): Promise<void>} deletePermission
  * @property {function(number, number[]): Promise<object>} setRolePermissions
  * @property {function(number): Promise<object>} resetDailyBonus
  *
@@ -162,9 +159,6 @@ const repositoryMethods = {
     "deleteRole",
     "setUserRoles",
     "listPermissions",
-    "createPermission",
-    "updatePermission",
-    "deletePermission",
     "setRolePermissions",
     "resetDailyBonus",
   ],

@@ -124,8 +124,6 @@ export default function AdminPage() {
 
   const [permissions, setPermissions] = useState([]);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
-  const [permissionForm, setPermissionForm] = useState(blankAccessItem);
-  const [editingPermission, setEditingPermission] = useState(null);
   const [saving, setSaving] = useState("");
   const [notice, setNotice] = useState(null);
 
@@ -349,82 +347,6 @@ export default function AdminPage() {
     }
   };
 
-  const createPermission = async (event) => {
-    event.preventDefault();
-    setSaving("create-permission");
-    try {
-      const permission = await adminRequest("/permissions", {
-        method: "POST",
-        body: JSON.stringify(permissionForm),
-      });
-      setPermissionForm(blankAccessItem);
-      setPermissions((current) => [...current, permission]);
-      showNotice("Permission created.");
-    } catch (error) {
-      showNotice(error.message, "error");
-    } finally {
-      setSaving("");
-    }
-  };
-
-  const updatePermission = async (event) => {
-    event.preventDefault();
-    if (!editingPermission) return;
-    setSaving(`permission-${editingPermission.id}`);
-    try {
-      const updated = await adminRequest(
-        `/permissions/${editingPermission.id}`,
-        { method: "PATCH", body: JSON.stringify(editingPermission) }
-      );
-      setPermissions((current) =>
-        current.map((permission) =>
-          permission.id === updated.id ? updated : permission
-        )
-      );
-      const updateRolePermission = (role) => ({
-        ...role,
-        permissions: role.permissions.map((permission) =>
-          permission.id === updated.id ? updated : permission
-        ),
-      });
-      setRoles((current) => current.map(updateRolePermission));
-      setSelectedRole((current) =>
-        current ? updateRolePermission(current) : current
-      );
-      setEditingPermission(null);
-      showNotice("Permission updated.");
-    } catch (error) {
-      showNotice(error.message, "error");
-    } finally {
-      setSaving("");
-    }
-  };
-
-  const deletePermission = async (permission) => {
-    if (!window.confirm(`Delete “${permission.displayName}”? It will be removed from every role.`)) return;
-    setSaving(`permission-${permission.id}`);
-    try {
-      await adminRequest(`/permissions/${permission.id}`, { method: "DELETE" });
-      setPermissions((current) => current.filter(({ id }) => id !== permission.id));
-      setRolePermissionDraft((current) =>
-        current.filter((id) => id !== permission.id)
-      );
-      const removeRolePermission = (role) => ({
-        ...role,
-        permissions: role.permissions.filter(({ id }) => id !== permission.id),
-      });
-      setRoles((current) => current.map(removeRolePermission));
-      setSelectedRole((current) =>
-        current ? removeRolePermission(current) : current
-      );
-      showNotice("Permission deleted.");
-    } catch (error) {
-      showNotice(error.message, "error");
-    } finally {
-      setSaving("");
-    }
-  };
-
   const userRolesChanged = selectedUser
     ? !sameIds(userRoleDraft, selectedIds(selectedUser.roles))
     : false;
@@ -572,7 +494,7 @@ export default function AdminPage() {
                     </div>
                     <div className="admin-section role-permissions">
                       <div className="section-heading"><div><span>Capabilities</span><h3>Permissions on this role</h3></div><span className="section-number">{rolePermissionDraft.length}</span></div>
-                      <AccessChecklist items={permissions} selected={rolePermissionDraft} loading={permissionsLoading} emptyMessage="Create a permission below to configure this role." onToggle={(id) => toggleId(setRolePermissionDraft, id)} />
+                      <AccessChecklist items={permissions} selected={rolePermissionDraft} loading={permissionsLoading} emptyMessage="No registered permissions are available." onToggle={(id) => toggleId(setRolePermissionDraft, id)} />
                       <div className="permission-save-row"><span>{rolePermissionDraft.length} permission{rolePermissionDraft.length === 1 ? "" : "s"} selected</span><button className="primary-action" type="button" disabled={!rolePermissionsChanged || saving === "role-permissions"} onClick={saveRolePermissions}>{saving === "role-permissions" ? "Saving…" : "Save permissions"}</button></div>
                     </div>
                   </>
@@ -581,22 +503,15 @@ export default function AdminPage() {
             </div>
 
             <section className="admin-panel permission-library">
-              <div className="permission-library-header"><div className="panel-heading"><div><span>Permissions</span><h2>Permission library</h2></div></div><p>Create reusable capabilities, then attach them to roles.</p></div>
-              <form className="permission-create-form" onSubmit={createPermission}>
-                <label><span>Permission name</span><input required maxLength="100" value={permissionForm.displayName} placeholder="Reset player bonus" onChange={(event) => setPermissionForm((current) => ({ ...current, displayName: event.target.value }))} /></label>
-                <label><span>Permission key</span><input required maxLength="100" pattern="[a-z][a-z0-9:_-]+" value={permissionForm.key} placeholder="user:reset_bonus" onChange={(event) => setPermissionForm((current) => ({ ...current, key: event.target.value.toLowerCase().replace(/\s+/g, "_") }))} /></label>
-                <button className="primary-action" type="submit" disabled={saving === "create-permission"}><span aria-hidden="true">+</span>{saving === "create-permission" ? "Creating…" : "Create permission"}</button>
-              </form>
+              <div className="permission-library-header"><div className="panel-heading"><div><span>Permissions</span><h2>Permission library</h2></div></div><p>Registered in code and synced during deployment. Assign them to roles above.</p></div>
               <div className="permission-table-wrap">
                 <table className="permission-table">
-                  <thead><tr><th>Name</th><th>Key</th><th><span className="visually-hidden">Actions</span></th></tr></thead>
-                  <tbody>{permissions.map((permission) => editingPermission?.id === permission.id ? (
-                    <tr key={permission.id} className="is-editing"><td><input aria-label="Permission name" maxLength="100" value={editingPermission.displayName} onChange={(event) => setEditingPermission((current) => ({ ...current, displayName: event.target.value }))} /></td><td><input aria-label="Permission key" maxLength="100" value={editingPermission.key} onChange={(event) => setEditingPermission((current) => ({ ...current, key: event.target.value.toLowerCase() }))} /></td><td className="permission-actions"><button type="button" className="table-action is-save" disabled={saving === `permission-${permission.id}`} onClick={updatePermission}>Save</button><button type="button" className="table-action" onClick={() => setEditingPermission(null)}>Cancel</button></td></tr>
-                  ) : (
-                    <tr key={permission.id}><td><span className="permission-name-cell"><ShieldIcon /><strong>{permission.displayName}</strong></span></td><td><code>{permission.key}</code></td><td className="permission-actions"><button type="button" className="table-action" onClick={() => setEditingPermission(permission)}>Edit</button><button type="button" className="table-action is-delete" disabled={saving === `permission-${permission.id}`} onClick={() => deletePermission(permission)}>Delete</button></td></tr>
+                  <thead><tr><th>Name</th><th>Key</th></tr></thead>
+                  <tbody>{permissions.map((permission) => (
+                    <tr key={permission.id}><td><span className="permission-name-cell"><ShieldIcon /><strong>{permission.displayName}</strong></span></td><td><code>{permission.key}</code></td></tr>
                   ))}</tbody>
                 </table>
-                {!permissionsLoading && !permissions.length ? <div className="empty-permission-library">No permissions created yet.</div> : null}
+                {!permissionsLoading && !permissions.length ? <div className="empty-permission-library">No registered permissions are available.</div> : null}
               </div>
             </section>
           </>

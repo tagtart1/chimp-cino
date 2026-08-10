@@ -4,8 +4,8 @@ import "@testing-library/jest-dom";
 import AdminPage from "./AdminPage";
 
 const permissions = [
-  { id: 1, key: "user:reset_bonus", displayName: "Reset bonus" },
-  { id: 2, key: "user:view", displayName: "View users" },
+  { id: 1, key: "role:manage", displayName: "Manage Roles" },
+  { id: 2, key: "permission:manage", displayName: "Manage Permissions" },
 ];
 const roles = [
   {
@@ -128,7 +128,7 @@ describe("AdminPage", () => {
 
     expect(screen.getByText("Permissions on this role")).toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("checkbox", { name: /Reset bonus user:reset_bonus/i })
+      screen.getByRole("checkbox", { name: /Manage Roles role:manage/i })
     );
     fireEvent.click(
       screen.getByRole("button", { name: "Save permissions" })
@@ -146,5 +146,19 @@ describe("AdminPage", () => {
     expect(
       await screen.findByText("Permissions updated for Administrator.")
     ).toBeInTheDocument();
+  });
+
+  it("shows the permission registry without permission CRUD controls", async () => {
+    render(<AdminPage />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Roles & permissions/i })
+    );
+
+    expect(await screen.findByText("role:manage")).toBeInTheDocument();
+    expect(screen.getByText("permission:manage")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create permission" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Permission name")).not.toBeInTheDocument();
   });
 });

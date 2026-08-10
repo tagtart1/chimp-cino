@@ -9,14 +9,15 @@
   "scripts": {
     "predev": "prisma generate",
     "dev": "nodemon ./bin/www",
-    "prestart": "prisma generate",
+    "prestart": "prisma generate && pnpm run permissions:sync",
     "start": "node ./bin/www",
     "test": "node --test",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:format": "prisma format",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:migrate:status": "prisma migrate status"
+    "prisma:migrate:status": "prisma migrate status",
+    "permissions:sync": "node ./scripts/syncPermissions.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.9.0",

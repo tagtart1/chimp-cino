@@ -56,15 +56,6 @@ function createStore() {
       async listPermissions() {
         return permissions;
       },
-      async createPermission(input) {
-        return { id: 3, ...input };
-      },
-      async updatePermission(permissionId, input) {
-        return { id: permissionId, ...input };
-      },
-      async deletePermission(permissionId) {
-        calls.push({ method: "deletePermission", permissionId });
-      },
       async setRolePermissions(roleId, permissionIds) {
         calls.push({ method: "setRolePermissions", roleId, permissionIds });
         return {

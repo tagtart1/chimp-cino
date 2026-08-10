@@ -1,7 +1,6 @@
-import "../utils/loadEnv.js";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Prisma, PrismaClient } from "../generated/prisma/client.ts";
+import { Prisma } from "../generated/prisma/client.ts";
 import { assertDataStore, DataStoreError } from "./dataStore.js";
+import { prisma } from "./prismaClient.js";
 
 const TRANSACTION_OPTIONS = {
   isolationLevel: "Serializable",
@@ -9,20 +8,6 @@ const TRANSACTION_OPTIONS = {
   timeout: 10_000,
 };
 const MAX_TRANSACTION_ATTEMPTS = 3;
-
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required");
-}
-
-const hostname = new URL(connectionString).hostname;
-const adapter = new PrismaPg({
-  connectionString,
-  ssl: hostname.endsWith(".render.com")
-    ? { rejectUnauthorized: true }
-    : undefined,
-});
-const prisma = new PrismaClient({ adapter });
 
 const number = (value) => (value == null ? value : Number(value));
 
@@ -681,23 +666,6 @@ function repositories(client, inTransaction = false) {
           orderBy: [{ displayName: "asc" }, { id: "asc" }],
         });
         return permissions.map(mapPermission);
-      },
-
-      async createPermission(input) {
-        return mapPermission(await client.permission.create({ data: input }));
-      },
-
-      async updatePermission(permissionId, input) {
-        return mapPermission(
-          await client.permission.update({
-            where: { id: permissionId },
-            data: input,
-          })
-        );
-      },
-
-      async deletePermission(permissionId) {
-        await client.permission.delete({ where: { id: permissionId } });
       },
 
       async setRolePermissions(roleId, permissionIds) {

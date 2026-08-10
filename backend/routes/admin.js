@@ -21,8 +21,5 @@ router.delete("/roles/:roleId", adminController.deleteRole);
 router.put("/roles/:roleId/permissions", adminController.setRolePermissions);
 
 router.get("/permissions", adminController.listPermissions);
-router.post("/permissions", adminController.createPermission);
-router.patch("/permissions/:permissionId", adminController.updatePermission);
-router.delete("/permissions/:permissionId", adminController.deletePermission);
 
 export default router;
