@@ -12,7 +12,7 @@ import GlobalLoader from "../GlobalLoader/GlobalLoader";
 import NotFoundPage from "../NotFoundPage/NotFoundPage";
 import soundManager from "../../Helpers/sfxPlayer";
 import { preloadGameAssets } from "../../Helpers/gameAssets";
-import { apiUrl } from "../../config/api";
+import { fetchSessionUser } from "../../Helpers/session";
 import AdminPage from "../AdminPage/AdminPage";
 
 function App() {
@@ -25,19 +25,9 @@ function App() {
     const fetchUser = async () => {
       setLoadingUser(true);
       try {
-        const response = await fetch(apiUrl("/users/validate-user"), {
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          // Show login notification
-          return;
-        }
-
-        const result = await response.json();
-
-        setUser(result.data);
-      } catch (err) {
+        setUser(await fetchSessionUser());
+      } catch {
+        setUser(null);
       } finally {
         setLoadingUser(false);
       }

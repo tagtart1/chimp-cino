@@ -18,6 +18,6 @@ router.post(
   validateToken,
   usersController.resetDailyBonusForTesting
 );
-router.get("/validate-user", usersController.validateUser);
+router.get("/validate-user", validateToken, usersController.validateUser);
 
 export default router;

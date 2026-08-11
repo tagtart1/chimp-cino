@@ -8,6 +8,10 @@ import StatsIcon from "./StatsIcon";
 import StatsDrawer from "../StatsDrawer/StatsDrawer";
 import { useUser } from "../../Contexts/UserProvider";
 import AdminIcon from "./AdminIcon";
+import {
+  hasPermission,
+  PERMISSION_KEYS,
+} from "../../Helpers/permissions";
 
 const Navigation = () => {
   const { user } = useUser();
@@ -22,6 +26,7 @@ const Navigation = () => {
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const showAdmin = hasPermission(user, PERMISSION_KEYS.USER_VIEW);
 
   const closeStats = useCallback(() => setStatsOpen(false), []);
   const openStats = useCallback(() => {
@@ -150,13 +155,15 @@ const Navigation = () => {
                     <MinesIcon />
                     Mines
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => navigateFromMobileMenu("/admin")}
-                  >
-                    <AdminIcon />
-                    Admin
-                  </button>
+                  {showAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => navigateFromMobileMenu("/admin")}
+                    >
+                      <AdminIcon />
+                      Admin
+                    </button>
+                  ) : null}
                 </nav>
               </motion.aside>
             </>
@@ -310,16 +317,18 @@ const Navigation = () => {
                   Stats
                 </button>
               ) : null}
-              <button
-                className={`desktop-admin-button${
-                  location.pathname === "/admin" ? " is-active" : ""
-                }`}
-                type="button"
-                onClick={() => navigate("/admin")}
-              >
-                <AdminIcon />
-                Admin
-              </button>
+              {showAdmin ? (
+                <button
+                  className={`desktop-admin-button${
+                    location.pathname === "/admin" ? " is-active" : ""
+                  }`}
+                  type="button"
+                  onClick={() => navigate("/admin")}
+                >
+                  <AdminIcon />
+                  Admin
+                </button>
+              ) : null}
             </motion.div>
           </div>
         ) : (
@@ -328,6 +337,7 @@ const Navigation = () => {
             minimize={minimize}
             onOpenStats={openStats}
             showStats={Boolean(user)}
+            showAdmin={showAdmin}
             statsOpen={statsOpen}
           />
         )}

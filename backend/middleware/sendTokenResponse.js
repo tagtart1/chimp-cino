@@ -12,6 +12,7 @@ const sendTokenResponse = (req, res, next) => {
     balance: parseFloat(req.user.balance),
     dailyBonusStreak: req.user.dailyBonusStreak,
     lastDailyBonusClaimedOn: req.user.lastDailyBonusClaimedOn,
+    permissions: req.user.permissions ?? [],
   };
 
   jwt.sign(

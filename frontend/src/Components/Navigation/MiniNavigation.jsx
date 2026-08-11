@@ -10,6 +10,7 @@ const MiniNavigation = ({
   minimize,
   onOpenStats,
   showStats,
+  showAdmin,
   statsOpen,
 }) => {
   const navigate = useNavigate();
@@ -77,16 +78,18 @@ const MiniNavigation = ({
             <StatsIcon />
           </button>
         ) : null}
-        <button
-          className={`mini-admin-button${
-            location.pathname === "/admin" ? " is-active" : ""
-          }`}
-          type="button"
-          aria-label="Admin"
-          onClick={() => navigate("/admin")}
-        >
-          <AdminIcon />
-        </button>
+        {showAdmin ? (
+          <button
+            className={`mini-admin-button${
+              location.pathname === "/admin" ? " is-active" : ""
+            }`}
+            type="button"
+            aria-label="Admin"
+            onClick={() => navigate("/admin")}
+          >
+            <AdminIcon />
+          </button>
+        ) : null}
       </div>
     </>
   );

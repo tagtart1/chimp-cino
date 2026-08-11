@@ -50,6 +50,8 @@
  * @property {function({username: string, email: string}): Promise<boolean>} exists
  * @property {function({username: string, email: string, password: string, balance: number}): Promise<UserRecord>} create
  * @property {function(number): Promise<{balance: number, dailyBonusStreak: number, lastDailyBonusClaimedOn: Date|null}|null>} findStateById
+ * @property {function(number): Promise<{balance: number, dailyBonusStreak: number, lastDailyBonusClaimedOn: Date|null, permissions: string[]}|null>} findSessionById
+ * @property {function(number, string[]): Promise<boolean>} hasAnyPermission
  * @property {function({userId: number, streak: number, payout: number, claimedOn: Date}): Promise<{balance: number}>} claimDailyBonus
  * @property {function(number): Promise<{dailyBonusStreak: number, lastDailyBonusClaimedOn: null}>} resetDailyBonusForTesting
  *
@@ -116,6 +118,8 @@ const repositoryMethods = {
     "exists",
     "create",
     "findStateById",
+    "findSessionById",
+    "hasAnyPermission",
     "claimDailyBonus",
     "resetDailyBonusForTesting",
   ],

@@ -8,8 +8,10 @@ import { syncPermissionRegistry } from "../syncPermissionRegistry.js";
 
 test("the registry exposes the code-owned permissions", () => {
   assert.deepEqual(registeredPermissions, [
+    { key: "user:view", displayName: "View Users" },
+    { key: "user:reset_bonus", displayName: "Reset User Daily Bonus" },
+    { key: "user:assign_roles", displayName: "Assign User Roles" },
     { key: "role:manage", displayName: "Manage Roles" },
-    { key: "permission:manage", displayName: "Manage Permissions" },
   ]);
   assert.equal(permissionRegistry.ROLE_MANAGE.key, "role:manage");
 });
@@ -35,27 +37,44 @@ test("permission sync deletes unregistered rows and upserts registry rows", asyn
 
   const result = await syncPermissionRegistry(client);
 
-  assert.equal(result.length, 2);
+  assert.equal(result.length, 4);
   assert.deepEqual(deleteCalls, [
     {
       where: {
-        key: { notIn: ["role:manage", "permission:manage"] },
+        key: {
+          notIn: [
+            "user:view",
+            "user:reset_bonus",
+            "user:assign_roles",
+            "role:manage",
+          ],
+        },
       },
     },
   ]);
   assert.deepEqual(upsertCalls, [
     {
+      where: { key: "user:view" },
+      create: { key: "user:view", displayName: "View Users" },
+      update: { displayName: "View Users" },
+    },
+    {
+      where: { key: "user:reset_bonus" },
+      create: {
+        key: "user:reset_bonus",
+        displayName: "Reset User Daily Bonus",
+      },
+      update: { displayName: "Reset User Daily Bonus" },
+    },
+    {
+      where: { key: "user:assign_roles" },
+      create: { key: "user:assign_roles", displayName: "Assign User Roles" },
+      update: { displayName: "Assign User Roles" },
+    },
+    {
       where: { key: "role:manage" },
       create: { key: "role:manage", displayName: "Manage Roles" },
       update: { displayName: "Manage Roles" },
-    },
-    {
-      where: { key: "permission:manage" },
-      create: {
-        key: "permission:manage",
-        displayName: "Manage Permissions",
-      },
-      update: { displayName: "Manage Permissions" },
     },
   ]);
 });

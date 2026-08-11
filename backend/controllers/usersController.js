@@ -1,14 +1,14 @@
-import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import { body, validationResult } from "express-validator";
 import AppError from "../utils/appError.js";
 import { authService, dailyBonusService } from "../services/index.js";
 
 export const logIn = asyncHandler(async (req, res, next) => {
-  req.user = await authService.logIn({
+  const user = await authService.logIn({
     identifier: req.body.emailOrUsername,
     password: req.body.password,
   });
+  req.user = await authService.validateSession(user);
   next();
 });
 
@@ -40,7 +40,8 @@ export const signUp = [
       throw new AppError(errors.array()[0].msg, 400, "VALIDATION_ERROR");
     }
 
-    req.user = await authService.signUp(req.body);
+    const user = await authService.signUp(req.body);
+    req.user = await authService.validateSession(user);
     next();
   }),
 ];
@@ -50,23 +51,9 @@ export const logOut = (req, res) => {
   res.status(200).json({ data: { message: "Logged out successfully" } });
 };
 
-export const validateUser = asyncHandler(async (req, res, next) => {
-  const token = req.cookies.token;
-  jwt.verify(token, process.env.SECRETKEY, async (error, userData) => {
-    if (error) {
-      next(
-        new AppError("User timed out, please log back in", 401, "TIMED_OUT")
-      );
-      return;
-    }
-
-    try {
-      res.json({
-        data: await authService.validateSession(userData.user),
-      });
-    } catch (serviceError) {
-      next(serviceError);
-    }
+export const validateUser = asyncHandler(async (req, res) => {
+  res.json({
+    data: await authService.validateSession(req.user),
   });
 });
 

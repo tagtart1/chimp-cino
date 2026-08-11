@@ -1,5 +1,6 @@
 import { Prisma } from "../generated/prisma/client.ts";
 import { assertDataStore, DataStoreError } from "./dataStore.js";
+import { flattenPermissionKeys } from "./permissionKeys.js";
 import { prisma } from "./prismaClient.js";
 
 const TRANSACTION_OPTIONS = {
@@ -199,6 +200,46 @@ function repositories(client, inTransaction = false) {
           },
         });
         return user && { ...user, balance: number(user.balance) };
+      },
+
+      async findSessionById(userId) {
+        const user = await client.user.findUnique({
+          where: { id: userId },
+          select: {
+            balance: true,
+            dailyBonusStreak: true,
+            lastDailyBonusClaimedOn: true,
+            roles: {
+              select: {
+                permissions: { select: { key: true } },
+              },
+            },
+          },
+        });
+        return (
+          user && {
+            balance: number(user.balance),
+            dailyBonusStreak: user.dailyBonusStreak,
+            lastDailyBonusClaimedOn: user.lastDailyBonusClaimedOn,
+            permissions: flattenPermissionKeys(user.roles),
+          }
+        );
+      },
+
+      async hasAnyPermission(userId, keys) {
+        if (!keys.length) return false;
+        const user = await client.user.findFirst({
+          where: {
+            id: userId,
+            roles: {
+              some: {
+                permissions: { some: { key: { in: keys } } },
+              },
+            },
+          },
+          select: { id: true },
+        });
+        return Boolean(user);
       },
 
       async claimDailyBonus({ userId, streak, payout, claimedOn }) {

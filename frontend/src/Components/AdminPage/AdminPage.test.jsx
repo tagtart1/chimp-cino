@@ -1,11 +1,26 @@
 import { act } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { MemoryRouter } from "react-router-dom";
 import AdminPage from "./AdminPage";
 
+const mockSetUser = jest.fn();
+const mockOpenLogin = jest.fn();
+let mockCurrentUser;
+
+jest.mock("../../Contexts/UserProvider", () => ({
+  useUser: () => ({ user: mockCurrentUser, setUser: mockSetUser }),
+}));
+
+jest.mock("../../Contexts/AuthPopupProvider", () => ({
+  useAuthPopup: () => ({ openLogin: mockOpenLogin }),
+}));
+
 const permissions = [
-  { id: 1, key: "role:manage", displayName: "Manage Roles" },
-  { id: 2, key: "permission:manage", displayName: "Manage Permissions" },
+  { id: 1, key: "user:view", displayName: "View Users" },
+  { id: 2, key: "user:reset_bonus", displayName: "Reset User Daily Bonus" },
+  { id: 3, key: "user:assign_roles", displayName: "Assign User Roles" },
+  { id: 4, key: "role:manage", displayName: "Manage Roles" },
 ];
 const roles = [
   {
@@ -30,17 +45,36 @@ const user = {
   lastDailyBonusClaimedOn: "2026-08-04T00:00:00.000Z",
   roles: [roles[0]],
 };
+const adminSession = {
+  id: 99,
+  username: "admin",
+  permissions: permissions.map(({ key }) => key),
+};
 
 const jsonResponse = (data, ok = true) => ({
   ok,
+  status: ok ? 200 : 403,
   json: async () => (ok ? { data } : { message: data }),
 });
+
+const renderAdminPage = () =>
+  render(
+    <MemoryRouter>
+      <AdminPage />
+    </MemoryRouter>
+  );
 
 describe("AdminPage", () => {
   beforeEach(() => {
     jest.useFakeTimers();
+    mockCurrentUser = adminSession;
+    mockSetUser.mockClear();
+    mockOpenLogin.mockClear();
     global.fetch = jest.fn(async (input, options = {}) => {
       const url = String(input);
+      if (url.includes("/users/validate-user")) {
+        return jsonResponse(adminSession);
+      }
       if (url.includes("/admin/users/7/daily-bonus/reset")) {
         return jsonResponse({
           ...user,
@@ -75,7 +109,7 @@ describe("AdminPage", () => {
   });
 
   it("debounces backend search by username or email", async () => {
-    render(<AdminPage />);
+    renderAdminPage();
     await waitFor(() => expect(screen.getByText("bananaBoss")).toBeInTheDocument());
     global.fetch.mockClear();
 
@@ -94,7 +128,7 @@ describe("AdminPage", () => {
   });
 
   it("assigns roles to users instead of assigning permissions directly", async () => {
-    render(<AdminPage />);
+    renderAdminPage();
     fireEvent.click(await screen.findByRole("button", { name: /bananaBoss/i }));
 
     expect(await screen.findByText("Assigned roles")).toBeInTheDocument();
@@ -118,7 +152,7 @@ describe("AdminPage", () => {
   });
 
   it("uses a separate access section to assign permissions to roles", async () => {
-    render(<AdminPage />);
+    renderAdminPage();
     fireEvent.click(
       await screen.findByRole("button", { name: /Roles & permissions/i })
     );
@@ -139,7 +173,7 @@ describe("AdminPage", () => {
         expect.stringContaining("/admin/roles/10/permissions"),
         expect.objectContaining({
           method: "PUT",
-          body: JSON.stringify({ permissionIds: [2, 1] }),
+          body: JSON.stringify({ permissionIds: [2, 4] }),
         })
       )
     );
@@ -149,16 +183,114 @@ describe("AdminPage", () => {
   });
 
   it("shows the permission registry without permission CRUD controls", async () => {
-    render(<AdminPage />);
+    renderAdminPage();
     fireEvent.click(
       await screen.findByRole("button", { name: /Roles & permissions/i })
     );
 
-    expect(await screen.findByText("role:manage")).toBeInTheDocument();
-    expect(screen.getByText("permission:manage")).toBeInTheDocument();
+    expect(await screen.findByText("user:view")).toBeInTheDocument();
+    expect(screen.getByText("user:reset_bonus")).toBeInTheDocument();
+    expect(screen.getByText("user:assign_roles")).toBeInTheDocument();
+    expect(screen.getByText("role:manage")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Create permission" })
     ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Permission name")).not.toBeInTheDocument();
+  });
+
+  it("does not mount the admin workspace without user:view", () => {
+    mockCurrentUser = { id: 8, username: "player", permissions: [] };
+
+    renderAdminPage();
+
+    expect(screen.getByText("Access denied")).toBeInTheDocument();
+    expect(screen.getByText("This control room is off limits.")).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("offers sign in without mounting the workspace when signed out", () => {
+    mockCurrentUser = null;
+
+    renderAdminPage();
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(screen.getByText("Sign in required")).toBeInTheDocument();
+    expect(mockOpenLogin).toHaveBeenCalledTimes(1);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("loads only user data and hides privileged controls with user:view alone", async () => {
+    mockCurrentUser = {
+      id: 8,
+      username: "viewer",
+      permissions: ["user:view"],
+    };
+
+    renderAdminPage();
+    fireEvent.click(await screen.findByRole("button", { name: /bananaBoss/i }));
+    await screen.findByText("Player #7");
+
+    expect(screen.queryByRole("button", { name: "Reset bonus" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Assigned roles")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Roles & permissions/i })).not.toBeInTheDocument();
+    expect(
+      global.fetch.mock.calls.some(([url]) => String(url).endsWith("/admin/roles"))
+    ).toBe(false);
+    expect(
+      global.fetch.mock.calls.some(([url]) => String(url).endsWith("/admin/permissions"))
+    ).toBe(false);
+  });
+
+  it("shows bonus reset without exposing role controls", async () => {
+    mockCurrentUser = {
+      id: 8,
+      username: "bonus-admin",
+      permissions: ["user:view", "user:reset_bonus"],
+    };
+
+    renderAdminPage();
+    fireEvent.click(await screen.findByRole("button", { name: /bananaBoss/i }));
+
+    expect(
+      await screen.findByRole("button", { name: "Reset bonus" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Assigned roles")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Roles & permissions/i })
+    ).not.toBeInTheDocument();
+    expect(
+      global.fetch.mock.calls.some(([url]) =>
+        String(url).endsWith("/admin/roles")
+      )
+    ).toBe(false);
+  });
+
+  it("loads role choices for role assignment without exposing role management", async () => {
+    mockCurrentUser = {
+      id: 8,
+      username: "role-assigner",
+      permissions: ["user:view", "user:assign_roles"],
+    };
+
+    renderAdminPage();
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(([url]) =>
+          String(url).endsWith("/admin/roles")
+        )
+      ).toBe(true)
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /bananaBoss/i }));
+
+    expect(await screen.findByText("Assigned roles")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reset bonus" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Roles & permissions/i })
+    ).not.toBeInTheDocument();
+    expect(
+      global.fetch.mock.calls.some(([url]) =>
+        String(url).endsWith("/admin/permissions")
+      )
+    ).toBe(false);
   });
 });

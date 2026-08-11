@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiUrl } from "../../config/api";
+import { useAuthPopup } from "../../Contexts/AuthPopupProvider";
+import { useUser } from "../../Contexts/UserProvider";
+import {
+  hasPermission,
+  PERMISSION_KEYS,
+} from "../../Helpers/permissions";
+import { fetchSessionUser } from "../../Helpers/session";
 import "./AdminPage.scss";
 
 const SEARCH_DELAY_MS = 300;
@@ -14,7 +22,12 @@ async function adminRequest(path, options = {}) {
       : options.headers,
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.message || "Something went wrong");
+  if (!response.ok) {
+    const error = new Error(payload.message || "Something went wrong");
+    error.code = payload.code;
+    error.status = response.status;
+    throw error;
+  }
   return payload.data;
 }
 
@@ -66,6 +79,42 @@ function UsersIcon() {
   );
 }
 
+function AdminAccessPage({ signedIn, onSignIn }) {
+  return (
+    <main className="admin-access-page">
+      <section className="admin-access-card">
+        <div className="admin-access-icon" aria-hidden="true">
+          <ShieldIcon />
+          <span>{signedIn ? "403" : "!"}</span>
+        </div>
+        <div className="admin-access-copy">
+          <span className="admin-access-eyebrow">
+            {signedIn ? "Access denied" : "Sign in required"}
+          </span>
+          <h1>
+            {signedIn
+              ? "This control room is off limits."
+              : "Sign in to check your access."}
+          </h1>
+          <p>
+            {signedIn
+              ? "Your account does not have permission to view player administration."
+              : "You need an authenticated account with admin access to open this page."}
+          </p>
+          <div className="admin-access-actions">
+            {!signedIn ? (
+              <button type="button" onClick={onSignIn}>
+                Sign in
+              </button>
+            ) : null}
+            <Link to="/">Back to lobby</Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function AccessChecklist({
   items,
   selected,
@@ -104,7 +153,20 @@ function AccessChecklist({
   );
 }
 
-export default function AdminPage() {
+function AdminWorkspace({ currentUser, setCurrentUser }) {
+  const canResetBonus = hasPermission(
+    currentUser,
+    PERMISSION_KEYS.USER_RESET_BONUS
+  );
+  const canAssignRoles = hasPermission(
+    currentUser,
+    PERMISSION_KEYS.USER_ASSIGN_ROLES
+  );
+  const canManageRoles = hasPermission(
+    currentUser,
+    PERMISSION_KEYS.ROLE_MANAGE
+  );
+  const canLoadRoles = canAssignRoles || canManageRoles;
   const [activeSection, setActiveSection] = useState("users");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -116,20 +178,43 @@ export default function AdminPage() {
   const [userRoleDraft, setUserRoleDraft] = useState([]);
 
   const [roles, setRoles] = useState([]);
-  const [rolesLoading, setRolesLoading] = useState(true);
+  const [rolesLoading, setRolesLoading] = useState(canLoadRoles);
   const [selectedRole, setSelectedRole] = useState(null);
   const [rolePermissionDraft, setRolePermissionDraft] = useState([]);
   const [roleForm, setRoleForm] = useState(blankAccessItem);
   const [editingRole, setEditingRole] = useState(null);
 
   const [permissions, setPermissions] = useState([]);
-  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  const [permissionsLoading, setPermissionsLoading] = useState(canManageRoles);
   const [saving, setSaving] = useState("");
   const [notice, setNotice] = useState(null);
 
   const showNotice = useCallback((message, type = "success") => {
     setNotice({ message, type });
   }, []);
+
+  const refreshCurrentUser = useCallback(async () => {
+    try {
+      const user = await fetchSessionUser();
+      setCurrentUser(user);
+      return user;
+    } catch (error) {
+      if (error.status === 401) setCurrentUser(null);
+      throw error;
+    }
+  }, [setCurrentUser]);
+
+  const handleAdminError = useCallback(
+    async (error) => {
+      if (error.code === "FORBIDDEN") {
+        await refreshCurrentUser().catch(() => undefined);
+      } else if (error.status === 401) {
+        setCurrentUser(null);
+      }
+      showNotice(error.message, "error");
+    },
+    [refreshCurrentUser, setCurrentUser, showNotice]
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(
@@ -147,14 +232,17 @@ export default function AdminPage() {
       signal: controller.signal,
     })
       .then(setUsers)
-      .catch((error) => {
-        if (error.name !== "AbortError") setUsersError(error.message);
+      .catch(async (error) => {
+        if (error.name !== "AbortError") {
+          setUsersError(error.message);
+          await handleAdminError(error);
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setUsersLoading(false);
       });
     return () => controller.abort();
-  }, [debouncedQuery]);
+  }, [debouncedQuery, handleAdminError]);
 
   const loadRoles = useCallback(async () => {
     setRolesLoading(true);
@@ -166,27 +254,30 @@ export default function AdminPage() {
         return nextRoles.find(({ id }) => id === current.id) ?? null;
       });
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setRolesLoading(false);
     }
-  }, [showNotice]);
+  }, [handleAdminError]);
 
   const loadPermissions = useCallback(async () => {
     setPermissionsLoading(true);
     try {
       setPermissions(await adminRequest("/permissions"));
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setPermissionsLoading(false);
     }
-  }, [showNotice]);
+  }, [handleAdminError]);
 
   useEffect(() => {
-    loadRoles();
-    loadPermissions();
-  }, [loadPermissions, loadRoles]);
+    if (canLoadRoles) loadRoles();
+    else setRolesLoading(false);
+
+    if (canManageRoles) loadPermissions();
+    else setPermissionsLoading(false);
+  }, [canLoadRoles, canManageRoles, loadPermissions, loadRoles]);
 
   const selectUser = async (userId) => {
     setSelectedLoading(true);
@@ -196,7 +287,7 @@ export default function AdminPage() {
       setSelectedUser(user);
       setUserRoleDraft(selectedIds(user.roles));
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setSelectedLoading(false);
     }
@@ -229,7 +320,7 @@ export default function AdminPage() {
       setUserRoleDraft(selectedIds(user.roles));
       showNotice(`${user.username}'s daily bonus was reset.`);
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setSaving("");
     }
@@ -245,9 +336,10 @@ export default function AdminPage() {
       });
       setSelectedUser(user);
       setUserRoleDraft(selectedIds(user.roles));
+      if (user.id === currentUser.id) await refreshCurrentUser();
       showNotice(`Roles updated for ${user.username}.`);
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setSaving("");
     }
@@ -266,7 +358,7 @@ export default function AdminPage() {
       selectRole(role);
       showNotice("Role created.");
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setSaving("");
     }
@@ -298,7 +390,7 @@ export default function AdminPage() {
       );
       showNotice("Role updated.");
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setSaving("");
     }
@@ -318,9 +410,10 @@ export default function AdminPage() {
       );
       setSelectedRole(null);
       setRolePermissionDraft([]);
+      await refreshCurrentUser();
       showNotice("Role deleted.");
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setSaving("");
     }
@@ -339,9 +432,10 @@ export default function AdminPage() {
       setRoles((current) =>
         current.map((item) => (item.id === role.id ? role : item))
       );
+      await refreshCurrentUser();
       showNotice(`Permissions updated for ${role.displayName}.`);
     } catch (error) {
-      showNotice(error.message, "error");
+      await handleAdminError(error);
     } finally {
       setSaving("");
     }
@@ -379,14 +473,16 @@ export default function AdminPage() {
             <UsersIcon />
             <span><strong>Users</strong><small>Accounts & roles</small></span>
           </button>
-          <button
-            type="button"
-            className={activeSection === "access" ? "is-active" : ""}
-            onClick={() => setActiveSection("access")}
-          >
-            <ShieldIcon />
-            <span><strong>Roles & permissions</strong><small>Access structure</small></span>
-          </button>
+          {canManageRoles ? (
+            <button
+              type="button"
+              className={activeSection === "access" ? "is-active" : ""}
+              onClick={() => setActiveSection("access")}
+            >
+              <ShieldIcon />
+              <span><strong>Roles & permissions</strong><small>Access structure</small></span>
+            </button>
+          ) : null}
         </nav>
 
         {notice ? (
@@ -435,22 +531,26 @@ export default function AdminPage() {
                     <div><span>Bonus streak</span><strong>{selectedUser.dailyBonusStreak}</strong><small>Consecutive days</small></div>
                     <div><span>Last claimed</span><strong>{dateLabel(selectedUser.lastDailyBonusClaimedOn)}</strong><small>Daily reward</small></div>
                   </div>
-                  <div className="admin-section account-actions">
-                    <div className="section-heading"><div><span>Player actions</span><h3>Daily bonus</h3></div><span className="section-number">01</span></div>
-                    <div className="action-row">
-                      <div className="action-icon bonus-icon" aria-hidden="true">↻</div>
-                      <div className="action-copy"><strong>Reset daily bonus</strong><span>Clears the current streak and allows this player to claim again.</span></div>
-                      <button className="secondary-action danger-action" type="button" disabled={saving === "bonus"} onClick={resetBonus}>{saving === "bonus" ? "Resetting…" : "Reset bonus"}</button>
+                  {canResetBonus ? (
+                    <div className="admin-section account-actions">
+                      <div className="section-heading"><div><span>Player actions</span><h3>Daily bonus</h3></div><span className="section-number">01</span></div>
+                      <div className="action-row">
+                        <div className="action-icon bonus-icon" aria-hidden="true">↻</div>
+                        <div className="action-copy"><strong>Reset daily bonus</strong><span>Clears the current streak and allows this player to claim again.</span></div>
+                        <button className="secondary-action danger-action" type="button" disabled={saving === "bonus"} onClick={resetBonus}>{saving === "bonus" ? "Resetting…" : "Reset bonus"}</button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="admin-section user-permissions">
-                    <div className="section-heading"><div><span>Access control</span><h3>Assigned roles</h3></div><span className="section-number">02</span></div>
-                    <AccessChecklist items={roles} selected={userRoleDraft} loading={rolesLoading} emptyMessage="Create a role in Roles & permissions to begin assigning access." onToggle={(id) => toggleId(setUserRoleDraft, id)} />
-                    <div className="permission-save-row">
-                      <span>{roleSet.size} role{roleSet.size === 1 ? "" : "s"} selected</span>
-                      <button className="primary-action" type="button" disabled={!userRolesChanged || saving === "user-roles"} onClick={saveUserRoles}>{saving === "user-roles" ? "Saving…" : "Save roles"}</button>
+                  ) : null}
+                  {canAssignRoles ? (
+                    <div className="admin-section user-permissions">
+                      <div className="section-heading"><div><span>Access control</span><h3>Assigned roles</h3></div><span className="section-number">02</span></div>
+                      <AccessChecklist items={roles} selected={userRoleDraft} loading={rolesLoading} emptyMessage="Create a role in Roles & permissions to begin assigning access." onToggle={(id) => toggleId(setUserRoleDraft, id)} />
+                      <div className="permission-save-row">
+                        <span>{roleSet.size} role{roleSet.size === 1 ? "" : "s"} selected</span>
+                        <button className="primary-action" type="button" disabled={!userRolesChanged || saving === "user-roles"} onClick={saveUserRoles}>{saving === "user-roles" ? "Saving…" : "Save roles"}</button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </>
               ) : <div className="workbench-empty"><div className="empty-shield"><UsersIcon /></div><strong>Select a player</strong><span>Choose an account to view information, actions, and assigned roles.</span></div>}
             </section>
@@ -519,4 +619,15 @@ export default function AdminPage() {
       </div>
     </main>
   );
+}
+
+export default function AdminPage() {
+  const { user, setUser } = useUser();
+  const { openLogin } = useAuthPopup();
+
+  if (!hasPermission(user, PERMISSION_KEYS.USER_VIEW)) {
+    return <AdminAccessPage signedIn={Boolean(user)} onSignIn={openLogin} />;
+  }
+
+  return <AdminWorkspace currentUser={user} setCurrentUser={setUser} />;
 }

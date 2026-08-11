@@ -60,7 +60,7 @@ export function createAuthService(store) {
     },
 
     async validateSession(user) {
-      const state = await store.users.findStateById(user.id);
+      const state = await store.users.findSessionById(user.id);
       if (!state) {
         throw new AppError(
           "User timed out, please log back in",
